@@ -10,8 +10,10 @@ import AppPage from "./pages/App";
 import ProjectsPage from "./app/projects/page";
 import ProjectOverviewPage from "./app/projects/[id]/page";
 import ProjectSettingsPage from "./app/projects/[id]/settings/page";
+import LoginPage from "./app/auth/login";
 import RunsPage from "./app/runs/page";
 import RunDetailPage from "./app/runs/[runId]/page";
+import EnvironmentsPage from "./app/environments/page";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/app/projects/:id/settings" element={<ProjectSettingsPage />} />
           <Route path="/app/runs" element={<RunsPage />} />
           <Route path="/app/runs/:runId" element={<RunDetailPage />} />
+          <Route path="/app/environments" element={<EnvironmentsPage />} />
+          <Route path="/auth/login" element={<LoginPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

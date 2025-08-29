@@ -1,6 +1,8 @@
 // Environment configuration for the frontend app
 export const config = {
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5002',
+  // Prefer VITE_API_BASE_URL (used in .env), then VITE_API_URL for backward compatibility,
+  // finally fall back to localhost:5002 for local development.
+  apiUrl: import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5002',
   authConfig: {
     tokenEndpoint: '/connect/token',
     scopes: 'openid email profile roles',
