@@ -41,4 +41,11 @@ export const environmentsApi = {
   async delete(id: string): Promise<void> {
     await AuthService.authenticatedFetch<void>(`/api/environments/${id}`, { method: 'DELETE' });
   }
+
+  ,
+
+  // Server-side connection test (performs the outbound request from the server)
+  async test(id: string): Promise<{ ok: boolean; status?: number; reason?: string; elapsedMs?: number; error?: string }> {
+    return await AuthService.authenticatedFetch<{ ok: boolean; status?: number; reason?: string; elapsedMs?: number; error?: string }>(`/api/environments/${id}/test`, { method: 'POST' });
+  }
 };

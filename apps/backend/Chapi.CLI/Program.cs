@@ -11,7 +11,7 @@ using Chapi.Api.Data;
 var builder = Host.CreateDefaultBuilder(args);
 
 // Force Development environment for CLI
-builder.UseEnvironment(Environments.Development);
+builder.UseEnvironment("Development");
 
 // Configure logging
 builder.ConfigureLogging(logging =>
