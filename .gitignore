@@ -44,7 +44,6 @@ public/build/
 # Dotnet build / publish outputs
 **/bin/
 **/obj/
-**/artifacts/
 **/publish/
 publish/
 app.publish/
