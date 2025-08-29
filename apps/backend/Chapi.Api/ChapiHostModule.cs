@@ -20,13 +20,13 @@ namespace Chapi.Api;
 
 [Module]
 [DependsOn<HostModule>]
-[DependsOn<InvoiceDbModule>]
+[DependsOn<ChapiDbModule>]
 [DependsOn<InvoicesModule>]
-public class InvoiceHostModule : IModule
+public class ChapiHostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
     {
-       
+
     }
 
 

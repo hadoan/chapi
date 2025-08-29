@@ -9,7 +9,7 @@ builder.Services.AddDataProtection();
 
 // Add HostModule type, and let ModuleContainer resolve dependencies like ApiModule
 builder.Services.AddModules(
-    typeof(InvoiceHostModule)
+    typeof(ChapiHostModule)
 );
 
 try

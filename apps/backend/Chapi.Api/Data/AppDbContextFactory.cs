@@ -2,11 +2,11 @@ using ShipMvp.Application.Infrastructure.Data;
 
 namespace Chapi.Api.Data;
 
-public sealed class AppDbContextFactory : BaseAppDbContextFactory<InvoiceDbContext>
+public sealed class AppDbContextFactory : BaseAppDbContextFactory<ChapiDbContext>
 {
-    public override InvoiceDbContext CreateDbContext(string[] args)
+    public override ChapiDbContext CreateDbContext(string[] args)
     {
         var options = GetOptions();
-        return new InvoiceDbContext(options);
+        return new ChapiDbContext(options);
     }
 }

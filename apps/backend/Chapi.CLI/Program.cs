@@ -31,7 +31,7 @@ builder.ConfigureServices((context, services) =>
      services.AddModules(
             typeof(CLIModule),
             typeof(ApplicationModule),
-            typeof(InvoiceDbModule));
+            typeof(ChapiDbModule));
 });
 
 var host = builder.Build();

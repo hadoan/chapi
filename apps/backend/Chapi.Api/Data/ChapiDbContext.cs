@@ -1,20 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 
 using ShipMvp.Application.Infrastructure.Data;
-using Invoices.Infrastructure;
 
 namespace Chapi.Api.Data;
 
-public sealed class InvoiceDbContext : AppDbContext
+public sealed class ChapiDbContext : AppDbContext
 {
-    public InvoiceDbContext(DbContextOptions<InvoiceDbContext> options) : base(options)
+    public ChapiDbContext(DbContextOptions<ChapiDbContext> options) : base(options)
     {
     }
 
     public override void ConfigureModules(ModelBuilder modelBuilder)
     {
         base.ConfigureModules(modelBuilder);
-        modelBuilder.ConfigureInvoiceEntities();
+        // modelBuilder.ConfigureChapiEntities();
     }
     
 }

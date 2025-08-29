@@ -6,6 +6,6 @@ namespace Chapi.Api.Data;
 
 
 [Module]
-public class InvoiceDbModule : DatabaseModule<InvoiceDbContext>, IModule
+public class ChapiDbModule : DatabaseModule<ChapiDbContext>, IModule
 {    
 }
