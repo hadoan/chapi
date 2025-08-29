@@ -17,7 +17,7 @@ Invoice.sln
 ├── apps/
 │   ├── backend/
 │   │   ├── Chapi.Api/           # Main API application
-│   │   └── Invoice.CLI/           # Command-line interface tool
+│   │   └── Chapi.CLI/           # Command-line interface tool
 │   └── frontend/                  # React frontend application
 ├── modules/
 │   └── Invoices/                  # Invoice module (Clean Architecture)
@@ -121,10 +121,10 @@ The frontend will be available at `http://localhost:5173`
 
 ### 5. Command Line Interface (CLI)
 
-The Invoice.CLI provides command-line tools for database management and administrative tasks:
+The Chapi.CLI provides command-line tools for database management and administrative tasks:
 
 ```bash
-cd apps/backend/Invoice.CLI
+cd apps/backend/Chapi.CLI
 
 # Show available commands
 dotnet run

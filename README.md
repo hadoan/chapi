@@ -47,7 +47,7 @@ apps/
         InvoiceDbContext.cs   # Application-specific DbContext
         InvoiceDbModule.cs    # Database module configuration
       appsettings.json        # ConnectionStrings:Default
-    Invoice.CLI/            # Command-line interface tool
+  Chapi.CLI/            # Command-line interface tool
       Program.cs              # CLI host with commands (seed-data, run-sql, etc.)
       appsettings.json        # CLI configuration
   frontend/                 # React frontend application (Vite + TypeScript)
@@ -285,12 +285,12 @@ Controllers are automatically discovered from module assemblies using `.AddAppli
 
 ## Command Line Interface (CLI)
 
-The Invoice.CLI provides command-line tools for database management and administrative tasks.
+The Chapi.CLI provides command-line tools for database management and administrative tasks.
 
 ### Available Commands
 
 ```bash
-cd apps/backend/Invoice.CLI
+cd apps/backend/Chapi.CLI
 
 # Show all available commands
 dotnet run
