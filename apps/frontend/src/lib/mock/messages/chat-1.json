@@ -1,0 +1,61 @@
+[
+  {
+    "role": "user",
+    "content": "Generate smoke tests for our user service API"
+  },
+  {
+    "role": "assistant", 
+    "content": "I'll generate comprehensive smoke tests for your user service API. Let me analyze the endpoints and create tests that cover the critical paths.",
+    "cards": [
+      {
+        "type": "plan",
+        "title": "Test Generation Plan",
+        "items": [
+          "Analyze user service endpoints",
+          "Generate CRUD operations tests",
+          "Add authentication checks", 
+          "Include edge case validations"
+        ]
+      },
+      {
+        "type": "diff",
+        "title": "Generated Tests",
+        "files": [
+          { "path": "tests/user-service/smoke.json", "change": "added", "lines": 45 },
+          { "path": "tests/user-service/auth.json", "change": "added", "lines": 23 },
+          { "path": "tests/user-service/crud.json", "change": "added", "lines": 67 }
+        ]
+      }
+    ],
+    "buttons": [
+      { "label": "Run in Cloud", "variant": "primary" },
+      { "label": "Download Run Pack", "variant": "secondary" },
+      { "label": "Add Negatives", "variant": "secondary" }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "/run cloud staging"
+  },
+  {
+    "role": "assistant",
+    "content": "Running your user service tests in staging environment...",
+    "cards": [
+      {
+        "type": "run",
+        "title": "Cloud Run Results",
+        "status": "pass",
+        "env": "staging",
+        "duration": "2.4s",
+        "p95": 312,
+        "seed": 42,
+        "passed": 12,
+        "failed": 0
+      }
+    ],
+    "buttons": [
+      { "label": "View Artifacts", "variant": "secondary" },
+      { "label": "Create PR", "variant": "primary" }
+    ]
+  }
+]

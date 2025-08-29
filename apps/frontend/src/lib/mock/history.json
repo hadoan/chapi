@@ -1,0 +1,37 @@
+[
+  {
+    "id": "chat-1",
+    "title": "User service smoke tests",
+    "updatedAt": "2024-08-25T10:30:00Z",
+    "env": "staging",
+    "lastStatus": "pass"
+  },
+  {
+    "id": "chat-2", 
+    "title": "Payment API negative cases",
+    "updatedAt": "2024-08-25T09:15:00Z",
+    "env": "local",
+    "lastStatus": "fail"
+  },
+  {
+    "id": "chat-3",
+    "title": "Orders endpoints performance",
+    "updatedAt": "2024-08-24T16:45:00Z", 
+    "env": "production",
+    "lastStatus": "pass"
+  },
+  {
+    "id": "chat-4",
+    "title": "Auth flow edge cases",
+    "updatedAt": "2024-08-24T14:20:00Z",
+    "env": "staging", 
+    "lastStatus": "fail"
+  },
+  {
+    "id": "chat-5",
+    "title": "Product catalog smoke",
+    "updatedAt": "2024-08-23T11:30:00Z",
+    "env": "local",
+    "lastStatus": "pass"
+  }
+]

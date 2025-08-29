@@ -1,0 +1,97 @@
+# Root .gitignore for chapi
+
+# General
+*.log
+.DS_Store
+Thumbs.db
+*.cache
+*.bak
+*.tmp
+*~
+.env
+.env.*
+secrets.json
+.env.docker
+docker-compose.override.yml
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.turbo/
+.vite/
+.parcel-cache/
+.cache/
+/.pnp.cjs
+/.pnp.loader.mjs
+
+# Bun
+# (intentionally not ignoring bun.lockb — keep lockfile committed by default)
+
+# Vite / frontend specific
+public/build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Editors and IDEs
+.vscode/
+*.code-workspace
+.idea/
+*.sln.iml
+.vs/
+
+# Dotnet build / publish outputs
+**/bin/
+**/obj/
+**/artifacts/
+**/publish/
+publish/
+app.publish/
+*.Publish.xml
+*.nupkg
+packages/
+.nuget/
+.project.lock.json
+project.fragment.lock.json
+
+# Visual Studio user files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+
+# Test results / coverage
+**/TestResults/
+*.trx
+*.TestSettings
+coverage/
+.coverage
+
+# ASP.NET Core environment-specific files
+# Keep appsettings.json in source, ignore environment/local overrides
+appsettings.*.json
+appsettings.*.Development.json
+appsettings.*.Local.json
+
+# Certificates and keys
+*.pfx
+*.key
+*.cer
+
+# Generated code
+**/Generated/
+**/Generated_Code/
+
+# Logs, dumps
+*.dmp
+
+# Docker
+.env.docker
+
+# Misc
+.vsconfig
+
+# Ensure nested node modules inside subprojects are ignored as well
+**/node_modules/
