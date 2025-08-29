@@ -9,6 +9,7 @@ public class Environment : Entity<Guid>
 {
     public string Name { get; private set; } = string.Empty; // local/staging/prod
     public string BaseUrl { get; private set; } = string.Empty;
+    public Guid ProjectId { get; private set; }
     public int TimeoutMs { get; private set; }
     public bool FollowRedirects { get; private set; }
     public List<EnvironmentHeader> Headers { get; private set; } = new();

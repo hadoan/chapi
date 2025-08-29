@@ -9,25 +9,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus } from "lucide-react";
 
-type Environment = {
-  name: 'local' | 'staging' | 'prod';
-  baseUrl: string;
-  timeoutMs: number;
-  followRedirects: boolean;
-  headers: Record<string, string>;
-  secrets: Record<string, string>;
-  updatedAt: string;
-};
+import type { EnvModel } from '@/lib/state/types';
 
 interface EnvEditorDrawerProps {
-  environment: Environment | null;
+  environment: EnvModel | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (env: Environment) => void;
+  onSave: (env: Partial<EnvModel> & { id?: string }) => void;
 }
 
 export function EnvEditorDrawer({ environment, open, onOpenChange, onSave }: EnvEditorDrawerProps) {
-  const [formData, setFormData] = useState<Environment | null>(null);
+  const [formData, setFormData] = useState<Partial<EnvModel> | null>(null);
 
   useEffect(() => {
     if (environment) {
@@ -37,12 +29,13 @@ export function EnvEditorDrawer({ environment, open, onOpenChange, onSave }: Env
 
   if (!formData) return null;
 
-  const isProduction = formData.name === 'prod';
+  const isProduction = (formData.name ?? '').toString().toLowerCase() === 'prod';
 
   const handleSave = () => {
     onSave({
       ...formData,
-      updatedAt: 'just now'
+      // Ensure createdAt exists for new items; createdAt will be ignored on create if backend sets it
+      createdAt: (formData.createdAt ?? new Date().toISOString()) as string
     });
   };
 

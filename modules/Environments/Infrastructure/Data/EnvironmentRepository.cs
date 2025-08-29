@@ -50,9 +50,10 @@ public class EnvironmentRepository : IEnvironmentRepository
     public async Task<Environments.Domain.Environment?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
         => await IncludeParts(_dbSet).FirstOrDefaultAsync(e => e.Name == name, cancellationToken);
 
-    public async Task<(IEnumerable<Environments.Domain.Environment> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? search = null, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<Environments.Domain.Environment> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? search = null, Guid? projectId = null, CancellationToken cancellationToken = default)
     {
         var query = IncludeParts(_dbSet).AsQueryable();
+        if (projectId.HasValue) query = query.Where(e => e.ProjectId == projectId.Value);
         if (!string.IsNullOrWhiteSpace(search)) query = query.Where(e => e.Name.Contains(search));
         var total = await query.CountAsync(cancellationToken);
         var items = await query.OrderByDescending(e => e.CreatedAt)
@@ -61,6 +62,9 @@ public class EnvironmentRepository : IEnvironmentRepository
             .ToListAsync(cancellationToken);
         return (items, total);
     }
+
+    public async Task<IEnumerable<Environments.Domain.Environment>> GetByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default)
+        => await IncludeParts(_dbSet).Where(e => e.ProjectId == projectId).OrderByDescending(e => e.CreatedAt).ToListAsync(cancellationToken);
 
     private static IQueryable<Environments.Domain.Environment> IncludeParts(DbSet<Environments.Domain.Environment> set) => set
         .Include(e => e.Headers)

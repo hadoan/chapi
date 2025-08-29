@@ -12,74 +12,49 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
 import { EnvEditorDrawer } from "@/components/EnvEditorDrawer";
+import { EnvProvider, useEnvStore } from '@/lib/state/envStore';
+import type { EnvModel } from '@/lib/state/types';
 import { GithubIntegrationCard } from "@/components/GithubIntegrationCard";
 
 interface ProjectSettingsPageProps {
   params: { id: string };
 }
 
-type Environment = {
-  name: 'local' | 'staging' | 'prod';
-  baseUrl: string;
-  timeoutMs: number;
-  followRedirects: boolean;
-  headers: Record<string, string>;
-  secrets: Record<string, string>;
-  updatedAt: string;
-};
+// ...existing code...
 
-const mockEnvironments: Environment[] = [
-  {
-    name: 'local',
-    baseUrl: 'http://localhost:3000',
-    timeoutMs: 5000,
-    followRedirects: true,
-    headers: { 'Content-Type': 'application/json' },
-    secrets: { API_KEY: 'local-test-key' },
-    updatedAt: '2 hours ago'
-  },
-  {
-    name: 'staging',
-    baseUrl: 'https://api-staging.example.com',
-    timeoutMs: 10000,
-    followRedirects: false,
-    headers: { 'Content-Type': 'application/json', 'X-Environment': 'staging' },
-    secrets: { API_KEY: '***', DATABASE_URL: '***' },
-    updatedAt: '1 day ago'
-  },
-  {
-    name: 'prod',
-    baseUrl: 'https://api.example.com',
-    timeoutMs: 15000,
-    followRedirects: false,
-    headers: { 'Content-Type': 'application/json', 'X-Environment': 'production' },
-    secrets: { API_KEY: '***', DATABASE_URL: '***' },
-    updatedAt: '3 days ago'
-  }
-];
-
-export default function ProjectSettingsPage() {
+export function ProjectSettingsPageInner() {
   const { id } = useParams();
-  const [environments, setEnvironments] = useState<Environment[]>(mockEnvironments);
-  const [selectedEnv, setSelectedEnv] = useState<Environment | null>(null);
+  const { envs, loading, updateEnv, createEnv, deleteEnv } = useEnvStore();
+  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
   const [showEnvEditor, setShowEnvEditor] = useState(false);
   const [policies, setPolicies] = useState({
     failOnContractBreak: true,
     artifactRedaction: true
   });
 
-  const handleEditEnvironment = (env: Environment) => {
-    setSelectedEnv(env);
+  const handleEditEnvironment = (envId: string) => {
+    setSelectedEnvId(envId);
     setShowEnvEditor(true);
   };
 
-  const handleSaveEnvironment = (updatedEnv: Environment) => {
-    setEnvironments(envs => 
-      envs.map(env => env.name === updatedEnv.name ? updatedEnv : env)
-    );
+  const handleSaveEnvironment = async (env: Partial<EnvModel> & { id?: string }) => {
+    // env will match EnvModel shape from the drawer
+    if (env.id) {
+      await updateEnv(env.id, env);
+    } else {
+      // Build create payload with required fields; drawer should supply name and baseUrl
+      const payload = {
+        name: env.name as string,
+        baseUrl: env.baseUrl as string,
+        timeoutMs: env.timeoutMs ?? 30000,
+        followRedirects: env.followRedirects ?? true,
+        headers: env.headers ?? {}
+      } as Omit<EnvModel, 'id' | 'createdAt'>;
+
+      await createEnv(payload);
+    }
     setShowEnvEditor(false);
-    setSelectedEnv(null);
-    toast({ title: "Environment updated" });
+    setSelectedEnvId(null);
   };
 
   const handlePolicyChange = (key: keyof typeof policies, value: boolean) => {
@@ -112,31 +87,35 @@ export default function ProjectSettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {environments.map((env) => (
-                    <div key={env.name} className="flex items-center justify-between p-4 border rounded-lg hover-scale">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={env.name === 'prod' ? 'destructive' : 'outline'}>
-                            {env.name}
-                          </Badge>
-                          {env.name === 'prod' && (
-                            <span className="text-xs text-muted-foreground">Read-only in MVP</span>
-                          )}
+                  {loading ? (
+                    <div>Loading environments...</div>
+                  ) : (
+                    envs.map((env) => (
+                      <div key={env.id} className="flex items-center justify-between p-4 border rounded-lg hover-scale">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={env.locked ? 'destructive' : 'outline'}>
+                              {env.name}
+                            </Badge>
+                            {env.locked && (
+                              <span className="text-xs text-muted-foreground">Read-only</span>
+                            )}
+                          </div>
+                          <p className="text-sm font-mono">{env.baseUrl}</p>
+                          <p className="text-xs text-muted-foreground">Created {env.createdAt}</p>
                         </div>
-                        <p className="text-sm font-mono">{env.baseUrl}</p>
-                        <p className="text-xs text-muted-foreground">Last edited {env.updatedAt}</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditEnvironment(env.id)}
+                          disabled={env.locked}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditEnvironment(env)}
-                        disabled={env.name === 'prod'}
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -191,12 +170,20 @@ export default function ProjectSettingsPage() {
         </Tabs>
 
         <EnvEditorDrawer
-          environment={selectedEnv}
+          environment={selectedEnvId ? envs.find(e => e.id === selectedEnvId) ?? null : null}
           open={showEnvEditor}
           onOpenChange={setShowEnvEditor}
           onSave={handleSaveEnvironment}
         />
       </div>
     </Layout>
+  );
+}
+
+export default function ProjectSettingsPage(props: ProjectSettingsPageProps) {
+  return (
+    <EnvProvider>
+  <ProjectSettingsPageInner />
+    </EnvProvider>
   );
 }

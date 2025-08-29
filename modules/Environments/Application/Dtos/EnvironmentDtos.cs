@@ -7,6 +7,7 @@ public record EnvironmentDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
+    public Guid ProjectId { get; init; }
     public string BaseUrl { get; init; } = string.Empty;
     public int TimeoutMs { get; init; }
     public bool FollowRedirects { get; init; }
@@ -18,6 +19,7 @@ public record EnvironmentDto
 public record CreateEnvironmentRequest
 {
     public string Name { get; init; } = string.Empty;
+    public Guid ProjectId { get; init; }
     public string BaseUrl { get; init; } = string.Empty;
     public int TimeoutMs { get; init; } = 30000;
     public bool FollowRedirects { get; init; } = true;

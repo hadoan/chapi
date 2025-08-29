@@ -618,6 +618,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/environments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
+                        "application/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
+                        "text/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
+                    };
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Environments.Application.Dtos.CreateEnvironmentRequest"];
+                    "text/json": components["schemas"]["Environments.Application.Dtos.CreateEnvironmentRequest"];
+                    "application/*+json": components["schemas"]["Environments.Application.Dtos.CreateEnvironmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"];
+                        "application/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"];
+                        "text/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/environments/{id}": {
         parameters: {
             query?: never;
@@ -2744,6 +2826,8 @@ export interface components {
     schemas: {
         "Environments.Application.Dtos.CreateEnvironmentRequest": {
             name?: string | null;
+            /** Format: uuid */
+            projectId?: string;
             baseUrl?: string | null;
             /** Format: int32 */
             timeoutMs?: number;
@@ -2754,6 +2838,8 @@ export interface components {
             /** Format: uuid */
             id?: string;
             name?: string | null;
+            /** Format: uuid */
+            projectId?: string;
             baseUrl?: string | null;
             /** Format: int32 */
             timeoutMs?: number;

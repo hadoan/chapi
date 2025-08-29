@@ -27,6 +27,20 @@ public class EnvironmentsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
+    [HttpPost("/api/projects/{projectId:guid}/environments")]
+    public async Task<ActionResult<EnvironmentDto>> CreateForProject(Guid projectId, CreateEnvironmentRequest request, CancellationToken ct)
+    {
+        var created = await _service.CreateForProjectAsync(projectId, request, ct);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
+    [HttpGet("/api/projects/{projectId:guid}/environments")]
+    public async Task<ActionResult<IEnumerable<EnvironmentDto>>> GetByProject(Guid projectId, CancellationToken ct)
+    {
+        var items = await _service.GetByProjectAsync(projectId, ct);
+        return Ok(items);
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EnvironmentDto>>> List([FromQuery] GetEnvironmentsQuery query, CancellationToken ct)
         => Ok(await _service.GetListAsync(query, ct));
