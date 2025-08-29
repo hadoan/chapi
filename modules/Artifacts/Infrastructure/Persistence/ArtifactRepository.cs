@@ -18,9 +18,10 @@ public class ArtifactRepository : IArtifactEfRepository
     }
     public IQueryable<Artifact> Query() => _set.AsQueryable();
     public async Task<Artifact?> GetByIdAsync(Guid id, CancellationToken ct) => await _set.FindAsync(new object?[] { id }, ct).AsTask();
-    public async Task AddAsync(Artifact entity, CancellationToken ct) { await _set.AddAsync(entity, ct); await _db.SaveChangesAsync(ct); }
-    public Task UpdateAsync(Artifact entity, CancellationToken ct) { _set.Update(entity); return _db.SaveChangesAsync(ct); }
-    public Task DeleteAsync(Artifact entity, CancellationToken ct) { _set.Remove(entity); return _db.SaveChangesAsync(ct); }
+    public async Task<IEnumerable<Artifact>> GetAllAsync(CancellationToken ct) => await _set.ToListAsync(ct);
+    public async Task<Artifact> AddAsync(Artifact entity, CancellationToken ct) { await _set.AddAsync(entity, ct); await _db.SaveChangesAsync(ct); return entity; }
+    public async Task<Artifact> UpdateAsync(Artifact entity, CancellationToken ct) { _set.Update(entity); await _db.SaveChangesAsync(ct); return entity; }
+    public async Task DeleteAsync(Guid id, CancellationToken ct) { var entity = await _set.FindAsync(new object?[] { id }, ct).AsTask(); if (entity is null) return; _set.Remove(entity); await _db.SaveChangesAsync(ct); }
     public async Task<IEnumerable<Artifact>> ListByRunAsync(Guid runId, ArtifactKind? kind = null, CancellationToken ct = default)
     {
         var q = _set.Where(a => a.RunId == runId);

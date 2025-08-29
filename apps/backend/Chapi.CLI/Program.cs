@@ -39,13 +39,13 @@ var host = builder.Build();
 // Get command resolver and execute command
 var scope = host.Services.CreateScope();
 var commandResolver = scope.ServiceProvider.GetRequiredService<ICommandResolver>();
-var logger = scope.ServiceProvider.GetRequiredService<ILogger<InvoiceCLIProgram>>();
+var logger = scope.ServiceProvider.GetRequiredService<ILogger<ChapiCliProgram>>();
 
 try
 {
     if (args.Length == 0)
     {
-        Console.WriteLine("Invoice CLI Tool");
+    Console.WriteLine("Chapi CLI Tool");
         Console.WriteLine("================");
         Console.WriteLine();
         Console.WriteLine("Available commands:");
@@ -70,4 +70,5 @@ catch (Exception ex)
 }
 
 // Make Program class accessible for testing
-public partial class InvoiceCLIProgram { }
+// Make Program class accessible for testing
+public partial class ChapiCliProgram { }

@@ -46,9 +46,7 @@ public class ArtifactService : IArtifactService
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var ent = await _repo.GetByIdAsync(id, ct);
-        if (ent != null)
-            await _repo.DeleteAsync(ent, ct);
+    await _repo.DeleteAsync(id, ct);
     }
 
     public async Task<string> GenerateSignedUrlAsync(Guid id, TimeSpan ttl, CancellationToken ct)
