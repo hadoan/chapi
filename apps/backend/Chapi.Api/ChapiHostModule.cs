@@ -15,11 +15,16 @@ using ShipMvp.Integration.SemanticKernel;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using Chapi.Api.Data;
+using Projects;
+
 namespace Chapi.Api;
+
+
 
 [Module]
 [DependsOn<HostModule>]
 [DependsOn<ChapiDbModule>]
+[DependsOn<ProjectsModule>]
 public class ChapiHostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)

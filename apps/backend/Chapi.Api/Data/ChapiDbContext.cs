@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 using ShipMvp.Application.Infrastructure.Data;
 
+using Projects.Infrastructure;
+
 namespace Chapi.Api.Data;
 
 public sealed class ChapiDbContext : AppDbContext
@@ -14,6 +16,7 @@ public sealed class ChapiDbContext : AppDbContext
     {
         base.ConfigureModules(modelBuilder);
         // modelBuilder.ConfigureChapiEntities();
+        modelBuilder.ConfigureProjectEntities();
     }
-    
+
 }
