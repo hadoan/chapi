@@ -1,0 +1,3 @@
+[submodule "shipmvp"]
+	path = shipmvp
+	url = https://github.com/ShipMvp/shipmvp
