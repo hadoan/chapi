@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { projectsApi, ProjectDto } from "@/lib/api/projects";
 import { Plus, Settings, Trash2, ExternalLink, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,31 +25,9 @@ type Project = {
   };
 };
 
-const mockProjects: Project[] = [
-  {
-    id: 'proj-1',
-    name: 'Payment API',
-    region: 'EU',
-    repo: 'company/payment-api',
-    lastRun: { status: 'pass', p95: 245 }
-  },
-  {
-    id: 'proj-2',
-    name: 'User Service',
-    region: 'US',
-    lastRun: { status: 'fail', p95: 567 }
-  },
-  {
-    id: 'proj-3',
-    name: 'Analytics Dashboard',
-    region: 'EU',
-    repo: 'company/analytics-api'
-  }
-];
-
 export default function ProjectsPage() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
@@ -57,23 +36,34 @@ export default function ProjectsPage() {
 
   const handleCreateProject = () => {
     if (!newProject.name.trim()) return;
-    
-    const project: Project = {
-      id: `proj-${Date.now()}`,
-      name: newProject.name,
-      region: newProject.region
-    };
-    
-    setProjects([...projects, project]);
-    setNewProject({ name: '', region: 'EU' });
-    setShowCreateDialog(false);
-    toast({ title: "Project created" });
+    const payload = { name: newProject.name, description: '' };
+    projectsApi.create(payload)
+      .then((created: ProjectDto) => {
+        const mapped: Project = { id: created.id ?? '', name: created.name ?? '', region: 'EU' };
+        setProjects(prev => [mapped, ...prev]);
+        setNewProject({ name: '', region: 'EU' });
+        setShowCreateDialog(false);
+        toast({ title: "Project created" });
+      })
+      .catch(() => toast({ title: 'Failed to create project' }));
   };
 
   const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter(p => p.id !== id));
-    toast({ title: "Project deleted" });
+    projectsApi.delete(id)
+      .then(() => {
+        setProjects(prev => prev.filter(p => p.id !== id));
+        toast({ title: "Project deleted" });
+      })
+      .catch(() => toast({ title: 'Failed to delete project' }));
   };
+
+  useEffect(() => {
+    let mounted = true;
+    projectsApi.getAll()
+      .then((list: ProjectDto[]) => { if (mounted) setProjects(list.map(l => ({ id: l.id ?? '', name: l.name ?? '', region: 'EU' }))); })
+      .catch(() => toast({ title: 'Failed to load projects' }));
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <Layout showProjectSelector={false}>
