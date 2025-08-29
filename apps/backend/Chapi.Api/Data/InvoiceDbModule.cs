@@ -2,7 +2,7 @@ using ShipMvp.Application.Infrastructure.Data;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Modules;
 
-namespace Invoice.Api.Data;
+namespace Chapi.Api.Data;
 
 
 [Module]

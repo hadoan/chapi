@@ -3,6 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, MessageSquare, Play, Download, GitPullRequest, FileText, Github, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 const Index = () => {
   return (
@@ -51,12 +55,66 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="text-lg h-12 px-8">
-              <Link to="/app">
-                Join Beta
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
+            {/* Join Beta opens a dialog with a small signup form */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="lg" className="text-lg h-12 px-8">
+                  Join Beta
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Join the Beta</DialogTitle>
+                  <DialogDescription>
+                    Tell us a little about yourself and we'll send an invite when available.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <form className="space-y-4 mt-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  // TODO: wire submit to API or capture values
+                  const form = e.currentTarget as HTMLFormElement;
+                  const data = {
+                    name: (form.elements.namedItem('name') as HTMLInputElement)?.value,
+                    email: (form.elements.namedItem('email') as HTMLInputElement)?.value,
+                    company: (form.elements.namedItem('company') as HTMLInputElement)?.value,
+                  };
+                  // For now, just log and close the dialog
+                  console.log('Join Beta submit', data);
+                  // close by clicking the DialogClose button programmatically is possible,
+                  // but keeping simple: form will be closed via DialogClose button below after submission.
+                }}>
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" name="name" placeholder="Your full name" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="company">Company (optional)</Label>
+                    <Input id="company" name="company" placeholder="Company name" />
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    We won't spam you — we'll only send beta invites and important updates.
+                  </p>
+
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button type="submit">Join</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" size="lg" className="text-lg h-12 px-8">
               <FileText className="w-5 h-5 mr-2" />
               Read Docs

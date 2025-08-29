@@ -32,7 +32,7 @@ Features a RESTful API, React frontend, and command-line tools for data manageme
   * Entities + `IEntityTypeConfiguration<>`
   * An `IShipMvpModule` to register services and map endpoints.
 * **Migrations** live in your **`Invoice.Migrations`** project (not in `/shipmvp`).
-* **Host API** (`Invoice.Api`) wires the DbContext, discovers modules, and exposes Swagger.
+* **Host API** (`Chapi.Api`) wires the DbContext, discovers modules, and exposes Swagger.
 
 ---
 
@@ -41,7 +41,7 @@ Features a RESTful API, React frontend, and command-line tools for data manageme
 ```
 apps/
   backend/
-    Invoice.Api/            # Host API (runs the app)
+    Chapi.Api/            # Host API (runs the app)
       Program.cs              # Application startup and module discovery
       Data/
         InvoiceDbContext.cs   # Application-specific DbContext
@@ -99,18 +99,18 @@ docker run --name shipmvp-postgres \
 
 ```bash
 dotnet ef migrations add Initial \
-  --project apps/backend/Invoice.Api \
+  --project apps/backend/Chapi.Api \
   --context InvoiceDbContext
 
 dotnet ef database update \
-  --project apps/backend/Invoice.Api \
+  --project apps/backend/Chapi.Api \
   --context InvoiceDbContext
 ```
 
 3. **Run the API**:
 
 ```bash
-dotnet run --project apps/backend/Invoice.Api
+dotnet run --project apps/backend/Chapi.Api
 ```
 
 * Swagger: `http://localhost:5066/swagger`
@@ -121,7 +121,7 @@ dotnet run --project apps/backend/Invoice.Api
 
 ## Configuration
 
-`apps/backend/Invoice.Api/appsettings.json`:
+`apps/backend/Chapi.Api/appsettings.json`:
 
 ```json
 {
@@ -147,17 +147,17 @@ opts.UseNpgsql(cs, b => b.MigrationsAssembly("Invoice.Migrations"));
 
 ## Migrations
 
-* **Entity Framework migrations** are managed through the Invoice.Api project.
+* **Entity Framework migrations** are managed through the Chapi.Api project.
 * The **InvoiceDbContext** scans all module assemblies for entity configurations.
 * Typical flow when you add/change entities in any module:
 
 ```bash
 dotnet ef migrations add AddInvoiceFeature \
-  --project apps/backend/Invoice.Api \
+  --project apps/backend/Chapi.Api \
   --context InvoiceDbContext
 
 dotnet ef database update \
-  --project apps/backend/Invoice.Api \
+  --project apps/backend/Chapi.Api \
   --context InvoiceDbContext
 ```
 
@@ -175,7 +175,7 @@ dotnet ef database update \
 
 2. **Reference** projects:
 
-   * `Invoice.Api` → reference your module project
+   * `Chapi.Api` → reference your module project
    * Your module project → reference `shipmvp/backend/src/ShipMvp.Abstractions`
 
 3. **Minimal examples**
@@ -318,7 +318,7 @@ dotnet run help
 ### CLI Architecture
 
 * **Framework**: Built on ShipMvp.CLI command framework
-* **Dependency Injection**: Inherits all services from Invoice.Api
+* **Dependency Injection**: Inherits all services from Chapi.Api
 * **Database Access**: Uses same InvoiceDbContext as the main application
 * **Modular Commands**: Extensible command system with automatic discovery
 
@@ -393,7 +393,7 @@ docker volume rm shipmvp-postgres-data
 
 **No model changes detected**
 
-* Ensure `Invoice.Api` **references your module** project.
+* Ensure `Chapi.Api` **references your module** project.
 * Make sure your EF configs implement `IEntityTypeConfiguration<>` and are in a loaded assembly.
 * Clean & rebuild: `dotnet clean && dotnet build`.
 

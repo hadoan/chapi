@@ -1,6 +1,6 @@
 using ShipMvp.Api;
 using ShipMvp.Core.Modules;
-using Invoice.Api;
+using Chapi.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -14,9 +14,9 @@ using ShipMvp.Domain.Shared.Constants;
 using ShipMvp.Integration.SemanticKernel;
 using System.Text.RegularExpressions;
 using System.Reflection;
-using Invoice.Api.Data;
+using Chapi.Api.Data;
 using Invoices;
-namespace Invoice.Api;
+namespace Chapi.Api;
 
 [Module]
 [DependsOn<HostModule>]

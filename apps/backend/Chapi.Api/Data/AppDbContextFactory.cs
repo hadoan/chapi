@@ -1,6 +1,6 @@
 using ShipMvp.Application.Infrastructure.Data;
 
-namespace Invoice.Api.Data;
+namespace Chapi.Api.Data;
 
 public sealed class AppDbContextFactory : BaseAppDbContextFactory<InvoiceDbContext>
 {

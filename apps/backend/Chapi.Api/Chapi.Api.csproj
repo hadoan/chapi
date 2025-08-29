@@ -3,6 +3,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Chapi.Api</AssemblyName>
+    <RootNamespace>Chapi.Api</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
@@ -16,7 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\shipmvp\ShipMvp.Application\ShipMvp.Application.csproj" />
     <ProjectReference Include="..\..\..\shipmvp\ShipMvp.Core\ShipMvp.Core.csproj" />
-  <ProjectReference Include="..\..\..\modules\Invoices\Invoice.csproj" />
+    <ProjectReference Include="..\..\..\modules\Invoices\Invoice.csproj" />
     <ProjectReference Include="..\..\..\shipmvp\ShipMvp.Api\ShipMvp.Api.csproj" />
   </ItemGroup>
 </Project>

@@ -16,7 +16,7 @@ This project implements a complete invoice management system with:
 Invoice.sln
 ├── apps/
 │   ├── backend/
-│   │   ├── Invoice.Api/           # Main API application
+│   │   ├── Chapi.Api/           # Main API application
 │   │   └── Invoice.CLI/           # Command-line interface tool
 │   └── frontend/                  # React frontend application
 ├── modules/
@@ -96,10 +96,10 @@ docker run --name shipmvp-postgres \
 dotnet restore
 
 # Apply database migrations
-dotnet ef database update --project apps/backend/Invoice.Api
+dotnet ef database update --project apps/backend/Chapi.Api
 
 # Run the API
-dotnet run --project apps/backend/Invoice.Api
+dotnet run --project apps/backend/Chapi.Api
 ```
 
 The API will be available at `http://localhost:5066`
@@ -151,7 +151,7 @@ dotnet run run-sql "SELECT * FROM Invoices"
 #### CLI Architecture
 
 - **Framework**: Uses ShipMvp.CLI command framework
-- **Dependency Injection**: Inherits all services from Invoice.Api
+- **Dependency Injection**: Inherits all services from Chapi.Api
 - **Database Access**: Uses same InvoiceDbContext as the main API
 - **Modular Design**: Commands are discoverable and extensible
 
@@ -254,13 +254,13 @@ dotnet run run-sql "SELECT * FROM Invoices"
 
 ```bash
 # Add new migration
-dotnet ef migrations add <MigrationName> --project apps/backend/Invoice.Api
+dotnet ef migrations add <MigrationName> --project apps/backend/Chapi.Api
 
 # Update database
-dotnet ef database update --project apps/backend/Invoice.Api
+dotnet ef database update --project apps/backend/Chapi.Api
 
 # Remove last migration (if not applied)
-dotnet ef migrations remove --project apps/backend/Invoice.Api
+dotnet ef migrations remove --project apps/backend/Chapi.Api
 ```
 
 ### Testing
@@ -290,7 +290,7 @@ dotnet test <TestProjectPath>
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY published/ .
-ENTRYPOINT ["dotnet", "Invoice.Api.dll"]
+ENTRYPOINT ["dotnet", "Chapi.Api.dll"]
 ```
 
 ## 🤝 Contributing
@@ -324,7 +324,7 @@ ENTRYPOINT ["dotnet", "Invoice.Api.dll"]
 2. **Database connection**: Verify PostgreSQL is running and connection string is correct
 3. **Migration errors**: Check entity configurations and relationships
 4. **DI issues**: Verify service registrations in module configuration
-5. **CLI command failures**: Ensure database is running and Invoice.Api dependencies are properly referenced
+5. **CLI command failures**: Ensure database is running and Chapi.Api dependencies are properly referenced
 
 #### CLI Troubleshooting
 

@@ -6,7 +6,7 @@ using ShipMvp.CLI;
 using ShipMvp.Application;
 using ShipMvp.Core;
 using ShipMvp.Core.Modules;
-using Invoice.Api.Data;
+using Chapi.Api.Data;
 
 var builder = Host.CreateDefaultBuilder(args);
 

@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{1787FE1D-0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{270F7A58-C097-D64B-0343-582534E94D4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Invoice.Api", "apps\backend\Invoice.Api\Invoice.Api.csproj", "{AF89FD7D-0656-4DFB-ADEF-E8D284CF0EF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chapi.Api", "apps\backend\Chapi.Api\Chapi.Api.csproj", "{AF89FD7D-0656-4DFB-ADEF-E8D284CF0EF8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{CA253913-39DE-BFD0-C9A3-4B7EC6FBDF17}"
 EndProject
@@ -27,7 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipMvp.Integration.Semanti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipMvp.SourceGenerators", "shipmvp\ShipMvp.SourceGenerators\ShipMvp.SourceGenerators.csproj", "{195D4AE1-90F8-4EA3-B850-3E2F2D8DCCB3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Invoice.CLI", "apps\backend\Invoice.CLI\Invoice.CLI.csproj", "{CB4CFD2A-5460-4A1D-9467-47198C35DF46}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chapi.CLI", "apps\backend\Chapi.CLI\Chapi.CLI.csproj", "{CB4CFD2A-5460-4A1D-9467-47198C35DF46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
