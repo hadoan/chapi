@@ -21,5 +21,6 @@
   <!-- Invoice module removed: project reference deleted -->
     <ProjectReference Include="..\..\..\shipmvp\ShipMvp.Api\ShipMvp.Api.csproj" />
     <ProjectReference Include="..\..\..\modules\Projects\Project.csproj" />
+    <ProjectReference Include="..\..\..\modules\Environments\Environment.csproj" />
   </ItemGroup>
 </Project>

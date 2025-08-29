@@ -1,12 +1,13 @@
 export type EnvName = 'local' | 'staging' | 'prod';
 
 export type EnvModel = {
-  name: EnvName;
+  id: string;
+  name: string;
   baseUrl: string;
   timeoutMs: number;
   followRedirects: boolean;
-  headers: Record<string,string>;
-  secrets: Record<string,string>;
-  updatedAt: string;
+  headers: Record<string, string>;
+  secrets: Record<string, string>;
+  createdAt: string;
   locked?: boolean;
 }

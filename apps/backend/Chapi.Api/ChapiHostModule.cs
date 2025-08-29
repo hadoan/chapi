@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using Chapi.Api.Data;
 using Projects;
+using Environments;
 
 namespace Chapi.Api;
 
@@ -25,6 +26,7 @@ namespace Chapi.Api;
 [DependsOn<HostModule>]
 [DependsOn<ChapiDbModule>]
 [DependsOn<ProjectsModule>]
+[DependsOn<EnvironmentsModule>]
 public class ChapiHostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
