@@ -18,6 +18,22 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- Google Analytics (optional) -->
+    <!-- Add VITE_GA_MEASUREMENT_ID to apps/frontend/.env to enable -->
+    <script>
+      (function() {
+        const id = import.meta.env.VITE_GA_MEASUREMENT_ID;
+        if (!id) return;
+        const gtagScript = document.createElement('script');
+        gtagScript.async = true;
+        gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+        document.head.appendChild(gtagScript);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){window.dataLayer.push(arguments);} 
+        gtag('js', new Date());
+        gtag('config', id);
+      })();
+    </script>
   </head>
 
   <body>
