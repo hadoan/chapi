@@ -4,6 +4,7 @@ using Chapi.SharedKernel.Events;
 using Chapi.SharedKernel;
 using Chapi.ApiSpecs.Domain;
 using Chapi.ApiSpecs.Infrastructure.OpenApi;
+using ShipMvp.Core.EventBus;
 
 namespace Chapi.ApiSpecs.Application;
 
@@ -11,11 +12,13 @@ public class ApiSpecAppService : IApiSpecAppService
 {
     private readonly IApiSpecRepository _repo;
     private readonly OpenApiReader _reader;
+    private readonly IDistributedEventBus _eventBus;
 
-    public ApiSpecAppService(IApiSpecRepository repo, OpenApiReader reader)
+    public ApiSpecAppService(IApiSpecRepository repo, OpenApiReader reader, IDistributedEventBus eventBus)
     {
-        _repo = repo; 
+        _repo = repo;
         _reader = reader;
+        _eventBus = eventBus;
     }
 
     public async Task<ApiSpecDto> ImportAsync(ImportOpenApiInputDto input)
@@ -30,8 +33,7 @@ public class ApiSpecAppService : IApiSpecAppService
 
         var id = await _repo.UpsertAsync(spec);
 
-        // TODO: Publish event when event bus is available
-        // await _bus.PublishAsync(new ApiSpecImportedEto(id, input.ProjectId));
+        await _eventBus.PublishAsync(new ApiSpecImportedEto(id, input.ProjectId));
 
         return new ApiSpecDto(id, spec.ProjectId, spec.SourceUrl, spec.Version, spec.CreatedAt);
     }

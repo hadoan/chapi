@@ -15,15 +15,18 @@ public sealed class EndpointCatalogModule : IModule
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers().AddApplicationPart(typeof(EndpointCatalogModule).Assembly);
-        
+
         // Repository registration
         services.AddScoped<IApiEndpointRepository, Infrastructure.EntityFrameworkCore.ApiEndpointRepository>();
-        
+
         // Application service registration
         services.AddTransient<IEndpointAppService, EndpointAppService>();
-        
+
         // Event handler registration
         services.AddTransient<BuildCatalogOnSpecImportedHandler>();
+        // Background service that subscribes the handler to ApiSpecImportedEto
+        services.AddHostedService<Chapi.EndpointCatalog.Events.SubscribeEventsBackgroundService>();
+
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)
