@@ -23,6 +23,9 @@ public class EnvironmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EnvironmentDto>> Create(CreateEnvironmentRequest request, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { error = "Name required" });
+
         var created = await _service.CreateAsync(request, ct);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
@@ -30,6 +33,9 @@ public class EnvironmentsController : ControllerBase
     [HttpPost("/api/projects/{projectId:guid}/environments")]
     public async Task<ActionResult<EnvironmentDto>> CreateForProject(Guid projectId, CreateEnvironmentRequest request, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { error = "Name required" });
+
         var created = await _service.CreateForProjectAsync(projectId, request, ct);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }

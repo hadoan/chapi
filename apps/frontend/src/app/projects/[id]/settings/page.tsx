@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Settings, Edit, Github } from "lucide-react";
+import { Settings, Edit, Github, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,7 @@ export function ProjectSettingsPageInner() {
         headers: env.headers ?? {}
       } as Omit<EnvModel, 'id' | 'createdAt'>;
 
-      await createEnv(payload);
+  await createEnv(payload, id ?? undefined);
     }
     setShowEnvEditor(false);
     setSelectedEnvId(null);
@@ -83,7 +83,13 @@ export function ProjectSettingsPageInner() {
           <TabsContent value="environments" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Environment Configuration</CardTitle>
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle>Environment Configuration</CardTitle>
+                  <Button onClick={() => setShowEnvEditor(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Environment
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -181,9 +187,10 @@ export function ProjectSettingsPageInner() {
 }
 
 export default function ProjectSettingsPage(props: ProjectSettingsPageProps) {
+  const { id } = useParams();
   return (
-    <EnvProvider>
-  <ProjectSettingsPageInner />
+    <EnvProvider projectId={id}>
+      <ProjectSettingsPageInner />
     </EnvProvider>
   );
 }

@@ -27,7 +27,7 @@ export default function Login() {
   const location = useLocation();
 
   // Get the originally requested URL or default to dashboard
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  const from = (location.state as any)?.from?.pathname || "/app";
 
   // Handle initial auth check loading
   useEffect(() => {

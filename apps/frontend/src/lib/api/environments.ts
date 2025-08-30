@@ -30,8 +30,16 @@ export const environmentsApi = {
     return await AuthService.authenticatedFetch<EnvironmentDto>(`/api/environments/${id}`, { method: 'GET' });
   },
 
+  async getByProject(projectId: string): Promise<EnvironmentDto[]> {
+    return await AuthService.authenticatedFetch<EnvironmentDto[]>(`/api/projects/${projectId}/environments`, { method: 'GET' });
+  },
+
   async create(environment: CreateEnvironmentRequest): Promise<EnvironmentDto> {
     return await AuthService.authenticatedFetch<EnvironmentDto>('/api/environments', { method: 'POST', data: environment });
+  },
+
+  async createForProject(projectId: string, environment: CreateEnvironmentRequest): Promise<EnvironmentDto> {
+    return await AuthService.authenticatedFetch<EnvironmentDto>(`/api/projects/${projectId}/environments`, { method: 'POST', data: environment });
   },
 
   async update(id: string, environment: UpdateEnvironmentRequest): Promise<EnvironmentDto> {

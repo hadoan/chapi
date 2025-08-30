@@ -20,18 +20,44 @@ interface EnvEditorDrawerProps {
 
 export function EnvEditorDrawer({ environment, open, onOpenChange, onSave }: EnvEditorDrawerProps) {
   const [formData, setFormData] = useState<Partial<EnvModel> | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (environment) {
       setFormData({ ...environment });
+      return;
     }
-  }, [environment]);
+
+    // If drawer opened for creating a new environment, initialize empty form
+    if (open && !environment) {
+      setFormData({
+        name: '',
+        baseUrl: '',
+        timeoutMs: 30000,
+        followRedirects: true,
+        headers: {},
+        secrets: {},
+        createdAt: new Date().toISOString(),
+        locked: false
+      } as Partial<EnvModel>);
+      return;
+    }
+
+    // Clear when closed
+    if (!open) setFormData(null);
+  }, [environment, open]);
 
   if (!formData) return null;
 
   const isProduction = (formData.name ?? '').toString().toLowerCase() === 'prod';
 
   const handleSave = () => {
+    // Basic client-side validation
+    if (!formData.name || formData.name.trim() === '') {
+      setValidationError('Name is required');
+      return;
+    }
+
     onSave({
       ...formData,
       // Ensure createdAt exists for new items; createdAt will be ignored on create if backend sets it
@@ -102,6 +128,15 @@ export function EnvEditorDrawer({ environment, open, onOpenChange, onSave }: Env
 
           {/* Basic Settings */}
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={isProduction}
+              />
+            </div>
             <div>
               <Label htmlFor="baseUrl">Base URL</Label>
               <Input
@@ -220,6 +255,10 @@ export function EnvEditorDrawer({ environment, open, onOpenChange, onSave }: Env
               ))}
             </div>
           </div>
+
+          {validationError && (
+            <div className="text-destructive text-sm">{validationError}</div>
+          )}
 
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} disabled={isProduction} className="flex-1">

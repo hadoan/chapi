@@ -8,7 +8,7 @@ type EnvStore = {
   envs: EnvModel[]; 
   loading: boolean;
   updateEnv: (id: string, patch: Partial<EnvModel>) => Promise<void>;
-  createEnv: (env: Omit<EnvModel, 'id' | 'createdAt'>) => Promise<void>;
+  createEnv: (env: Omit<EnvModel, 'id' | 'createdAt'>, projectId?: string) => Promise<void>;
   deleteEnv: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 };
@@ -51,14 +51,14 @@ function modelToUpdateRequest(model: EnvModel) {
   };
 }
 
-export function EnvProvider({children}:{children:React.ReactNode}){
+export function EnvProvider({children, projectId}:{children:React.ReactNode, projectId?: string}){
   const [envs, setEnvs] = useState<EnvModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEnvs = async () => {
     try {
       setLoading(true);
-      const dtos = await environmentsApi.getAll();
+  const dtos = projectId ? await environmentsApi.getByProject(projectId) : await environmentsApi.getAll();
       const models = dtos.map(dtoToModel);
       setEnvs(models);
     } catch (error) {
@@ -71,7 +71,7 @@ export function EnvProvider({children}:{children:React.ReactNode}){
 
   useEffect(() => {
     fetchEnvs();
-  }, []);
+  }, [projectId]);
 
   const updateEnv = async (id: string, patch: Partial<EnvModel>) => {
     try {
@@ -92,7 +92,7 @@ export function EnvProvider({children}:{children:React.ReactNode}){
     }
   };
 
-  const createEnv = async (env: Omit<EnvModel, 'id' | 'createdAt'>) => {
+  const createEnv = async (env: Omit<EnvModel, 'id' | 'createdAt'>, projectId?: string) => {
     try {
       const headers = Object.entries(env.headers).map(([key, value]) => ({ key, value }));
       const createRequest = {
@@ -102,8 +102,12 @@ export function EnvProvider({children}:{children:React.ReactNode}){
         followRedirects: env.followRedirects,
         headers
       };
-      
-      const dto = await environmentsApi.create(createRequest);
+      let dto;
+      if (projectId) {
+        dto = await environmentsApi.createForProject(projectId, createRequest);
+      } else {
+        dto = await environmentsApi.create(createRequest);
+      }
       const model = dtoToModel(dto);
       
       setEnvs(prev => [model, ...prev]);

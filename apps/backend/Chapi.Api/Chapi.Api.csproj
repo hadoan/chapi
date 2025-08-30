@@ -22,5 +22,6 @@
     <ProjectReference Include="..\..\..\shipmvp\ShipMvp.Api\ShipMvp.Api.csproj" />
     <ProjectReference Include="..\..\..\modules\Projects\Project.csproj" />
     <ProjectReference Include="..\..\..\modules\Environments\Environment.csproj" />
+    <ProjectReference Include="..\..\..\modules\Chat\Chat.csproj" />
   </ItemGroup>
 </Project>
