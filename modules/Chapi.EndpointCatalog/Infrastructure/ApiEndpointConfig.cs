@@ -2,13 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Chapi.EndpointCatalog.Domain;
 
-namespace Chapi.EndpointCatalog.Infrastructure.EntityFrameworkCore.Configurations;
+namespace Chapi.EndpointCatalog.Infrastructure;
 
-public class ApiEndpointConfiguration : IEntityTypeConfiguration<ApiEndpoint>
+public sealed class ApiEndpointConfig : IEntityTypeConfiguration<ApiEndpoint>
 {
     public void Configure(EntityTypeBuilder<ApiEndpoint> builder)
     {
-        builder.ToTable("api_endpoints");
+        builder.ToTable("ApiEndpoints", "EndpointCatalog");
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => new { x.SpecId, x.Method, x.Path }).IsUnique();
 
@@ -27,5 +27,9 @@ public class ApiEndpointConfiguration : IEntityTypeConfiguration<ApiEndpoint>
 
         builder.Property(x => x.Source).HasMaxLength(64).IsRequired();
         builder.Property(x => x.Deprecated).IsRequired();
+        
+        // Project and spec relationships
+        builder.Property(x => x.ProjectId).IsRequired();
+        builder.Property(x => x.SpecId).IsRequired();
     }
 }

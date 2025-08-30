@@ -5,7 +5,8 @@ using Chapi.EndpointCatalog.Domain;
 
 namespace Chapi.EndpointCatalog.Events;
 
-public class BuildCatalogOnSpecImportedHandler : ShipMvp.Core.Events.IDistributedEventHandler<ApiSpecImportedEto>, ShipMvp.Core.DependencyInjection.ITransientDependency
+// TODO: Implement event handling when distributed event bus is available
+public class BuildCatalogOnSpecImportedHandler
 {
     private readonly Chapi.ApiSpecs.Domain.IApiSpecRepository _specs;
     private readonly IApiEndpointRepository _endpoints;
@@ -15,6 +16,8 @@ public class BuildCatalogOnSpecImportedHandler : ShipMvp.Core.Events.IDistribute
         _specs = specs; _endpoints = endpoints;
     }
 
+    // TODO: Re-enable when distributed event handling is available
+    /*
     public async Task HandleEventAsync(ApiSpecImportedEto eto)
     {
         var spec = await _specs.FindAsync(eto.SpecId);
@@ -33,4 +36,5 @@ public class BuildCatalogOnSpecImportedHandler : ShipMvp.Core.Events.IDistribute
             }
         }
     }
+    */
 }

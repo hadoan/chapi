@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ShipMvp.Core.Entities;
+using Chapi.EndpointCatalog.Application;
 
 namespace Chapi.EndpointCatalog.Domain;
 
 public class ApiEndpoint : Entity<Guid>
 {
-    public Guid? TenantId { get; private set; }
     public Guid ProjectId { get; private set; }
     public Guid SpecId { get; private set; }
     public string Method { get; private set; } = default!;

@@ -5,13 +5,12 @@ namespace Chapi.ApiSpecs.Domain;
 
 public class ApiSpec : Entity<Guid>
 {
-    public Guid? TenantId { get; private set; }
     public Guid ProjectId { get; private set; }
     public string SourceUrl { get; private set; } = default!;
     public string? Version { get; private set; }
     public string Sha256 { get; private set; } = default!;
     public JsonDocument Raw { get; private set; } = default!;
-    public DateTime CreatedAt { get; private set; }
+    public new DateTime CreatedAt { get; private set; }
 
     private ApiSpec() : base(Guid.Empty) { }
 

@@ -1,10 +1,9 @@
 using System.Text.Json;
-using ShipMvp.Core.Application;
 using Chapi.EndpointCatalog.Domain;
 
 namespace Chapi.EndpointCatalog.Application;
 
-public class EndpointAppService : ApplicationService, IEndpointAppService
+public class EndpointAppService : IEndpointAppService
 {
     private readonly IApiEndpointRepository _repo;
 

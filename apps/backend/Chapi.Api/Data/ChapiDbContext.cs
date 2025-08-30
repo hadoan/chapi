@@ -4,7 +4,9 @@ using ShipMvp.Application.Infrastructure.Data;
 
 using Projects.Infrastructure;
 using Environments.Infrastructure;
-using Chat.Infrastructure;  
+using Chat.Infrastructure;
+using Chapi.ApiSpecs.Infrastructure;
+using Chapi.EndpointCatalog.Infrastructure;
 
 namespace Chapi.Api.Data;
 
@@ -21,6 +23,8 @@ public sealed class ChapiDbContext : AppDbContext
         modelBuilder.ConfigureProjectEntities();
         modelBuilder.ConfigureEnvironmentEntities();
         modelBuilder.ConfigureChatEntities();
+        modelBuilder.ConfigureApiSpecsEntities();
+        modelBuilder.ConfigureEndpointCatalogEntities();
     }
 
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Chapi.EndpointCatalog.Domain;
+using Chapi.EndpointCatalog.Application;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Persistence;
 
@@ -26,8 +27,8 @@ public class ApiEndpointRepository : IApiEndpointRepository
         }
         else
         {
-            existing = ApiEndpoint.Create(existing.Id, projectId, specId, dto);
-            _context.Entry(existing).State = EntityState.Modified;
+            var updated = ApiEndpoint.Create(existing.Id, projectId, specId, dto);
+            _dbSet.Update(updated);
         }
         await _context.SaveChangesAsync();
     }
@@ -43,4 +44,40 @@ public class ApiEndpointRepository : IApiEndpointRepository
 
     public Task<ApiEndpoint?> FindByMethodPathAsync(Guid projectId, string method, string path) =>
         _dbSet.FirstOrDefaultAsync(x => x.ProjectId == projectId && x.Method == method && x.Path == path);
+
+    // IRepository<ApiEndpoint, Guid> implementation
+    public Task<ApiEndpoint?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _dbSet.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public async Task<IEnumerable<ApiEndpoint>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var list = await _dbSet.ToListAsync(cancellationToken);
+        return list;
+    }
+
+    public async Task<ApiEndpoint> AddAsync(ApiEndpoint entity, CancellationToken cancellationToken = default)
+    {
+        await _dbSet.AddAsync(entity, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public async Task<ApiEndpoint> UpdateAsync(ApiEndpoint entity, CancellationToken cancellationToken = default)
+    {
+        _dbSet.Update(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetByIdAsync(id, cancellationToken);
+        if (entity != null)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public Task<ApiEndpoint?> FindAsync(Guid id) => GetByIdAsync(id);
 }

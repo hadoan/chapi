@@ -4,12 +4,11 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Writers;
 using Microsoft.Extensions.Http;
-using ShipMvp.Core.Exceptions;
 using System.Security.Cryptography;
 
 namespace Chapi.ApiSpecs.Infrastructure.OpenApi;
 
-public class OpenApiReader : IOpenApiReader, ShipMvp.Core.DependencyInjection.ITransientDependency
+public class OpenApiReader
 {
     private readonly IHttpClientFactory _http;
     public OpenApiReader(IHttpClientFactory http) { _http = http; }
@@ -23,9 +22,11 @@ public class OpenApiReader : IOpenApiReader, ShipMvp.Core.DependencyInjection.IT
             ReferenceResolution = ReferenceResolutionSetting.ResolveLocalReferences
         });
         var doc = reader.Read(stream, out var diag);
-        if (diag?.Errors?.Count > 0) throw new UserFriendlyException("OpenAPI parse errors: " + string.Join(" | ", diag.Errors.Select(e => e.Message)));
+        if (diag?.Errors?.Count > 0) 
+            throw new InvalidOperationException("OpenAPI parse errors: " + string.Join(" | ", diag.Errors.Select(e => e.Message)));
 
-        var raw = Serialize(doc); var sha = Sha256(raw);
+        var raw = Serialize(doc); 
+        var sha = Sha256(raw);
         return (doc, raw, doc.Info?.Version, sha);
     }
 

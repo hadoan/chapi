@@ -1,29 +1,47 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Chapi.ApiSpecs.Infrastructure.Configuration;
-using ShipMvp.Core.DependencyInjection;
+using Chapi.ApiSpecs.Domain;
+using Chapi.ApiSpecs.Application;
+using ShipMvp.Core.Modules;
+using ShipMvp.Core.Attributes;
 
 namespace Chapi.ApiSpecs;
 
-[DependsOn(
-    typeof(ShipMvp.Core.ShipMvpCoreModule)
-)]
-public class ChapiApiSpecsModule : ShipMvp.Core.AbpModuleBase
+[Module]
+public sealed class ApiSpecsModule : IModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public void ConfigureServices(IServiceCollection services)
     {
-        var conf = context.Services.BuildServiceProvider().GetRequiredService<IConfiguration>();
-        var section = conf.GetSection(ApiSpecsOptions.SectionName);
-        context.Services.Configure<ApiSpecsOptions>(section);
+        services.AddControllers().AddApplicationPart(typeof(ApiSpecsModule).Assembly);
+        
+        // Repository registration
+        services.AddScoped<IApiSpecRepository, Infrastructure.Persistence.ApiSpecRepository>();
+        
+        // Application service registration
+        services.AddTransient<IApiSpecAppService, ApiSpecAppService>();
+        
+        // OpenAPI reader registration
+        services.AddTransient<Infrastructure.OpenApi.OpenApiReader>();
+        
+        // Configuration
+        var configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+        var section = configuration.GetSection(ApiSpecsOptions.SectionName);
+        services.Configure<ApiSpecsOptions>(section);
 
-        // register reader with configured HttpClient
-        context.Services.AddHttpClient("OpenApiReader", c =>
+        // HTTP client for OpenAPI reader
+        services.AddHttpClient("OpenApiReader", c =>
         {
-            c.Timeout = TimeSpan.FromSeconds(conf.GetValue<int>("ApiSpecs:HttpClientTimeoutSeconds", 30));
-            var ua = conf.GetValue<string>("ApiSpecs:HttpClientUserAgent", "chapi-openapi-reader/1.0");
+            c.Timeout = TimeSpan.FromSeconds(configuration.GetValue<int>("ApiSpecs:HttpClientTimeoutSeconds", 30));
+            var ua = configuration.GetValue<string>("ApiSpecs:HttpClientUserAgent", "chapi-openapi-reader/1.0");
             if (!string.IsNullOrWhiteSpace(ua)) c.DefaultRequestHeaders.UserAgent.ParseAdd(ua);
         });
+    }
 
-        context.Services.AddTransient<Infrastructures.OpenApi.IOpenApiReader, Infrastructures.OpenApi.OpenApiReader>();
+    public void Configure(IApplicationBuilder app, IHostEnvironment env)
+    {
+        // Module specific middleware configuration placeholder
     }
 }
