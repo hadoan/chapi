@@ -29,6 +29,7 @@ namespace Chapi.Api;
 [DependsOn<EnvironmentsModule>]
 [DependsOn<Chapi.ApiSpecs.ApiSpecsModule>]
 [DependsOn<Chapi.EndpointCatalog.EndpointCatalogModule>]
+[DependsOn<Chapi.AI.ChapiAIModule>]
 public class ChapiHostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
