@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, XCircle, Clock, FileText, GitPullRequest, Play, Download } from "lucide-react";
 
-interface MessageCard {
+export interface MessageCard {
   type: 'plan' | 'diff' | 'run' | 'openapi-diff' | 'pr-preview';
   title: string;
+  // Optional free-form content used by certain card types (e.g., pr-preview)
+  content?: string;
   items?: string[];
   files?: Array<{ path: string; change: 'added' | 'modified'; lines: number }>;
   status?: 'pass' | 'fail' | 'running';
@@ -17,12 +19,19 @@ interface MessageCard {
   failed?: number;
 }
 
-interface MessageButton {
+export interface MessageButton {
   label: string;
   variant: 'primary' | 'secondary';
 }
 
-interface ChatMessageProps {
+export interface ChatMessageProps {
+  role: 'user' | 'assistant';
+  content: string;
+  cards?: MessageCard[];
+  buttons?: MessageButton[];
+}
+
+export interface MessageModel {
   role: 'user' | 'assistant';
   content: string;
   cards?: MessageCard[];
