@@ -16,18 +16,71 @@ public class OpenApiReader
     public async Task<(OpenApiDocument, string, string?, string)> ReadAsync(string url)
     {
         var client = _http.CreateClient();
-        await using var stream = await client.GetStreamAsync(url);
+        var content = await client.GetStringAsync(url);
 
         var reader = new OpenApiStreamReader(new OpenApiReaderSettings {
             ReferenceResolution = ReferenceResolutionSetting.ResolveLocalReferences
         });
-        var doc = reader.Read(stream, out var diag);
-        if (diag?.Errors?.Count > 0) 
-            throw new InvalidOperationException("OpenAPI parse errors: " + string.Join(" | ", diag.Errors.Select(e => e.Message)));
 
-        var raw = Serialize(doc); 
-        var sha = Sha256(raw);
-        return (doc, raw, doc.Info?.Version, sha);
+        // Try reading as-is
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        var doc = reader.Read(ms, out var diag);
+
+        if (diag?.Errors?.Count > 0)
+        {
+            // Attempt a best-effort repair: sanitize component schema keys and update $ref occurrences in the serialized output
+            try
+            {
+                var raw = Serialize(doc);
+
+                // Build mapping of old -> sanitized keys
+                var schemas = doc.Components?.Schemas?.Keys?.ToList() ?? new List<string>();
+                var mapping = new Dictionary<string, string>(StringComparer.Ordinal);
+                foreach (var key in schemas)
+                {
+                    // Allowed chars: A-Z a-z 0-9 . - _
+                    var sanitized = System.Text.RegularExpressions.Regex.Replace(key, "[^A-Za-z0-9.\\-_]", "_");
+                    var unique = sanitized;
+                    var i = 1;
+                    while (mapping.Values.Contains(unique))
+                    {
+                        unique = sanitized + "_" + i++;
+                    }
+                    mapping[key] = unique;
+                }
+
+                if (mapping.Count > 0)
+                {
+                    // Replace schema keys and references in the raw JSON/YAML text
+                    foreach (var kv in mapping)
+                    {
+                        raw = raw.Replace($"\"{kv.Key}\"", $"\"{kv.Value}\"");
+                        raw = raw.Replace($"#/components/schemas/{kv.Key}", $"#/components/schemas/{kv.Value}");
+                    }
+
+                    // Reparse the repaired document
+                    using var ms2 = new MemoryStream(Encoding.UTF8.GetBytes(raw));
+                    var doc2 = reader.Read(ms2, out var diag2);
+                    if (diag2?.Errors?.Count > 0)
+                    {
+                        throw new InvalidOperationException("OpenAPI parse errors: " + string.Join(" | ", diag.Errors.Select(e => e.Message)));
+                    }
+
+                    var sha2 = Sha256(raw);
+                    return (doc2, raw, doc2.Info?.Version, sha2);
+                }
+            }
+            catch
+            {
+                // Fall through to original exception below
+            }
+
+            throw new InvalidOperationException("OpenAPI parse errors: " + string.Join(" | ", diag.Errors.Select(e => e.Message)));
+        }
+
+        var rawOk = Serialize(doc);
+        var shaOk = Sha256(rawOk);
+        return (doc, rawOk, doc.Info?.Version, shaOk);
     }
 
     private static string Serialize(OpenApiDocument doc)

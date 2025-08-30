@@ -12,4 +12,12 @@ public class ApiSpecsController : Microsoft.AspNetCore.Mvc.ControllerBase
     [HttpPost("import")]
     public Task<ApiSpecDto> Import(Guid projectId, [FromBody] ImportOpenApiInputDto body)
         => _svc.ImportAsync(body with { ProjectId = projectId });
+
+    [HttpGet]
+    public Task<IEnumerable<ApiSpecDto>> List(Guid projectId)
+        => _svc.ListByProjectAsync(projectId);
+
+    [HttpGet("{specId:guid}")]
+    public Task<ApiSpecDto?> Get(Guid specId)
+        => _svc.GetAsync(specId);
 }

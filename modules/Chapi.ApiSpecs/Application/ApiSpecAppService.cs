@@ -41,4 +41,12 @@ public class ApiSpecAppService : IApiSpecAppService
         var spec = await _repo.GetByIdAsync(specId);
         return spec == null ? null : new ApiSpecDto(spec.Id, spec.ProjectId, spec.SourceUrl, spec.Version, spec.CreatedAt);
     }
+
+    public async Task<IEnumerable<ApiSpecDto>> ListByProjectAsync(Guid projectId)
+    {
+        var specs = await _repo.GetAllAsync();
+        return specs.Where(s => s.ProjectId == projectId)
+                    .OrderByDescending(s => s.CreatedAt)
+                    .Select(s => new ApiSpecDto(s.Id, s.ProjectId, s.SourceUrl, s.Version, s.CreatedAt));
+    }
 }
