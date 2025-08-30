@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HistoryList } from "@/components/HistoryList";
 import { ChatMessage, MessageCard, MessageButton, MessageModel } from "@/components/ChatMessage";
 import { ChatComposer } from "@/components/ChatComposer";
@@ -15,21 +15,19 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MessageSquare, ChevronDown, Settings, User, LogOut, Sun, Moon } from "lucide-react";
 import mockMessages from "@/lib/mock/messages/chat-1.json";
+import { projectsApi, ProjectDto } from "@/lib/api/projects";
+import { environmentsApi, EnvironmentDto } from "@/lib/api/environments";
 
 type Card = MessageCard;
 type CmdButton = MessageButton;
 
-const projects = [
-  { id: "proj-1", name: "E-commerce API", env: "staging" },
-  { id: "proj-2", name: "User Service", env: "production" },
-  { id: "proj-3", name: "Payment Gateway", env: "local" }
-];
-
-const environments = ["local", "staging", "production"];
+// Projects and environments will be fetched from the backend
 
 export default function ChatView() {
-  const [selectedProject, setSelectedProject] = useState(projects[1]);
-  const [selectedEnv, setSelectedEnv] = useState("staging");
+  const [projects, setProjects] = useState<ProjectDto[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectDto | null>(null);
+  const [envOptions, setEnvOptions] = useState<EnvironmentDto[]>([]);
+  const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -178,6 +176,38 @@ All smoke tests are passing. Ready to merge!`
     }
   };
 
+  // Load projects on mount
+  useEffect(() => {
+    let mounted = true;
+    projectsApi.getAll()
+      .then(list => {
+        if (!mounted) return;
+        setProjects(list);
+        if (list.length > 0) {
+          // set first project as selected if none yet
+          setSelectedProject(prev => prev ?? list[0]);
+        }
+      })
+      .catch(() => toast({ title: 'Failed to load projects' }));
+
+    return () => { mounted = false; };
+  }, []);
+
+  // Load environments when selectedProject changes
+  useEffect(() => {
+    if (!selectedProject) return;
+    let mounted = true;
+    environmentsApi.getByProject(selectedProject.id ?? '')
+      .then(list => {
+        if (!mounted) return;
+        setEnvOptions(list);
+        if (list.length > 0) setSelectedEnv(list[0].name ?? null);
+      })
+      .catch(() => toast({ title: 'Failed to load environments' }));
+
+    return () => { mounted = false; };
+  }, [selectedProject]);
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -205,7 +235,7 @@ All smoke tests are passing. Ready to merge!`
                       <Button variant="outline" className="justify-between min-w-[200px]">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-accent"></div>
-                          {selectedProject.name}
+                          {selectedProject?.name ?? 'Select project'}
                         </div>
                         <ChevronDown className="w-4 h-4" />
                       </Button>
@@ -227,17 +257,17 @@ All smoke tests are passing. Ready to merge!`
 
                   {/* Environment Selector */}
                   <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                    {environments.map((env) => (
+                    {envOptions.map((env) => (
                       <button
-                        key={env}
-                        onClick={() => setSelectedEnv(env)}
+                        key={env.id}
+                        onClick={() => setSelectedEnv(env.name ?? null)}
                         className={`px-3 py-1 rounded text-sm transition-colors ${
-                          selectedEnv === env
+                          selectedEnv === (env.name ?? null)
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {env}
+                        {env.name}
                       </button>
                     ))}
                   </div>
