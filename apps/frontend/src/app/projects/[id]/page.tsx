@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, FileDown, Import, ExternalLink, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { AuthService } from "@/lib/api/auth-service";
+import { apiSpecsApi } from "@/lib/api/apispecs";
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 
 interface ProjectOverviewPageProps {
   params: { id: string };
+}
+
+interface Project {
+  id: string;
+  name: string;
+  region: string;
+  repo?: string | null;
 }
 
 const mockProject = {
@@ -34,8 +43,36 @@ export default function ProjectOverviewPage() {
   const navigate = useNavigate();
   const [showRunPackModal, setShowRunPackModal] = useState(false);
 
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    AuthService.authenticatedFetch<Project>(`/api/projects/${id}`, { method: 'GET' })
+      .then((p) => setProject(p))
+      .catch((err) => toast({ title: 'Failed to load project', description: err?.message ?? String(err) }))
+      .finally(() => setLoading(false));
+  }, [id]);
+
   const handleImportOpenAPI = () => {
-    toast({ title: "OpenAPI import started", description: "This feature is coming soon." });
+    if (!id) {
+      toast({ title: 'Project id missing', description: 'Cannot import without project id' });
+      return;
+    }
+
+    const url = window.prompt('Enter OpenAPI spec URL (http(s)://...)');
+    if (!url) return;
+
+    toast({ title: 'OpenAPI import started', description: 'Importing specification...' });
+
+    apiSpecsApi.importOpenApi(id, { url })
+      .then(() => {
+        toast({ title: 'Import queued', description: 'OpenAPI spec import started successfully.' });
+      })
+      .catch((err) => {
+        toast({ title: 'Import failed', description: err?.message ?? String(err) });
+      });
   };
 
   const handleDownloadRunPack = () => {
@@ -49,6 +86,8 @@ export default function ProjectOverviewPage() {
 
   const files = ['tests.json', 'run.sh', 'run.ps1', '.env.example'];
 
+  const displayedProject = project ?? mockProject;
+
   return (
     <Layout>
       <div className="container mx-auto py-6 space-y-6">
@@ -56,11 +95,11 @@ export default function ProjectOverviewPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">{mockProject.name}</h1>
-              <Badge variant="outline">{mockProject.region}</Badge>
+              <h1 className="text-3xl font-bold">{loading ? 'Loading...' : displayedProject.name}</h1>
+              <Badge variant="outline">{displayedProject.region}</Badge>
             </div>
-            {mockProject.repo && (
-              <p className="text-muted-foreground">{mockProject.repo}</p>
+            {displayedProject?.repo && (
+              <p className="text-muted-foreground">{displayedProject.repo}</p>
             )}
           </div>
           
