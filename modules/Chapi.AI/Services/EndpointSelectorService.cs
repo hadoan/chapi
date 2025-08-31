@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -24,10 +25,20 @@ public sealed class EndpointSelectorService
 
     public async Task<Result> SelectAsync(string userQuery, string allowedOps, string hints = "")
     {
+        _logger.LogInformation("=== EndpointSelectorService.SelectAsync ===");
+        _logger.LogInformation("User query: {UserQuery}", userQuery);
+        _logger.LogInformation("Allowed ops count: {AllowedOpsCount}", allowedOps.Split('\n').Length);
+        _logger.LogInformation("Hints count: {HintsCount}", hints.Split('\n').Where(h => !string.IsNullOrWhiteSpace(h)).Count());
+
         var args = new KernelArguments { ["user_query"] = userQuery, ["allowed_ops"] = allowedOps, ["hints"] = hints };
+        
+        _logger.LogInformation("Invoking EndpointContext.Select plugin...");
         var result = await _semanticKernelService.InvokeAsync("EndpointContext", "Select", args);
         var raw = result.GetValue<string>() ?? string.Empty;
         
+        _logger.LogInformation("Raw LLM response ({Length} chars): {RawResponse}", raw.Length, raw.Length > 500 ? raw.Substring(0, 500) + "..." : raw);
+        
+        _logger.LogDebug("=== JSON Parsing Attempts ===");
         _logger.LogDebug("Raw LLM response: {RawResponse}", raw);
         
         raw = raw.Trim();
@@ -52,20 +63,37 @@ public sealed class EndpointSelectorService
         _logger.LogDebug("Cleaned LLM response for parsing: {CleanedResponse}", raw);
 
         // Try direct parse first
+        _logger.LogDebug("Attempt 1: Direct JSON parsing...");
         try
         {
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
-            var parsedResult = JsonSerializer.Deserialize<Result>(raw, options)!;
-            _logger.LogDebug("Successfully parsed JSON directly. ServiceSlug: {ServiceSlug}, PicksCount: {PicksCount}", 
+            var parsedResult = JsonSerializer.Deserialize<Result>(raw, options);
+            if (parsedResult == null)
+            {
+                _logger.LogWarning("Deserialized result is null");
+                return new Result("unknown", new List<Pick>());
+            }
+            
+            _logger.LogInformation("✓ Direct JSON parse successful! ServiceSlug: {ServiceSlug}, PicksCount: {PicksCount}", 
                 parsedResult.ServiceSlug, parsedResult.Picks?.Count ?? 0);
+            
+            if (parsedResult.Picks != null && parsedResult.Picks.Any())
+            {
+                _logger.LogInformation("Selected endpoints:");
+                foreach (var pick in parsedResult.Picks)
+                {
+                    _logger.LogInformation("  - {Method} {Path} | auth:{Auth}", pick.Method, pick.Path, pick.Auth);
+                }
+            }
+            
             return parsedResult;
         }
         catch (JsonException ex) 
         {
-            _logger.LogDebug("Direct JSON parse failed: {Error}", ex.Message);
+            _logger.LogWarning("❌ Direct JSON parse failed: {Error}", ex.Message);
         }
 
         // If the model returned additional surrounding text, try to extract the first {...} block
@@ -74,21 +102,27 @@ public sealed class EndpointSelectorService
         if (first >= 0 && last > first)
         {
             var candidate = raw.Substring(first, last - first + 1);
-            _logger.LogDebug("Trying to parse extracted JSON block: {ExtractedJson}", candidate);
+            _logger.LogInformation("Trying to parse extracted JSON block ({Length} chars)...", candidate.Length);
             try
             {
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 };
-                var extractedResult = JsonSerializer.Deserialize<Result>(candidate, options)!;
-                _logger.LogDebug("Successfully parsed extracted JSON. ServiceSlug: {ServiceSlug}, PicksCount: {PicksCount}", 
+                var extractedResult = JsonSerializer.Deserialize<Result>(candidate, options);
+                if (extractedResult == null)
+                {
+                    _logger.LogWarning("Extracted JSON deserialized to null");
+                    return new Result("unknown", new List<Pick>());
+                }
+                
+                _logger.LogInformation("✓ Extracted JSON parse successful! ServiceSlug: {ServiceSlug}, PicksCount: {PicksCount}", 
                     extractedResult.ServiceSlug, extractedResult.Picks?.Count ?? 0);
                 return extractedResult;
             }
             catch (JsonException ex)
             {
-                _logger.LogDebug("Extracted JSON parse failed: {Error}", ex.Message);
+                _logger.LogWarning("❌ Extracted JSON parse failed: {Error}", ex.Message);
             }
         }
 

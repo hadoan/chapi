@@ -8,7 +8,22 @@
       "service_id": "gpt-4o",
       "temperature": 0.15,
       "top_p": 1,
-      "max_tokens": 1600
+      "max_tokens": 1600,
+      "tool_call_behavior": "auto_invoke_kernel_functions"
+    },
+    "gemini-flash": {
+      "model_id": "gemini-2.5-flash", 
+      "service_id": "gemini-flash",
+      "temperature": 0.15,
+      "top_p": 1,
+      "max_tokens": 1600,
+      "tool_call_behavior": "auto_invoke_kernel_functions"
+    },
+    "default": {
+      "temperature": 0.15,
+      "top_p": 1,
+      "max_tokens": 1600,
+      "tool_call_behavior": "auto_invoke_kernel_functions"
     }
   },
   "input_variables": [

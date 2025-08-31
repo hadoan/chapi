@@ -13,6 +13,8 @@ namespace Chapi.AI.Utilities
 
         public IReadOnlyList<(string Path, string Content)> Files => _files;
 
+        public int GetFileCount() => _files.Count;
+
         public void Add(string path, string content)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path required");

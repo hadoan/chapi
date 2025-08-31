@@ -67,7 +67,7 @@ namespace Chapi.AI.Controllers
             string.Join("\n", picks.Select(p =>
                 $"- {p.Method,-4} {p.Path,-28} | auth:{p.Auth,-6} | req:{p.Req,-16} | {p.Success}"));
 
-        private static string ValidateAuthFiles(Dictionary<string, string> fileRoles, List<ApiEndpoint> filteredEndpoints)
+        private static string? ValidateAuthFiles(Dictionary<string, string> fileRoles, List<ApiEndpoint> filteredEndpoints)
         {
             var authFiles = fileRoles.Where(kvp => kvp.Value == "AUTH").ToList();
             if (!authFiles.Any()) return null; // No AUTH files to validate
@@ -89,6 +89,10 @@ namespace Chapi.AI.Controllers
         [HttpPost("generate")]
         public async Task<IActionResult> Generate([FromBody] GenerateRequest body)
         {
+            _logger.LogInformation("=== RunPack Generation Started ===");
+            _logger.LogInformation("ProjectId: {ProjectId}, UserQuery: {UserQuery}, Env: {Env}", 
+                body.ProjectId, body.UserQuery, body.Env);
+
             // 1) parse paths + slug from card AND detect file roles
             var root = (JsonElement)JsonSerializer.SerializeToElement(body.Card);
             var paths = new List<string>();
@@ -98,16 +102,38 @@ namespace Chapi.AI.Controllers
                 if (!string.IsNullOrWhiteSpace(p)) paths.Add(p);
             }
 
+            _logger.LogInformation("Files to generate: {FilePaths}", string.Join(", ", paths));
+
             // Detect roles from file paths
             var fileRoles = body.Card.Files.ToDictionary(f => f.Path, f => DetectRole(f.Path));
-            _logger.LogDebug("File roles detected: {FileRoles}", string.Join(", ", fileRoles.Select(kvp => $"{kvp.Key}:{kvp.Value}")));
+            _logger.LogInformation("File roles detected: {FileRoles}", string.Join(", ", fileRoles.Select(kvp => $"{kvp.Key}:{kvp.Value}")));
 
             // 2) pull all endpoints for project and filter out ignorable ones
             var all = await _repo.ListByProjectAsync(body.ProjectId, tag: null, search: null);
-            var filteredEndpoints = all.Where(e => !IsIgnorable(e.Path)).ToList();
+            _logger.LogInformation("Retrieved {TotalEndpoints} total endpoints from repository", all.Count());
 
-            _logger.LogDebug("Filtered {FilteredCount} endpoints from {TotalCount} (removed health/root/metrics)", 
-                filteredEndpoints.Count, all.Count());
+            var filteredEndpoints = all.Where(e => !IsIgnorable(e.Path)).ToList();
+            _logger.LogInformation("After filtering: {FilteredCount} endpoints remain (removed {RemovedCount} health/root/metrics)", 
+                filteredEndpoints.Count, all.Count() - filteredEndpoints.Count);
+
+            if (filteredEndpoints.Count <= 5)
+            {
+                _logger.LogInformation("Available endpoints after filtering:");
+                foreach (var ep in filteredEndpoints)
+                {
+                    _logger.LogInformation("  {Method} {Path} | auth:{Auth} | declared:{DeclaredAuth}", 
+                        ep.Method, ep.Path, DerivedAuth(ep), EndpointIntrospection.ExtractAuth(ep));
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Sample of available endpoints (first 5):");
+                foreach (var ep in filteredEndpoints.Take(5))
+                {
+                    _logger.LogInformation("  {Method} {Path} | auth:{Auth} | declared:{DeclaredAuth}", 
+                        ep.Method, ep.Path, DerivedAuth(ep), EndpointIntrospection.ExtractAuth(ep));
+                }
+            }
 
             // Validate AUTH files have suitable endpoints
             var validationError = ValidateAuthFiles(fileRoles, filteredEndpoints);
@@ -120,6 +146,22 @@ namespace Chapi.AI.Controllers
             // 3) Build role-specific contexts using derived auth
             var authEndpoints = filteredEndpoints.Where(e => DerivedAuth(e) != "none").ToList();
             var publicCandidates = filteredEndpoints.Where(e => !IsRoot(e)).ToList();
+            
+            _logger.LogInformation("Auth analysis: {AuthEndpointsCount} protected endpoints, {PublicCount} public candidates", 
+                authEndpoints.Count, publicCandidates.Count);
+
+            if (authEndpoints.Any())
+            {
+                _logger.LogInformation("Protected endpoints found:");
+                foreach (var ep in authEndpoints.Take(3))
+                {
+                    _logger.LogInformation("  {Method} {Path} | auth:{Auth}", ep.Method, ep.Path, DerivedAuth(ep));
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No protected endpoints found! All endpoints appear to be public.");
+            }
             
             var contexts = new Dictionary<string, string>
             {
@@ -140,22 +182,30 @@ namespace Chapi.AI.Controllers
             var hints = Helpers.BuildHintsWithAuth(filteredEndpoints, DerivedAuth);
 
             // 5) LLM selects relevant endpoints
+            _logger.LogInformation("=== Calling Endpoint Selector ===");
+            _logger.LogInformation("UserQuery: {UserQuery}", body.UserQuery);
+            _logger.LogInformation("AllowedOps preview: {AllowedOpsPreview}", 
+                string.Join(", ", filteredEndpoints.Take(3).Select(e => $"{e.Method} {e.Path}")));
+
             var sel = await _selector.SelectAsync(body.UserQuery, allowedOps, hints);
             
-            _logger.LogDebug("SelectAsync result: ServiceSlug={ServiceSlug}, PicksCount={PicksCount}", 
+            _logger.LogInformation("=== Endpoint Selector Results ===");
+            _logger.LogInformation("ServiceSlug: {ServiceSlug}, PicksCount: {PicksCount}", 
                 sel?.ServiceSlug, sel?.Picks?.Count ?? 0);
             
             if (sel?.Picks != null)
             {
+                _logger.LogInformation("Endpoint selector picked {PickCount} endpoints:", sel.Picks.Count);
                 foreach (var pick in sel.Picks)
                 {
-                    _logger.LogDebug("Pick: {Method} {Path} | auth:{Auth} | req:{Req} | success:{Success}", 
+                    _logger.LogInformation("  ✓ {Method} {Path} | auth:{Auth} | req:{Req} | success:{Success}", 
                         pick.Method, pick.Path, pick.Auth, pick.Req, pick.Success);
                 }
             }
             else
             {
-                _logger.LogWarning("SelectAsync returned null or picks is null");
+                _logger.LogError("❌ Endpoint selector returned null or empty picks!");
+                return BadRequest("Endpoint selector failed to find matching endpoints.");
             }
 
             // 6) build endpoints_context from picks (backward compatibility)
@@ -164,12 +214,61 @@ namespace Chapi.AI.Controllers
                 return BadRequest("No matching endpoints. Import OpenAPI or broaden request.");
 
             // 7) Build role-specific contexts from selector picks
-            var picks = sel.Picks ?? new List<EndpointSelectorService.Pick>();
+            var picks = sel?.Picks ?? new List<EndpointSelectorService.Pick>();
+            
+            _logger.LogInformation("=== Building Role-Specific Contexts ===");
+            _logger.LogInformation("Building role contexts from {PicksCount} picks", picks.Count);
+            foreach (var pick in picks)
+            {
+                _logger.LogInformation("Available pick: {Method} {Path} | auth:{Auth}", pick.Method, pick.Path, pick.Auth);
+            }
             
             // AUTH: protected first; fallback to any write op
             var authPicks = picks.Where(p => p.Auth != "none").ToList();
             if (!authPicks.Any())
+            {
+                _logger.LogWarning("No picks with auth != 'none' found. Falling back to write operations.");
                 authPicks = picks.Where(p => p.Method is "POST" or "PUT" or "PATCH" or "DELETE").ToList();
+            }
+
+            _logger.LogInformation("AUTH analysis: {AuthPicksCount} picks selected for AUTH context", authPicks.Count);
+            foreach (var pick in authPicks)
+            {
+                _logger.LogInformation("  AUTH pick: {Method} {Path} | auth:{Auth}", pick.Method, pick.Path, pick.Auth);
+            }
+
+            // Validate AUTH picks before proceeding
+            if (fileRoles.Values.Contains("AUTH"))
+            {
+                _logger.LogInformation("=== AUTH Validation ===");
+                if (!authPicks.Any())
+                {
+                    _logger.LogError("❌ AUTH file detected but no suitable AUTH picks found!");
+                    _logger.LogError("Available picks: {AvailablePicks}", 
+                        string.Join(", ", picks.Select(p => $"{p.Method} {p.Path} (auth:{p.Auth})")));
+                    return BadRequest(new { 
+                        error = "Cannot generate AUTH tests: No protected endpoints found.", 
+                        details = "AUTH tests require endpoints with authentication (auth != 'none'). Available endpoints all appear to be public.",
+                        suggestion = "Import OpenAPI specs with security definitions, or ensure write operations (POST/PUT/PATCH/DELETE) are available.",
+                        available_endpoints = picks.Select(p => $"{p.Method} {p.Path} (auth:{p.Auth})").ToList()
+                    });
+                }
+
+                // Additional validation: AUTH picks should not be root endpoints
+                var badAuthPicks = authPicks.Where(p => p.Path == "/" || p.Path == "/health" || p.Path == "/ping").ToList();
+                if (badAuthPicks.Any())
+                {
+                    _logger.LogError("❌ AUTH file has unsuitable endpoints: {BadPicks}", 
+                        string.Join(", ", badAuthPicks.Select(p => $"{p.Method} {p.Path}")));
+                    return BadRequest(new { 
+                        error = "Cannot generate AUTH tests: Selected endpoints are not suitable for authentication testing.",
+                        details = "AUTH tests cannot use root (/), health, or ping endpoints.",
+                        bad_endpoints = badAuthPicks.Select(p => $"{p.Method} {p.Path}").ToList()
+                    });
+                }
+                
+                _logger.LogInformation("✓ AUTH validation passed. Using {AuthPicksCount} suitable endpoints.", authPicks.Count);
+            }
 
             // SMOKE: 3–5 representative
             var smokePicks = picks.Take(5).ToList();
@@ -185,11 +284,36 @@ namespace Chapi.AI.Controllers
                 ["CRUD"] = CompactFromPicks(crudPicks)
             };
 
-            _logger.LogDebug("Role contexts from picks - AUTH: {AuthPicksCount}, SMOKE: {SmokePicksCount}, CRUD: {CrudPicksCount}", 
+            _logger.LogInformation("=== Final Role Contexts ===");
+            foreach (var kvp in roleContextsFromPicks)
+            {
+                _logger.LogInformation("{Role} context ({Length} chars):", kvp.Key, kvp.Value.Length);
+                if (kvp.Value.Length > 0)
+                {
+                    var lines = kvp.Value.Split('\n').Take(2);
+                    foreach (var line in lines)
+                    {
+                        _logger.LogInformation("  {Line}", line);
+                    }
+                    if (kvp.Value.Split('\n').Length > 2)
+                    {
+                        _logger.LogInformation("  ... ({MoreLines} more lines)", kvp.Value.Split('\n').Length - 2);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("  ⚠️  {Role} context is EMPTY!", kvp.Key);
+                }
+            }
+
+            _logger.LogInformation("Role pick counts - AUTH: {AuthPicksCount}, SMOKE: {SmokePicksCount}, CRUD: {CrudPicksCount}", 
                 authPicks.Count, smokePicks.Count, crudPicks.Count);
 
             // 8) generate ZIP with role contexts and file roles
+            _logger.LogInformation("=== Generating RunPack ZIP ===");
             var zip = await _runpack.GenerateZipAsync(paths, endpointsContext, body.Env, fileRoles, roleContextsFromPicks);
+            
+            _logger.LogInformation("✓ RunPack ZIP generated successfully ({ZipSize} bytes)", zip.Length);
             return File(zip, "application/zip", "chapi-run-pack.zip");
         }
     }
