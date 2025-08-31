@@ -39,10 +39,15 @@ namespace Chapi.AI.Services
                 if (!string.IsNullOrEmpty(openApiJson))
                     args["openApiJson"] = openApiJson;
 
+                _logger.LogInformation("Calling ApiTest.Generate with args: UserQuery='{UserQuery}', EndpointsContext length={ContextLength}, MaxFiles={MaxFiles}", 
+                    userQuery, endpointsContext?.Length ?? 0, maxFiles);
+
                 var result = await _semanticKernelService.InvokeAsync("ApiTest", "Generate", args);
 
                 // Prefer function value, then rendered prompt, then empty
                 var content = result.GetValue<string>() ?? result.RenderedPrompt ?? string.Empty;
+
+                _logger.LogInformation("ApiTest plugin returned: {Content}", content.Length > 500 ? content.Substring(0, 500) + "..." : content);
 
                 // Parse JSON into DTO
                 var card = System.Text.Json.JsonSerializer.Deserialize<Chapi.AI.Dto.ChapiCard>(content, new System.Text.Json.JsonSerializerOptions

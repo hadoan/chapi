@@ -17,6 +17,7 @@ public class ChapiAIModule : IModule
         // Register AI related services here
         services.AddTransient<Chapi.AI.Services.IApiTestGenerationService, Chapi.AI.Services.ApiTestGenerationService>();
         services.AddScoped<IEndpointContextService, EndpointContextService>();
+        services.AddScoped<RunPackService>();
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)

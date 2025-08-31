@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "description": "Generate test files for the manifest via tool-calling add_file; reply DONE when finished.",
+  "type": "completion",
+  "execution_settings": {
+    "gpt-4o": {
+      "model_id": "gpt-4o-2024-08-06",
+      "service_id": "openai",
+      "temperature": 0.15,
+      "top_p": 1,
+      "max_tokens": 1600
+    }
+  },
+  "input_variables": [
+    {
+      "name": "files_manifest",
+      "description": "One-per-line list of file paths to create (e.g., tests/email-service/smoke.json).",
+      "required": true
+    },
+    {
+      "name": "env",
+      "description": "Target environment: local | staging | prod.",
+      "required": true
+    },
+    {
+      "name": "endpoints_context",
+      "description": "Compact endpoints list (method, path, summary, auth, request content type).",
+      "required": true
+    }
+  ]
+}

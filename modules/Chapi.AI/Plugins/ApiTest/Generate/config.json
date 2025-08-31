@@ -3,11 +3,11 @@
   "description": "Generates a Chapi chat card (plan + generated files + actions) for 'Generate smoke tests…' using EndpointCatalog context. Returns STRICT JSON only.",
   "execution_settings": {
     "gpt-4o": {
-      "model_id": "gpt-4o-2024-08-06",
-      "service_id": "openai",
-      "temperature": 0.2,
+      "model_id": "gpt-4o",
+      "service_id": "gpt-4o",
+      "temperature": 0.7,
       "text_format": "json",
-      "store": true,
+      "store": false,
       "response_format": {
         "type": "json_schema",
         "json_schema": {

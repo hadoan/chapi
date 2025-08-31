@@ -41,6 +41,7 @@ RULES FOR actions
 CONFIDENCE & SAFETY
 • If the endpoint catalog is empty or clearly unrelated to the user's request, respond with an empty JSON object: {}.
 • Otherwise, produce the JSON object as specified below.
+• Always try to generate useful tests even with minimal user input - interpret "generate", "test", or similar words as requests for smoke tests.
 
 CRITICAL OUTPUT REQUIREMENTS
 • You MUST respond with ONLY valid JSON and absolutely nothing else.
@@ -58,10 +59,13 @@ CRITICAL OUTPUT REQUIREMENTS
   "actions": ["RUN_CLOUD","DOWNLOAD_RUN_PACK","ADD_NEGATIVES"]
 }
 
-• If you are not confident (≤ 75%) due to missing/insufficient endpoints, return: {}
+• Generate meaningful test plans based on available endpoints, even with minimal user queries.
+• Focus on the endpoint catalog content to drive test generation.
 
 USER REQUEST
 {{$user_query}}
+
+Instructions: Generate comprehensive smoke tests for the API endpoints provided below. Focus on covering key functionality including authentication, CRUD operations, and basic validation scenarios.
 
 ENDPOINT CATALOG (compact text; do not invent beyond this)
 {{$endpoints_context}}
@@ -71,5 +75,7 @@ BOUNDS & HINTS
 • Do not exceed {{$max_files}} files (default 3).
 • Prefer application/json where possible.
 • Keep names concise and deterministic.
+• Ensure each response is unique and tailored to the specific endpoints provided.
+• Consider the user's specific request when naming and structuring tests.
 
 Return ONLY the JSON object now.
