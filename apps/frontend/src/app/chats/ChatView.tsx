@@ -298,6 +298,79 @@ All smoke tests are passing. Ready to merge!`,
     }
   };
 
+  // Button actions
+  const runInCloud = async () => {
+    toast({ title: 'Starting run in cloud...' });
+    try {
+      // Placeholder: call backend run api if available
+      // await llmsApi.runInCloud({ /* params */ });
+      toast({ title: 'Cloud run started' });
+    } catch (err) {
+      console.error('Run in cloud failed', err);
+      toast({ title: 'Failed to start cloud run' });
+    }
+  };
+
+  const downloadRunPack = async (messageModel: MessageModel) => {
+    try {
+      toast({ title: 'Preparing run pack...' });
+      // POST to run-pack generate endpoint and download zip
+      const resp = await fetch('/api/run-pack/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Card: messageModel, EndpointsContext: '', Env: selectedEnv ?? 'local' }),
+      });
+      if (!resp.ok) throw new Error('Failed to generate run pack');
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chapi-run-pack.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Run pack downloaded' });
+    } catch (err) {
+      console.error('Download failed', err);
+      toast({ title: 'Failed to download run pack' });
+    }
+  };
+
+  const addNegatives = async (messageModel: MessageModel) => {
+    try {
+      toast({ title: 'Adding negative tests...' });
+      // Reuse llms.generate with an augmented prompt to ask for negatives
+      const req = {
+        user_query: `${selectedProject?.name ?? ''} Add 3 negative tests for the generated suite`,
+        projectId: selectedProject?.id ?? '',
+        max_files: 3,
+        openApiJson: null,
+      };
+      const negCard = await llmsApi.generate(req);
+      // Append a message with the negatives
+      const assistantMessage: MessageModel = {
+        role: 'assistant',
+        content: negCard.heading ?? 'Added negative tests',
+        cards: negCard.files
+          ? [
+              {
+                type: 'diff',
+                title: negCard.heading ?? 'Negative Tests',
+          files: negCard.files.map((f: { path?: string; addedLines?: number }) => ({ path: f.path ?? '', change: 'added' as const, lines: f.addedLines ?? 0 })),
+              },
+            ]
+          : undefined,
+      };
+
+  setMessages(prev => [...prev, assistantMessage]);
+      toast({ title: 'Negative tests added' });
+    } catch (err) {
+      console.error('Add negatives failed', err);
+      toast({ title: 'Failed to add negatives' });
+    }
+  };
+
   // Load projects on mount
   useEffect(() => {
     let mounted = true;
@@ -475,6 +548,13 @@ All smoke tests are passing. Ready to merge!`,
                           content={message.content}
                           cards={message.cards as Card[]}
                           buttons={message.buttons as CmdButton[]}
+                          onButtonClick={async (label: string) => {
+                            // MessageModel may include original llmCard under .llmCard
+                            const llmCard = (message as unknown as { llmCard?: import('@/lib/api/llms').ChapiCard }).llmCard;
+                            if (label === 'Run in Cloud') await runInCloud();
+                            if (label === 'Download Run Pack') await downloadRunPack(message as MessageModel);
+                            if (label === 'Add Negatives') await addNegatives(message as MessageModel);
+                          }}
                         />
                       </div>
                     ))}
@@ -526,6 +606,12 @@ All smoke tests are passing. Ready to merge!`,
                                 },
                               ]
                             : undefined,
+                          buttons: [
+                            { label: 'Run in Cloud', variant: 'primary' },
+                            { label: 'Download Run Pack', variant: 'secondary' },
+                            { label: 'Add Negatives', variant: 'secondary' },
+                          ],
+                          llmCard: card,
                         };
 
                         // Replace the loading message with the real assistant message

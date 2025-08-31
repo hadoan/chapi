@@ -29,6 +29,7 @@ export interface ChatMessageProps {
   content: string;
   cards?: MessageCard[];
   buttons?: MessageButton[];
+  onButtonClick?: (label: string) => void;
 }
 
 export interface MessageModel {
@@ -36,6 +37,8 @@ export interface MessageModel {
   content: string;
   cards?: MessageCard[];
   buttons?: MessageButton[];
+  // Optional original ChapiCard returned from the LLM
+  llmCard?: any;
 }
 
 const getStatusIcon = (status: string) => {
@@ -62,7 +65,7 @@ const getChangeIcon = (change: string) => {
   }
 };
 
-export const ChatMessage = ({ role, content, cards, buttons }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: ChatMessageProps) => {
   if (role === 'user') {
     return (
       <div className="flex justify-end mb-6">
@@ -176,6 +179,7 @@ export const ChatMessage = ({ role, content, cards, buttons }: ChatMessageProps)
                   variant={button.variant === 'primary' ? 'default' : 'outline'}
                   size="sm"
                   className="text-xs"
+                  onClick={() => onButtonClick?.(button.label)}
                 >
                   {button.label === 'Run in Cloud' && <Play className="w-3 h-3 mr-1" />}
                   {button.label === 'Download Run Pack' && <Download className="w-3 h-3 mr-1" />}
