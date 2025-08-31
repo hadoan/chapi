@@ -22,6 +22,7 @@ export interface MessageCard {
 export interface MessageButton {
   label: string;
   variant: 'primary' | 'secondary';
+  loading?: boolean;
 }
 
 export interface ChatMessageProps {
@@ -180,9 +181,11 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                   size="sm"
                   className="text-xs"
                   onClick={() => onButtonClick?.(button.label)}
+                  disabled={button.loading}
                 >
-                  {button.label === 'Run in Cloud' && <Play className="w-3 h-3 mr-1" />}
-                  {button.label === 'Download Run Pack' && <Download className="w-3 h-3 mr-1" />}
+                    {button.loading ? <Clock className="w-3 h-3 mr-1 animate-spin" /> : null}
+                    {button.label === 'Run in Cloud' && <Play className="w-3 h-3 mr-1" />}
+                    {button.label === 'Download Run Pack' && !button.loading && <Download className="w-3 h-3 mr-1" />}
                   {button.label === 'Create PR' && <GitPullRequest className="w-3 h-3 mr-1" />}
                   {button.label}
                 </Button>

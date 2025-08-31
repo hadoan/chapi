@@ -4,8 +4,8 @@
   "type": "completion",
   "execution_settings": {
     "gpt-4o": {
-      "model_id": "gpt-4o-2024-08-06",
-      "service_id": "openai",
+      "model_id": "gpt-4o",
+      "service_id": "gpt-4o",
       "temperature": 0.15,
       "top_p": 1,
       "max_tokens": 1600

@@ -2484,6 +2484,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/run-pack/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/SemanticKernelIntegration/status": {
         parameters: {
             query?: never;
@@ -3634,6 +3680,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "Chapi.AI.Controllers.RunPackController.GenerateRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+            userQuery?: string | null;
+            env?: string | null;
+        };
         "Chapi.AI.Dto.ApiTestGenerateRequest": {
             user_query?: string | null;
             /** Format: uuid */

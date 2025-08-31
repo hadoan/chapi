@@ -24,7 +24,7 @@ namespace Chapi.AI.Services
         }
 
         // Preferred overload: accept inputs that match the plugin config.json variables
-    public async Task<Chapi.AI.Dto.ChapiCard> GenerateTestAsync(string? userQuery, string? endpointsContext, int? maxFiles, string? openApiJson)
+        public async Task<Chapi.AI.Dto.ChapiCard> GenerateTestAsync(string? userQuery, string? endpointsContext, int? maxFiles, string? openApiJson)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace Chapi.AI.Services
                 if (!string.IsNullOrEmpty(openApiJson))
                     args["openApiJson"] = openApiJson;
 
-                _logger.LogInformation("Calling ApiTest.Generate with args: UserQuery='{UserQuery}', EndpointsContext length={ContextLength}, MaxFiles={MaxFiles}", 
+                _logger.LogInformation("Calling ApiTest.Generate with args: UserQuery='{UserQuery}', EndpointsContext length={ContextLength}, MaxFiles={MaxFiles}",
                     userQuery, endpointsContext?.Length ?? 0, maxFiles);
 
                 var result = await _semanticKernelService.InvokeAsync("ApiTest", "Generate", args);

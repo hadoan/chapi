@@ -35,7 +35,9 @@ import {
 import mockMessages from '@/lib/mock/messages/chat-1.json';
 import { projectsApi, ProjectDto } from '@/lib/api/projects';
 import { llmsApi } from '@/lib/api/llms';
+import { runPacksApi } from '@/lib/api/run-packs';
 import { environmentsApi, EnvironmentDto } from '@/lib/api/environments';
+import type { components } from '@/lib/api/schema';
 
 type Card = MessageCard;
 type CmdButton = MessageButton;
@@ -55,6 +57,9 @@ export default function ChatView() {
   const [messages, setMessages] = useState<MessageModel[]>(
     mockMessages as MessageModel[]
   );
+  const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
+
+  type LlmMessage = MessageModel & { llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'] };
 
   const executeCommand = async (command: string): Promise<MessageModel> => {
     const baseResponse: {
@@ -312,16 +317,32 @@ All smoke tests are passing. Ready to merge!`,
   };
 
   const downloadRunPack = async (messageModel: MessageModel) => {
+    // Find the message index to show loading state
+    const idx = messages.indexOf(messageModel as MessageModel);
     try {
       toast({ title: 'Preparing run pack...' });
-      // POST to run-pack generate endpoint and download zip
-      const resp = await fetch('/api/run-pack/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Card: messageModel, EndpointsContext: '', Env: selectedEnv ?? 'local' }),
+      if (idx >= 0) {
+        setDownloadingIndex(idx);
+        // Mark the message's buttons as loading
+        setMessages(prev => {
+          const copy = [...prev];
+          const m = { ...copy[idx] } as LlmMessage & { buttons?: Array<{ label: string; variant: string; loading?: boolean }> };
+          m.buttons = [{ label: 'Downloading...', variant: 'secondary', loading: true }];
+          copy[idx] = m;
+          return copy;
+        });
+
+      }
+
+      // Call run-packs API which returns a blob
+      const lm = messageModel as LlmMessage;
+      const blob = await runPacksApi.generate({
+        projectId: selectedProject?.id ?? '',
+        card: lm.llmCard ?? (messageModel as unknown as components['schemas']['Chapi.AI.Controllers.RunPackController.GenerateRequest']),
+        userQuery: messageModel.content,
+        env: selectedEnv ?? 'local',
       });
-      if (!resp.ok) throw new Error('Failed to generate run pack');
-      const blob = await resp.blob();
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -334,6 +355,26 @@ All smoke tests are passing. Ready to merge!`,
     } catch (err) {
       console.error('Download failed', err);
       toast({ title: 'Failed to download run pack' });
+    } finally {
+      if (idx >= 0) {
+        setDownloadingIndex(-1);
+        // Restore buttons (remove loading)
+        setMessages(prev => {
+          const copy = [...prev];
+          const m = { ...copy[idx] } as LlmMessage & { buttons?: Array<{ label: string; variant: string }> };
+          // If llmCard exists, restore the original action buttons
+          const hasLl = !!m.llmCard;
+          m.buttons = hasLl
+            ? [
+                { label: 'Run in Cloud', variant: 'primary' },
+                { label: 'Download Run Pack', variant: 'secondary' },
+                { label: 'Add Negatives', variant: 'secondary' },
+              ]
+            : [];
+          copy[idx] = m;
+          return copy;
+        });
+      }
     }
   };
 

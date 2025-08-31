@@ -18,6 +18,7 @@ public class ChapiAIModule : IModule
         services.AddTransient<Chapi.AI.Services.IApiTestGenerationService, Chapi.AI.Services.ApiTestGenerationService>();
         services.AddScoped<IEndpointContextService, EndpointContextService>();
         services.AddScoped<RunPackService>();
+        services.AddScoped<EndpointSelectorService>();
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)
