@@ -10,6 +10,11 @@ Given:
 
 Return STRICT JSON listing the endpoints to use for this run. Never invent ops not in ALLOWED_OPS.
 
+HARD RULES
+- You MUST ignore health, ping, root ("/") and metrics endpoints.
+- Picks MUST include at least one write operation (POST/PUT/PATCH/DELETE) if any exist in ALLOWED_OPS.
+- Prefer operations with auth != "none" when present in HINTS.
+
 JSON Schema
 {
   "type":"object",

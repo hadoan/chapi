@@ -82,8 +82,8 @@
     },
     { "role": "user", "content": "User asked: {{user_query}}" },
     { "role": "assistant", "content": "Context follows." },
-    { "role": "user", "content": "{{endpoints_context}}" }
-  ,{ "role": "user", "content": "OpenAPI document: {{openApiJson}}" }
+    { "role": "user", "content": "{{endpoints_context}}" },
+    { "role": "user", "content": "OpenAPI document: {{openApiJson}}" }
   ],
   "defaults": {
     "max_files": 3

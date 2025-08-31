@@ -21,8 +21,20 @@ namespace Chapi.AI.Utilities
             string succ = EndpointIntrospection.ExtractSuccess(e);         // "200:application/json User"|"-"
             return $"{e.Method} {e.Path} | auth:{auth} | req:{req} | {succ}";
         }
+
+        public static string HintWithAuth(ApiEndpoint e, Func<ApiEndpoint, string> authExtractor)
+        {
+            string auth = authExtractor(e);                               // Custom auth extraction
+            string req = EndpointIntrospection.ExtractReq(e);             // "application/json"|"-"
+            string succ = EndpointIntrospection.ExtractSuccess(e);         // "200:application/json User"|"-"
+            return $"{e.Method} {e.Path} | auth:{auth} | req:{req} | {succ}";
+        }
+
         public static string BuildHints(IEnumerable<ApiEndpoint> eps) =>
             string.Join("\n", eps.Select(Hint));
+
+        public static string BuildHintsWithAuth(IEnumerable<ApiEndpoint> eps, Func<ApiEndpoint, string> authExtractor) =>
+            string.Join("\n", eps.Select(e => HintWithAuth(e, authExtractor)));
 
         public static string BuildEndpointsContextFromPicks(IEnumerable<EndpointSelectorService.Pick>? picks) =>
             picks == null ? string.Empty : string.Join("\n", picks.Select(p =>

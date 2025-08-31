@@ -41,7 +41,9 @@ public sealed class RunPackService
     public async Task<byte[]> GenerateZipAsync(
         IReadOnlyList<string> manifestPaths,     // from card.files[].path
         string endpointsContext,                 // compact text
-        string env = "local")
+        string env = "local",
+        Dictionary<string, string>? fileRoles = null,      // path -> "AUTH"|"SMOKE"|"CRUD"
+        Dictionary<string, string>? roleContexts = null)   // role -> compact endpoint text
     {
         // Reset the builder for this run by replacing the plugin instance's field
         var runBuilder = new RunPackBuilder();
@@ -66,6 +68,23 @@ public sealed class RunPackService
             ["env"] = env,
             ["endpoints_context"] = endpointsContext
         };
+
+        // Add role-based parameters if provided
+        if (fileRoles != null && fileRoles.Any())
+        {
+            // Convert to JSON format expected by prompt
+            var roleEntries = fileRoles.Select(kvp => $"\"{kvp.Key}\": \"{kvp.Value}\"");
+            var fileRolesJson = "{ " + string.Join(", ", roleEntries) + " }";
+            args["file_roles_json"] = fileRolesJson;
+        }
+
+        if (roleContexts != null && roleContexts.Any())
+        {
+            // Convert to JSON format expected by prompt
+            var contextEntries = roleContexts.Select(kvp => $"\"{kvp.Key}\": \"{kvp.Value.Replace("\"", "\\\"")}\"");
+            var roleContextsJson = "{ " + string.Join(", ", contextEntries) + " }";
+            args["role_contexts_json"] = roleContextsJson;
+        }
 
         foreach (var plugin in _kernel.Plugins)
         {

@@ -18,6 +18,16 @@
       "required": true
     },
     {
+      "name": "file_roles_json",
+      "description": "JSON object mapping file paths to their roles (AUTH, SMOKE, CRUD).",
+      "required": false
+    },
+    {
+      "name": "role_contexts_json", 
+      "description": "JSON object mapping roles to their specific endpoint contexts.",
+      "required": false
+    },
+    {
       "name": "env",
       "description": "Target environment: local | staging | prod.",
       "required": true
