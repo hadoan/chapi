@@ -37,7 +37,9 @@ public class ChapiSemanticKernelService : SemanticKernelService
         base.SetupToolPlugins(kernelBuilder);
 
         // Let DI create the plugin instance
-        var runPackPlugin = _serviceProvider.GetRequiredService<Chapi.AI.Plugins.RunPack.RunPackPlugin>();
+        var runPackPlugin = new Chapi.AI.Plugins.RunPack.RunPackPlugin(
+            _serviceProvider.GetRequiredService<Chapi.AI.Utilities.RunPackBuilder>()
+        );
         
         // Register RunPackPlugin as a tool plugin
         kernelBuilder.Plugins.AddFromObject(runPackPlugin, "runpack_tools");
