@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Chapi.AI.Utilities;
-using Chapi.AI.Services;
-using System.Collections.Generic;
+using ShipMvp.Integration.SemanticKernel.Infrastructure;
 
 namespace Chapi.AI.Services;
 
@@ -22,8 +26,9 @@ public class RunPackService
 
     public async Task<byte[]> GenerateZipAsync(
         IReadOnlyList<string> manifestPaths,
-        string environment,
         string endpointsContext,
+        string environment,
+        Dictionary<string, string> fileRoles,
         Dictionary<string, string> roleContexts)
     {
         _logger.LogInformation("=== RunPackService.GenerateZipAsync Started ===");
@@ -51,12 +56,7 @@ public class RunPackService
             ["files_manifest"] = string.Join("\n", manifestPaths.Select(p => $"- {p}")),
             ["env"] = environment,
             ["endpoints_context"] = endpointsContext,
-            ["file_roles_json"] = JsonSerializer.Serialize(
-                manifestPaths.ToDictionary(
-                    path => path, 
-                    path => DetermineFileRole(path)
-                )
-            )
+            ["file_roles_json"] = JsonSerializer.Serialize(fileRoles ?? new Dictionary<string, string>())
         };
 
         _logger.LogInformation("=== Kernel Arguments ===");
@@ -109,7 +109,7 @@ public class RunPackService
             
             foreach (var manifestPath in manifestPaths)
             {
-                var role = DetermineFileRole(manifestPath);
+                var role = fileRoles?.GetValueOrDefault(manifestPath) ?? DetermineFileRole(manifestPath);
                 var fallbackContent = GenerateFallbackContent(role, environment);
                 runBuilder.Add(manifestPath, fallbackContent);
                 _logger.LogInformation("Added fallback placeholder for: {Path}", manifestPath);
