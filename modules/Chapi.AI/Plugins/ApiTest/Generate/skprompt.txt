@@ -26,7 +26,7 @@ RULES FOR plan
 
 RULES FOR files
 1) Propose 1–{{$max_files}} files (default 3 if not provided).
-2) Use conventional paths derived from the dominant resource in the catalog (e.g., "tests/user-service/smoke.json", "tests/user-service/auth.json", "tests/user-service/crud.json").
+2) Use conventional paths derived from the dominant resource in the catalog (e.g., "tests/user-service/smoke.sh", "tests/user-service/auth.sh", "tests/user-service/crud.sh").
 3) "addedLines" must be an integer estimate (20–120). Heuristic:
    • Start at 30 lines per file.
    • Add +10 if the file covers ≥3 endpoints.

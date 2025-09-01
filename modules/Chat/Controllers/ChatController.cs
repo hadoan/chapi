@@ -1,11 +1,13 @@
 using Chat.Application.Requests;
 using Chat.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chat.Controllers;
 
 [ApiController]
 [Route("api/chat")]
+[Authorize]
 public class ChatController : ControllerBase
 {
     private readonly IChatAppService _service;

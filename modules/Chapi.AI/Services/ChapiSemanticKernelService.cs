@@ -21,27 +21,22 @@ namespace Chapi.AI.Services;
 
 public class ChapiSemanticKernelService : SemanticKernelService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly Chapi.AI.Utilities.RunPackBuilder _runPackBuilder;
 
     public ChapiSemanticKernelService(
         IConfiguration configuration,
         ILogger<SemanticKernelService> logger,
-        IServiceProvider serviceProvider)
+        Chapi.AI.Utilities.RunPackBuilder builder)
         : base(configuration, logger)
     {
-        _serviceProvider = serviceProvider;
+        _runPackBuilder = builder;
     }
 
-    protected override void SetupToolPlugins(IKernelBuilder kernelBuilder)
-    {
-        base.SetupToolPlugins(kernelBuilder);
+    // protected override void SetupToolPlugins(IKernelBuilder kernelBuilder)
+    // {
+    //     base.SetupToolPlugins(kernelBuilder);
 
-        // Let DI create the plugin instance
-        var runPackPlugin = new Chapi.AI.Plugins.RunPack.RunPackPlugin(
-            _serviceProvider.GetRequiredService<Chapi.AI.Utilities.RunPackBuilder>()
-        );
-        
-        // Register RunPackPlugin as a tool plugin
-        kernelBuilder.Plugins.AddFromObject(runPackPlugin, "runpack_tools");
-    }
+    //     // Register RunPackPlugin as a tool plugin
+    //     kernelBuilder.Plugins.AddFromObject(new Chapi.AI.Plugins.RunPack.RunPackPlugin(_runPackBuilder), "runpack");
+    // }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Suites.Application;
 using Suites.Application.Dtos;
@@ -5,7 +6,8 @@ using Suites.Application.Dtos;
 namespace Suites.Controllers;
 
 [ApiController]
-[Route("api/suites")] 
+[Route("api/suites")]
+[Authorize]
 public class SuitesController : ControllerBase
 {
     private readonly ISuiteAppService _service;

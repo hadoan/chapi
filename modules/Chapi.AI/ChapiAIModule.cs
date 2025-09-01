@@ -23,10 +23,10 @@ public class ChapiAIModule : IModule
         services.AddScoped<IEndpointContextService, EndpointContextService>();
         services.AddScoped<RunPackService>();
         services.AddScoped<EndpointSelectorService>();
-        
+
         // Register RunPackBuilder as a shared service
-        services.AddScoped<Chapi.AI.Utilities.RunPackBuilder>();
-        
+        services.AddTransient<Chapi.AI.Utilities.RunPackBuilder>();
+
         // Replace the default Semantic Kernel service with our custom one
         var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(ISemanticKernelService));
         if (descriptor != null)

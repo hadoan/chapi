@@ -2,21 +2,21 @@
 
 This folder contains shared VS Code settings for the Chapi project to ensure consistent development experience across the team.
 
-## Files:
+## Files
 
 - **`launch.json`**: Debug configurations for Chapi.API
 - **`tasks.json`**: Build and run tasks
 - **`settings.json`**: Project-specific editor settings
 - **`extensions.json`**: Recommended VS Code extensions
 
-## Usage:
+## Usage
 
 1. Open the project in VS Code
 2. Install recommended extensions when prompted
 3. Use `F5` to start debugging with the default configuration
 4. Select different debug configurations from the Debug panel dropdown
 
-## Debug Configurations:
+## Debug Configurations
 
 - **Launch Chapi.API (HTTP - Port 5066)**: Default HTTP debugging
 - **Launch Chapi.API (HTTPS - Port 7199)**: HTTPS debugging  
