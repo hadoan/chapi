@@ -1,7 +1,16 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, Clock, FileText, GitPullRequest, Play, Download } from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  CheckCircle,
+  Clock,
+  Download,
+  FileText,
+  FolderOpen,
+  GitPullRequest,
+  Play,
+  XCircle,
+} from 'lucide-react';
 
 export interface MessageCard {
   type: 'plan' | 'diff' | 'run' | 'openapi-diff' | 'pr-preview';
@@ -30,7 +39,9 @@ export interface ChatMessageProps {
   content: string;
   cards?: MessageCard[];
   buttons?: MessageButton[];
+  runId?: string;
   onButtonClick?: (label: string) => void;
+  onBrowseFiles?: (runId: string) => void;
 }
 
 export interface MessageModel {
@@ -38,8 +49,9 @@ export interface MessageModel {
   content: string;
   cards?: MessageCard[];
   buttons?: MessageButton[];
+  runId?: string;
   // Optional original ChapiCard returned from the LLM
-  llmCard?: any;
+  llmCard?: Record<string, unknown>;
 }
 
 const getStatusIcon = (status: string) => {
@@ -66,7 +78,15 @@ const getChangeIcon = (change: string) => {
   }
 };
 
-export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: ChatMessageProps) => {
+export const ChatMessage = ({
+  role,
+  content,
+  cards,
+  buttons,
+  runId,
+  onButtonClick,
+  onBrowseFiles,
+}: ChatMessageProps) => {
   if (role === 'user') {
     return (
       <div className="flex justify-end mb-6">
@@ -104,11 +124,18 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       {card.type === 'plan' && <FileText className="w-4 h-4" />}
-                      {card.type === 'diff' && <GitPullRequest className="w-4 h-4" />}
+                      {card.type === 'diff' && (
+                        <GitPullRequest className="w-4 h-4" />
+                      )}
                       {card.type === 'run' && getStatusIcon(card.status || '')}
                       {card.title}
                       {card.status && (
-                        <Badge variant={card.status === 'pass' ? 'default' : 'destructive'} className="ml-auto">
+                        <Badge
+                          variant={
+                            card.status === 'pass' ? 'default' : 'destructive'
+                          }
+                          className="ml-auto"
+                        >
                           {card.status}
                         </Badge>
                       )}
@@ -129,11 +156,18 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                     {card.type === 'diff' && card.files && (
                       <div className="space-y-2">
                         {card.files.map((file, fileIdx) => (
-                          <div key={fileIdx} className="flex items-center gap-3 text-sm font-mono">
+                          <div
+                            key={fileIdx}
+                            className="flex items-center gap-3 text-sm font-mono"
+                          >
                             {getChangeIcon(file.change)}
                             <span className="text-foreground">{file.path}</span>
-                            <Badge variant="outline" className="ml-auto text-xs">
-                              {file.change === 'added' ? '+' : '~'}{file.lines}
+                            <Badge
+                              variant="outline"
+                              className="ml-auto text-xs"
+                            >
+                              {file.change === 'added' ? '+' : '~'}
+                              {file.lines}
                             </Badge>
                           </div>
                         ))}
@@ -143,7 +177,9 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                     {card.type === 'run' && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <div className="text-muted-foreground">Environment</div>
+                          <div className="text-muted-foreground">
+                            Environment
+                          </div>
                           <Badge variant="outline">{card.env}</Badge>
                         </div>
                         <div>
@@ -157,9 +193,16 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                         <div>
                           <div className="text-muted-foreground">Results</div>
                           <div className="font-mono">
-                            <span className="text-green-500">{card.passed}</span>
+                            <span className="text-green-500">
+                              {card.passed}
+                            </span>
                             {card.failed ? (
-                              <>/<span className="text-red-500">{card.failed}</span></>
+                              <>
+                                /
+                                <span className="text-red-500">
+                                  {card.failed}
+                                </span>
+                              </>
                             ) : null}
                           </div>
                         </div>
@@ -172,9 +215,9 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
           )}
 
           {/* Action Buttons */}
-          {buttons && buttons.length > 0 && (
+          {((buttons && buttons.length > 0) || runId) && (
             <div className="flex flex-wrap gap-2">
-              {buttons.map((button, idx) => (
+              {buttons?.map((button, idx) => (
                 <Button
                   key={idx}
                   variant={button.variant === 'primary' ? 'default' : 'outline'}
@@ -183,13 +226,34 @@ export const ChatMessage = ({ role, content, cards, buttons, onButtonClick }: Ch
                   onClick={() => onButtonClick?.(button.label)}
                   disabled={button.loading}
                 >
-                    {button.loading ? <Clock className="w-3 h-3 mr-1 animate-spin" /> : null}
-                    {button.label === 'Run in Cloud' && <Play className="w-3 h-3 mr-1" />}
-                    {button.label === 'Download Run Pack' && !button.loading && <Download className="w-3 h-3 mr-1" />}
-                  {button.label === 'Create PR' && <GitPullRequest className="w-3 h-3 mr-1" />}
+                  {button.loading ? (
+                    <Clock className="w-3 h-3 mr-1 animate-spin" />
+                  ) : null}
+                  {button.label === 'Run in Cloud' && (
+                    <Play className="w-3 h-3 mr-1" />
+                  )}
+                  {button.label === 'Download Run Pack' && !button.loading && (
+                    <Download className="w-3 h-3 mr-1" />
+                  )}
+                  {button.label === 'Create PR' && (
+                    <GitPullRequest className="w-3 h-3 mr-1" />
+                  )}
                   {button.label}
                 </Button>
               ))}
+
+              {/* Browse Files Button - shown when runId exists */}
+              {runId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => onBrowseFiles?.(runId)}
+                >
+                  <FolderOpen className="w-3 h-3 mr-1" />
+                  Browse Files
+                </Button>
+              )}
             </div>
           )}
         </div>
