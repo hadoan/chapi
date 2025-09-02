@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Environments.Application;
 using Environments.Application.Dtos;
@@ -6,6 +7,7 @@ namespace Environments.Controllers;
 
 [ApiController]
 [Route("api/environments/{environmentId:guid}/secrets")]
+[Authorize]
 public class EnvironmentSecretsController : ControllerBase
 {
     private readonly ISecretAppService _service;

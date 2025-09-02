@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Orchestration.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Orchestration.Controllers;
 
 [ApiController]
 [Route("api/orchestration")]
+[Authorize]
 public class OrchestrationController : ControllerBase
 {
     private readonly IOrchestrationAppService _service;

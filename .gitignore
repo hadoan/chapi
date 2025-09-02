@@ -35,7 +35,7 @@ public/build/
 *.tsbuildinfo
 
 # Editors and IDEs
-.vscode/
+# .vscode/ - VS Code settings are shared for team development
 *.code-workspace
 .idea/
 *.sln.iml

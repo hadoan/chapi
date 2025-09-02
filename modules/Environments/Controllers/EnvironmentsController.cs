@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Environments.Application;
 using Environments.Application.Dtos;
@@ -9,6 +10,7 @@ namespace Environments.Controllers;
 
 [ApiController]
 [Route("api/environments")]
+[Authorize]
 public class EnvironmentsController : ControllerBase
 {
     private readonly IEnvironmentAppService _service;
@@ -75,9 +77,9 @@ public class EnvironmentsController : ControllerBase
         var env = await _service.GetByIdAsync(id, ct);
         if (env == null) return NotFound();
 
-    var client = _httpFactory.CreateClient();
-    var timeoutMs = (env.TimeoutMs > 0) ? env.TimeoutMs : 30000;
-    client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
+        var client = _httpFactory.CreateClient();
+        var timeoutMs = (env.TimeoutMs > 0) ? env.TimeoutMs : 30000;
+        client.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
 
         var req = new HttpRequestMessage(HttpMethod.Get, env.BaseUrl ?? string.Empty);
         if (env.Headers != null)
@@ -98,7 +100,8 @@ public class EnvironmentsController : ControllerBase
             var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
             sw.Stop();
 
-            return Ok(new {
+            return Ok(new
+            {
                 ok = resp.IsSuccessStatusCode,
                 status = (int)resp.StatusCode,
                 reason = resp.ReasonPhrase,

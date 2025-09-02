@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Chapi.ApiSpecs.Application;
 
 namespace Chapi.ApiSpecs.HttpApi.Controllers;
 
 [Route("api/projects/{projectId:guid}/openapi")]
+[Authorize]
 public class ApiSpecsController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private readonly IApiSpecAppService _svc;

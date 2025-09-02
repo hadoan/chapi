@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Policies.Application.Requests;
 using Policies.Application.Services;
@@ -6,6 +7,7 @@ namespace Policies.Controllers;
 
 [ApiController]
 [Route("api/policies")]
+[Authorize]
 public class PoliciesController : ControllerBase
 {
     private readonly IPolicyService _service;

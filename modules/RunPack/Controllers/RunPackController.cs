@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RunPack.Application.Requests;
 using RunPack.Application.Services;
@@ -6,6 +7,7 @@ namespace RunPack.Controllers;
 
 [ApiController]
 [Route("api/runpacks")]
+[Authorize]
 public class RunPackController : ControllerBase
 {
     private readonly IRunPackAppService _service;

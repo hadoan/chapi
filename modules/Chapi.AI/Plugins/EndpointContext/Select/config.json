@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "description": "Select task-relevant endpoints from an allowed list.",
+  "execution_settings": {
+    "gpt-4o": {
+      "model_id": "gpt-4o",
+      "service_id": "gpt-4o",
+      "temperature": 0.1,
+      "max_tokens": 1200
+    }
+  },
+  "input_variables": [
+    { "name": "user_query", "required": true },
+    { "name": "allowed_ops", "required": true },
+    { "name": "hints", "required": false }
+  ]
+}

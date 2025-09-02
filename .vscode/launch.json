@@ -1,0 +1,79 @@
+{
+  // Shared VS Code debugging configurations for Chapi.API
+  // These configurations help team members debug the application consistently
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Chapi.API (HTTP - Port 5066)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/apps/backend/Chapi.Api/bin/Debug/net9.0/Chapi.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/apps/backend/Chapi.Api",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5066"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Launch Chapi.API (HTTPS - Port 7199)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/apps/backend/Chapi.Api/bin/Debug/net9.0/Chapi.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/apps/backend/Chapi.Api",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7199;http://localhost:5066"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Launch Chapi.API (Skip DB)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/apps/backend/Chapi.Api/bin/Debug/net9.0/Chapi.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/apps/backend/Chapi.Api",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5066",
+        "SKIP_DATABASE_MIGRATION": "true"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Attach to Chapi.API",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

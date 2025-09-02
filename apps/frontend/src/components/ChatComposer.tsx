@@ -27,9 +27,10 @@ const slashCommands = [
 interface ChatComposerProps {
   onCommandSelect?: (command: string) => void;
   onMenuOpen?: () => void;
+  onMessageSend?: (message: string) => void;
 }
 
-export const ChatComposer = ({ onCommandSelect, onMenuOpen }: ChatComposerProps) => {
+export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: ChatComposerProps) => {
   const [message, setMessage] = useState("");
   const [showSlashMenu, setShowSlashMenu] = useState(false);
 
@@ -51,9 +52,11 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen }: ChatComposerProps)
     if (message.trim()) {
       if (message.startsWith('/')) {
         onCommandSelect?.(message);
+      } else {
+        // non-slash message: notify parent to handle (e.g., call LLM)
+        onMessageSend?.(message);
       }
-      // Mock sending message
-      console.log("Sending:", message);
+
       setMessage("");
     }
   };

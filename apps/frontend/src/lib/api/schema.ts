@@ -48,6 +48,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -84,6 +98,20 @@ export interface paths {
                         "application/json": components["schemas"]["Chapi.ApiSpecs.Application.ApiSpecDto"][];
                         "text/json": components["schemas"]["Chapi.ApiSpecs.Application.ApiSpecDto"][];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -131,6 +159,20 @@ export interface paths {
                         "application/json": components["schemas"]["Chapi.ApiSpecs.Application.ApiSpecDto"];
                         "text/json": components["schemas"]["Chapi.ApiSpecs.Application.ApiSpecDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -285,6 +327,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Not Found - Resource does not exist */
                 404: {
                     headers: {
@@ -324,6 +380,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -352,6 +422,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -412,6 +496,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -453,6 +551,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -502,6 +614,13 @@ export interface paths {
                 };
                 /** @description Invalid date range */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -567,6 +686,13 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Access denied */
                 403: {
                     headers: {
@@ -622,6 +748,13 @@ export interface paths {
                 };
                 /** @description Invalid parameters */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -685,6 +818,13 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Access denied */
                 403: {
                     headers: {
@@ -741,6 +881,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -850,6 +1004,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -885,6 +1053,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Api.Controllers.EmailServiceHealth"];
                         "text/json": components["schemas"]["ShipMvp.Api.Controllers.EmailServiceHealth"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -1023,6 +1205,20 @@ export interface paths {
                         "text/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -1054,6 +1250,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1095,6 +1305,20 @@ export interface paths {
                         "application/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
                         "text/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"][];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -1141,6 +1365,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -1177,6 +1415,20 @@ export interface paths {
                         "application/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"];
                         "text/json": components["schemas"]["Environments.Application.Dtos.EnvironmentDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -1222,6 +1474,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         post?: never;
@@ -1238,6 +1504,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1279,6 +1559,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1336,6 +1630,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -1383,6 +1691,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1442,6 +1764,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -1471,6 +1807,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1523,6 +1873,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Application.Files.FileDto"];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Not Found - Resource does not exist */
                 404: {
                     headers: {
@@ -1548,6 +1912,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1592,6 +1970,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Application.Files.FileListDto"];
                         "text/json": components["schemas"]["ShipMvp.Application.Files.FileListDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -1641,6 +2033,20 @@ export interface paths {
                         "application/json": string;
                         "text/json": string;
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -1789,6 +2195,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Application.Integrations.IntegrationDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -1821,6 +2241,20 @@ export interface paths {
                 };
                 /** @description Invalid request */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1871,6 +2305,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Application.Integrations.IntegrationDto"];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Integration not found */
                 404: {
                     headers: {
@@ -1916,6 +2364,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Integration not found */
                 404: {
                     headers: {
@@ -1945,6 +2407,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Integration not found */
                 404: {
                     headers: {
@@ -1969,6 +2445,20 @@ export interface paths {
             responses: {
                 /** @description Integration exists */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2016,6 +2506,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Application.Integrations.IntegrationDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -2056,6 +2560,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Application.Integrations.IntegrationDto"];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description Integration not found */
                 404: {
                     headers: {
@@ -2067,6 +2585,56 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Dto.ApiTestGenerateRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Dto.ApiTestGenerateRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Dto.ApiTestGenerateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+                        "application/json": components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+                        "text/json": components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2105,6 +2673,20 @@ export interface paths {
                         "text/json": components["schemas"]["Projects.Application.Dtos.ProjectDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -2136,6 +2718,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2177,6 +2773,20 @@ export interface paths {
                         "application/json": components["schemas"]["Projects.Application.Dtos.ProjectDto"];
                         "text/json": components["schemas"]["Projects.Application.Dtos.ProjectDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -2222,6 +2832,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         post?: never;
@@ -2238,6 +2862,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2283,6 +2921,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2334,6 +2986,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -2380,6 +3046,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -2418,6 +3098,66 @@ export interface paths {
                         "application/json": components["schemas"]["Projects.Application.Dtos.ProjectDto"];
                         "text/json": components["schemas"]["Projects.Application.Dtos.ProjectDto"];
                     };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/run-pack/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -2612,6 +3352,20 @@ export interface paths {
                         "text/json": components["schemas"]["ShipMvp.Core.ApiResponse`1[[ShipMvp.Application.Subscriptions.UserSubscriptionDto, ShipMvp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -2649,6 +3403,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Core.ApiResponse`1[[ShipMvp.Application.Subscriptions.SubscriptionUsageDto, ShipMvp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"];
                         "text/json": components["schemas"]["ShipMvp.Core.ApiResponse`1[[ShipMvp.Application.Subscriptions.SubscriptionUsageDto, ShipMvp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -2698,6 +3466,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2754,6 +3536,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -2805,6 +3601,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -2842,6 +3652,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Core.ApiResponse`1[[ShipMvp.Api.Controllers.CanUseFeatureResponse, ShipMvp.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"];
                         "text/json": components["schemas"]["ShipMvp.Core.ApiResponse`1[[ShipMvp.Api.Controllers.CanUseFeatureResponse, ShipMvp.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -2885,6 +3709,20 @@ export interface paths {
                         "text/json": components["schemas"]["Suites.Application.Dtos.SuiteDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -2916,6 +3754,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2961,6 +3813,20 @@ export interface paths {
                         "text/json": number;
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -2999,6 +3865,20 @@ export interface paths {
                         "application/json": components["schemas"]["Suites.Application.Dtos.SuiteDto"];
                         "text/json": components["schemas"]["Suites.Application.Dtos.SuiteDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -3044,6 +3924,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         post?: never;
@@ -3060,6 +3954,20 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3110,6 +4018,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;
@@ -3151,6 +4073,20 @@ export interface paths {
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3244,6 +4180,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Application.Identity.UserDto"][];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         put?: never;
@@ -3278,6 +4228,20 @@ export interface paths {
                 };
                 /** @description Invalid user data */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3330,6 +4294,20 @@ export interface paths {
                         "application/json": components["schemas"]["ShipMvp.Application.Identity.UserDto"];
                     };
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description User not found */
                 404: {
                     headers: {
@@ -3378,6 +4356,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description User not found */
                 404: {
                     headers: {
@@ -3406,6 +4398,20 @@ export interface paths {
             responses: {
                 /** @description User deleted successfully */
                 204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3473,6 +4479,20 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description User not found */
                 404: {
                     headers: {
@@ -3524,6 +4544,20 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["ShipMvp.Application.Identity.UserDto"];
                     };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 /** @description User not found */
                 404: {
@@ -3584,6 +4618,33 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "Chapi.AI.Controllers.RunPackController.GenerateRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+            userQuery?: string | null;
+            env?: string | null;
+        };
+        "Chapi.AI.Dto.ApiTestGenerateRequest": {
+            user_query?: string | null;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: int32 */
+            max_files?: number | null;
+            openApiJson?: string | null;
+        };
+        "Chapi.AI.Dto.ChapiCard": {
+            role?: string | null;
+            heading?: string | null;
+            plan?: string[] | null;
+            files?: components["schemas"]["Chapi.AI.Dto.FileEntry"][] | null;
+            actions?: string[] | null;
+        };
+        "Chapi.AI.Dto.FileEntry": {
+            path?: string | null;
+            /** Format: int32 */
+            addedLines?: number;
+        };
         "Chapi.ApiSpecs.Application.ApiSpecDto": {
             /** Format: uuid */
             id?: string;

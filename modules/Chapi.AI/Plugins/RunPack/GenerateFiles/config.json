@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "description": "Generate file content for bash test files based on manifest; return structured file content without tool calls.",
+  "type": "completion",
+  "execution_settings": {
+    "gpt-4o": {
+      "model_id": "gpt-4o",
+      "service_id": "gpt-4o",
+      "temperature": 0.15,
+      "top_p": 1,
+      "max_tokens": 2000
+    },
+    "default": {
+      "temperature": 0.15,
+      "top_p": 1,
+      "max_tokens": 2000
+    }
+  },
+  "input_variables": [
+    {
+      "name": "files_manifest",
+      "description": "List of file paths to create (e.g., '- tests/email-service/auth.sh')",
+      "required": true
+    },
+    {
+      "name": "file_roles_json",
+      "description": "JSON object mapping file paths to roles (AUTH, SMOKE, CRUD)",
+      "required": true
+    },
+    {
+      "name": "role_contexts_json",
+      "description": "JSON object mapping each role to its compact endpoint context",
+      "required": true
+    },
+    {
+      "name": "env",
+      "description": "Target environment: local | staging | prod",
+      "required": true
+    }
+  ],
+  "output_example": {
+    "files": [
+      {
+        "path": "tests/user-service/smoke.sh",
+        "content": "#!/usr/bin/env bash\\nset -euo pipefail\\n\\nBASE_URL=\"http://localhost:8080\"\\n\\n# Test 1: GET /api/users should return 200\\nresponse=$(curl -sS --max-time 15 -o /dev/null -w \"%{http_code}\" \"${BASE_URL}/api/users\")\\nif [ \"$response\" = \"200\" ]; then\\n  echo \"PASS: GET /api/users returned $response\"\\nelse\\n  echo \"FAIL: GET /api/users returned $response (expected 200)\"\\n  exit 1\\nfi\\n\\necho \"All smoke tests passed!\"",
+        "role": "SMOKE",
+        "size": 387
+      }
+    ],
+    "summary": "Generated test files for API testing",
+    "total_files": 1
+  }
+}
