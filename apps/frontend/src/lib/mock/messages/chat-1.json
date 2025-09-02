@@ -6,6 +6,7 @@
   {
     "role": "assistant", 
     "content": "I'll generate comprehensive smoke tests for your user service API. Let me analyze the endpoints and create tests that cover the critical paths.",
+    "runId": "test-run-123",
     "cards": [
       {
         "type": "plan",
@@ -40,6 +41,7 @@
   {
     "role": "assistant",
     "content": "Running your user service tests in staging environment...",
+    "runId": "staging-run-456",
     "cards": [
       {
         "type": "run",

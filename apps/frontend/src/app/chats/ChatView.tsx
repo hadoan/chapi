@@ -11,6 +11,7 @@ import {
 import { CommandPalette } from '@/components/CommandPalette';
 import { HistoryList } from '@/components/HistoryList';
 import { RightDrawer } from '@/components/RightDrawer';
+import { RunPackFileBrowser } from '@/components/RunPackFileBrowser';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -56,6 +57,8 @@ export default function ChatView() {
     mockMessages as MessageModel[]
   );
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
+  const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState<string>('');
 
   type LlmMessage = MessageModel & {
     llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
@@ -317,6 +320,11 @@ All smoke tests are passing. Ready to merge!`,
       console.error('Run in cloud failed', err);
       toast({ title: 'Failed to start cloud run' });
     }
+  };
+
+  const browseFiles = (runId: string) => {
+    setSelectedRunId(runId);
+    setFileBrowserOpen(true);
   };
 
   const downloadRunPack = async (messageModel: MessageModel) => {
@@ -624,6 +632,8 @@ All smoke tests are passing. Ready to merge!`,
                           content={message.content}
                           cards={message.cards as Card[]}
                           buttons={message.buttons as CmdButton[]}
+                          runId={message.runId}
+                          onBrowseFiles={browseFiles}
                           onButtonClick={async (label: string) => {
                             // MessageModel may include original llmCard under .llmCard
                             const llmCard = (
@@ -761,6 +771,14 @@ All smoke tests are passing. Ready to merge!`,
             open={showCommandPalette}
             onOpenChange={setShowCommandPalette}
             onCommandSelect={handleCommandSelect}
+          />
+
+          {/* Run Pack File Browser */}
+          <RunPackFileBrowser
+            isOpen={fileBrowserOpen}
+            onClose={() => setFileBrowserOpen(false)}
+            runId={selectedRunId}
+            runPackName={`Run Pack ${selectedRunId.substring(0, 8)}...`}
           />
         </div>
       </div>

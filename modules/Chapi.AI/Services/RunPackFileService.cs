@@ -30,6 +30,12 @@ namespace Chapi.AI.Services
             string? specificFile = null,
             CancellationToken cancellationToken = default);
 
+        Task UpdateRunPackFileAsync(
+            Guid runId,
+            string filePath,
+            string content,
+            CancellationToken cancellationToken = default);
+
         Task DeleteRunPackFileAsync(
             Guid runId,
             CancellationToken cancellationToken = default);
@@ -304,9 +310,48 @@ namespace Chapi.AI.Services
             }
         }
 
+        public async Task UpdateRunPackFileAsync(
+            Guid runId,
+            string filePath,
+            string content,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("=== Updating RunPack File ===");
+            _logger.LogInformation("RunId: {RunId}, FilePath: {FilePath}", runId, filePath);
+
+            try
+            {
+                if (!_runPackMetadata.TryGetValue(runId, out var runInfo))
+                {
+                    throw new FileNotFoundException($"RunPack not found: {runId}");
+                }
+
+                // Check if the file exists in the run pack
+                if (!runInfo.GeneratedFiles.Contains(filePath))
+                {
+                    throw new FileNotFoundException($"File not found in RunPack: {filePath}");
+                }
+
+                // Upload the updated content to storage
+                var containerName = CONTAINER_NAME;
+                var fullFileName = $"{runInfo.ProjectPath}/{filePath}";
+                var contentType = GetContentType(filePath);
+
+                using var contentStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+                await _fileStorageService.UploadAsync(containerName, fullFileName, contentStream, contentType, false, cancellationToken);
+
+                _logger.LogInformation("✓ File updated successfully: {FilePath}", filePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error updating RunPack file: {RunId}, FilePath: {FilePath}", runId, filePath);
+                throw;
+            }
+        }
+
         public async Task DeleteRunPackFileAsync(
-        Guid runId,
-        CancellationToken cancellationToken = default)
+            Guid runId,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("=== Deleting RunPack ===");
             _logger.LogInformation("RunId: {RunId}", runId);

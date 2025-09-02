@@ -27,6 +27,7 @@ namespace Chapi.AI.Controllers
         }
 
         public record GenerateRequest(Guid ProjectId, ChapiCard Card, string UserQuery, string Env = "local");
+        public record UpdateFileRequest(string FilePath, string Content);
 
         [HttpPost("generate")]
         public async Task<IActionResult> Generate([FromBody] GenerateRequest body)
@@ -103,6 +104,25 @@ namespace Chapi.AI.Controllers
             {
                 _logger.LogError(ex, "Error downloading RunPack: {RunId}, File: {File}", runId, file);
                 return StatusCode(500, new { error = "Failed to download RunPack" });
+            }
+        }
+
+        [HttpPut("runs/{runId}/files")]
+        public async Task<IActionResult> UpdateRunPackFile(Guid runId, [FromBody] UpdateFileRequest request)
+        {
+            try
+            {
+                await _fileService.UpdateRunPackFileAsync(runId, request.FilePath, request.Content);
+                return Ok(new { message = "File updated successfully" });
+            }
+            catch (FileNotFoundException)
+            {
+                return NotFound(new { error = "RunPack or file not found" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating RunPack file: {RunId}, File: {FilePath}", runId, request.FilePath);
+                return StatusCode(500, new { error = "Failed to update file" });
             }
         }
 
