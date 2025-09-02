@@ -1,43 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { HistoryList } from '@/components/HistoryList';
+import { AppSidebar } from '@/components/AppSidebar';
+import { ChatComposer } from '@/components/ChatComposer';
 import {
   ChatMessage,
-  MessageCard,
   MessageButton,
+  MessageCard,
   MessageModel,
 } from '@/components/ChatMessage';
-import { ChatComposer } from '@/components/ChatComposer';
-import { RightDrawer } from '@/components/RightDrawer';
 import { CommandPalette } from '@/components/CommandPalette';
-import { AppSidebar } from '@/components/AppSidebar';
+import { HistoryList } from '@/components/HistoryList';
+import { RightDrawer } from '@/components/RightDrawer';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  MessageSquare,
-  ChevronDown,
-  Settings,
-  User,
-  LogOut,
-  Sun,
-  Moon,
-} from 'lucide-react';
-import mockMessages from '@/lib/mock/messages/chat-1.json';
-import { projectsApi, ProjectDto } from '@/lib/api/projects';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { toast } from '@/hooks/use-toast';
+import { EnvironmentDto, environmentsApi } from '@/lib/api/environments';
 import { llmsApi } from '@/lib/api/llms';
+import { ProjectDto, projectsApi } from '@/lib/api/projects';
 import { runPacksApi } from '@/lib/api/run-packs';
-import { environmentsApi, EnvironmentDto } from '@/lib/api/environments';
 import type { components } from '@/lib/api/schema';
+import mockMessages from '@/lib/mock/messages/chat-1.json';
+import {
+  ChevronDown,
+  LogOut,
+  MessageSquare,
+  Moon,
+  Settings,
+  Sun,
+  User,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type Card = MessageCard;
 type CmdButton = MessageButton;
@@ -59,7 +57,9 @@ export default function ChatView() {
   );
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
 
-  type LlmMessage = MessageModel & { llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'] };
+  type LlmMessage = MessageModel & {
+    llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
+  };
 
   const executeCommand = async (command: string): Promise<MessageModel> => {
     const baseResponse: {
@@ -150,17 +150,24 @@ export default function ChatView() {
         const card = await llmsApi.generate(req);
 
         // Build a simple assistant response from the returned ChapiCard
-        const assistantContent = card.heading ?? (card.plan ? card.plan.join('\n') : undefined) ?? JSON.stringify(card);
+        const assistantContent =
+          card.heading ??
+          (card.plan ? card.plan.join('\n') : undefined) ??
+          JSON.stringify(card);
 
         const diffCard = card.files
-          ? [
+          ? ([
               {
                 type: 'diff',
                 title: card.heading ?? 'Generated Tests',
-                files: card.files.map(f => ({ path: f.path ?? '', change: 'added' as const, lines: f.addedLines ?? 0 })),
+                files: card.files.map(f => ({
+                  path: f.path ?? '',
+                  change: 'added' as const,
+                  lines: f.addedLines ?? 0,
+                })),
               },
-            ] as Card[]
-          : [] as Card[];
+            ] as Card[])
+          : ([] as Card[]);
 
         return {
           role: 'assistant',
@@ -287,11 +294,7 @@ All smoke tests are passing. Ready to merge!`,
 
     const userMessage: MessageModel = { role: 'user', content: command };
 
-    setMessages(prev => [
-      ...prev,
-      userMessage,
-      assistantResponse,
-    ]);
+    setMessages(prev => [...prev, userMessage, assistantResponse]);
 
     // Show drawer for certain commands
     if (
@@ -326,24 +329,44 @@ All smoke tests are passing. Ready to merge!`,
         // Mark the message's buttons as loading
         setMessages(prev => {
           const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & { buttons?: Array<{ label: string; variant: string; loading?: boolean }> };
-          m.buttons = [{ label: 'Downloading...', variant: 'secondary', loading: true }];
+          const m = { ...copy[idx] } as LlmMessage & {
+            buttons?: Array<{
+              label: string;
+              variant: string;
+              loading?: boolean;
+            }>;
+          };
+          m.buttons = [
+            { label: 'Downloading...', variant: 'secondary', loading: true },
+          ];
           copy[idx] = m;
           return copy;
         });
-
       }
 
-      // Call run-packs API which returns a blob
+      // Call run-packs API which returns a blob and runId
       const lm = messageModel as LlmMessage;
-      const blob = await runPacksApi.generate({
+      const result = await runPacksApi.generate({
         projectId: selectedProject?.id ?? '',
-        card: lm.llmCard ?? (messageModel as unknown as components['schemas']['Chapi.AI.Controllers.RunPackController.GenerateRequest']),
+        card:
+          lm.llmCard ??
+          (messageModel as unknown as components['schemas']['Chapi.AI.Controllers.RunPackController.GenerateRequest']),
         userQuery: messageModel.content,
         env: selectedEnv ?? 'local',
       });
 
-      const url = URL.createObjectURL(blob);
+      // Store runId in the message for future reference
+      if (idx >= 0 && result.runId) {
+        setMessages(prev => {
+          const copy = [...prev];
+          const m = { ...copy[idx] } as LlmMessage & { runId?: string };
+          m.runId = result.runId;
+          copy[idx] = m;
+          return copy;
+        });
+      }
+
+      const url = URL.createObjectURL(result.blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'chapi-run-pack.zip';
@@ -351,7 +374,9 @@ All smoke tests are passing. Ready to merge!`,
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast({ title: 'Run pack downloaded' });
+      toast({
+        title: `Run pack downloaded (ID: ${result.runId.substring(0, 8)}...)`,
+      });
     } catch (err) {
       console.error('Download failed', err);
       toast({ title: 'Failed to download run pack' });
@@ -361,7 +386,9 @@ All smoke tests are passing. Ready to merge!`,
         // Restore buttons (remove loading)
         setMessages(prev => {
           const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & { buttons?: Array<{ label: string; variant: string }> };
+          const m = { ...copy[idx] } as LlmMessage & {
+            buttons?: Array<{ label: string; variant: string }>;
+          };
           // If llmCard exists, restore the original action buttons
           const hasLl = !!m.llmCard;
           m.buttons = hasLl
@@ -383,7 +410,9 @@ All smoke tests are passing. Ready to merge!`,
       toast({ title: 'Adding negative tests...' });
       // Reuse llms.generate with an augmented prompt to ask for negatives
       const req = {
-        user_query: `${selectedProject?.name ?? ''} Add 3 negative tests for the generated suite`,
+        user_query: `${
+          selectedProject?.name ?? ''
+        } Add 3 negative tests for the generated suite`,
         projectId: selectedProject?.id ?? '',
         max_files: 3,
         openApiJson: null,
@@ -398,13 +427,19 @@ All smoke tests are passing. Ready to merge!`,
               {
                 type: 'diff',
                 title: negCard.heading ?? 'Negative Tests',
-          files: negCard.files.map((f: { path?: string; addedLines?: number }) => ({ path: f.path ?? '', change: 'added' as const, lines: f.addedLines ?? 0 })),
+                files: negCard.files.map(
+                  (f: { path?: string; addedLines?: number }) => ({
+                    path: f.path ?? '',
+                    change: 'added' as const,
+                    lines: f.addedLines ?? 0,
+                  })
+                ),
               },
             ]
           : undefined,
       };
 
-  setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, assistantMessage]);
       toast({ title: 'Negative tests added' });
     } catch (err) {
       console.error('Add negatives failed', err);
@@ -591,10 +626,16 @@ All smoke tests are passing. Ready to merge!`,
                           buttons={message.buttons as CmdButton[]}
                           onButtonClick={async (label: string) => {
                             // MessageModel may include original llmCard under .llmCard
-                            const llmCard = (message as unknown as { llmCard?: import('@/lib/api/llms').ChapiCard }).llmCard;
+                            const llmCard = (
+                              message as unknown as {
+                                llmCard?: import('@/lib/api/llms').ChapiCard;
+                              }
+                            ).llmCard;
                             if (label === 'Run in Cloud') await runInCloud();
-                            if (label === 'Download Run Pack') await downloadRunPack(message as MessageModel);
-                            if (label === 'Add Negatives') await addNegatives(message as MessageModel);
+                            if (label === 'Download Run Pack')
+                              await downloadRunPack(message as MessageModel);
+                            if (label === 'Add Negatives')
+                              await addNegatives(message as MessageModel);
                           }}
                         />
                       </div>
@@ -622,12 +663,24 @@ All smoke tests are passing. Ready to merge!`,
                       };
 
                       // Create messages: user + loading placeholder
-                      const userMessage: MessageModel = { role: 'user', content: msg };
-                      const loadingMessage: MessageModel = { role: 'assistant', content: 'Generating...', cards: [], buttons: [] };
+                      const userMessage: MessageModel = {
+                        role: 'user',
+                        content: msg,
+                      };
+                      const loadingMessage: MessageModel = {
+                        role: 'assistant',
+                        content: 'Generating...',
+                        cards: [],
+                        buttons: [],
+                      };
 
                       // Capture current length and append user + loading so we can replace loading later
                       const currentLength = messages.length;
-                      setMessages(prev => [...prev, userMessage, loadingMessage]);
+                      setMessages(prev => [
+                        ...prev,
+                        userMessage,
+                        loadingMessage,
+                      ]);
 
                       const loadingIndex = currentLength + 1; // index where loadingMessage was appended
 
@@ -637,19 +690,28 @@ All smoke tests are passing. Ready to merge!`,
 
                         const assistantMessage: MessageModel = {
                           role: 'assistant',
-                          content: card.heading ?? (card.plan ? card.plan.join('\n') : ''),
+                          content:
+                            card.heading ??
+                            (card.plan ? card.plan.join('\n') : ''),
                           cards: card.files
                             ? [
                                 {
                                   type: 'diff',
                                   title: card.heading ?? 'Generated Tests',
-                                  files: card.files.map(f => ({ path: f.path ?? '', change: 'added' as const, lines: f.addedLines ?? 0 })),
+                                  files: card.files.map(f => ({
+                                    path: f.path ?? '',
+                                    change: 'added' as const,
+                                    lines: f.addedLines ?? 0,
+                                  })),
                                 },
                               ]
                             : undefined,
                           buttons: [
                             { label: 'Run in Cloud', variant: 'primary' },
-                            { label: 'Download Run Pack', variant: 'secondary' },
+                            {
+                              label: 'Download Run Pack',
+                              variant: 'secondary',
+                            },
                             { label: 'Add Negatives', variant: 'secondary' },
                           ],
                           llmCard: card,
@@ -674,7 +736,12 @@ All smoke tests are passing. Ready to merge!`,
                         setMessages(prev => {
                           const copy = [...prev];
                           if (loadingIndex >= 0 && loadingIndex < copy.length) {
-                            copy[loadingIndex] = { role: 'assistant', content: 'Failed to generate response', cards: [], buttons: [] };
+                            copy[loadingIndex] = {
+                              role: 'assistant',
+                              content: 'Failed to generate response',
+                              cards: [],
+                              buttons: [],
+                            };
                           }
                           return copy;
                         });
