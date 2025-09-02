@@ -94,3 +94,4 @@ appsettings.*.Local.json
 
 # Ensure nested node modules inside subprojects are ignored as well
 **/node_modules/
+apps/backend/Chapi.Api/gcp-credential.json

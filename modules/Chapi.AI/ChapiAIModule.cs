@@ -24,6 +24,11 @@ public class ChapiAIModule : IModule
         services.AddScoped<RunPackService>();
         services.AddScoped<EndpointSelectorService>();
 
+        // Register new refactored services
+        services.AddScoped<IEndpointAnalysisService, EndpointAnalysisService>();
+        services.AddScoped<IRunPackFileService, RunPackFileService>();
+        services.AddScoped<IRunPackGenerationService, RunPackGenerationService>();
+
         // Register RunPackPlugin as scoped so each request gets its own instance
         services.AddScoped<Chapi.AI.Plugins.RunPack.RunPackPlugin>();
 
