@@ -83,49 +83,41 @@ namespace Chapi.AI.Controllers
             }
         }
 
-        [HttpGet("files/{fileId}")]
-        public async Task<IActionResult> DownloadRunPackFile(Guid fileId)
+        [HttpGet("runs/{runId}")]
+        public async Task<IActionResult> DownloadRunPack(Guid runId, [FromQuery] string? file = null)
         {
             try
             {
-                var downloadResult = await _fileService.DownloadRunPackFileAsync(fileId);
-                return File(downloadResult.FileStream, downloadResult.MimeType, downloadResult.FileName);
-            }
-            catch (FileNotFoundException)
-            {
-                return NotFound(new { error = "RunPack file not found" });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
+                var fileContent = await _fileService.DownloadRunPackFileAsync(runId, file);
+                if (fileContent == null)
+                {
+                    return NotFound(new { error = "RunPack not found" });
+                }
+
+                var fileName = string.IsNullOrEmpty(file) ? $"runpack-{runId}.zip" : file;
+                var contentType = string.IsNullOrEmpty(file) ? "application/zip" : "application/octet-stream";
+
+                return File(fileContent, contentType, fileName);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error downloading RunPack file: {FileId}", fileId);
-                return StatusCode(500, new { error = "Failed to download RunPack file" });
+                _logger.LogError(ex, "Error downloading RunPack: {RunId}, File: {File}", runId, file);
+                return StatusCode(500, new { error = "Failed to download RunPack" });
             }
         }
 
-        [HttpDelete("files/{fileId}")]
-        public async Task<IActionResult> DeleteRunPackFile(Guid fileId)
+        [HttpDelete("runs/{runId}")]
+        public async Task<IActionResult> DeleteRunPack(Guid runId)
         {
             try
             {
-                await _fileService.DeleteRunPackFileAsync(fileId);
-                return Ok(new { message = "RunPack file deleted successfully" });
-            }
-            catch (FileNotFoundException)
-            {
-                return NotFound(new { error = "RunPack file not found" });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
+                await _fileService.DeleteRunPackFileAsync(runId);
+                return Ok(new { message = "RunPack deleted successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting RunPack file: {FileId}", fileId);
-                return StatusCode(500, new { error = "Failed to delete RunPack file" });
+                _logger.LogError(ex, "Error deleting RunPack: {RunId}", runId);
+                return StatusCode(500, new { error = "Failed to delete RunPack" });
             }
         }
     }

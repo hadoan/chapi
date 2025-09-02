@@ -97,8 +97,8 @@ namespace Chapi.AI.Services
                 {
                     ZipData = zipData,
                     FileName = fileName,
-                    SavedFileId = fileResult.FileId,
-                    StoragePath = fileResult.StoragePath
+                    SavedFileId = fileResult.RunId,
+                    StoragePath = fileResult.ProjectPath
                 };
             }
             catch (Exception ex)

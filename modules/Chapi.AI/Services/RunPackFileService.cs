@@ -1,11 +1,13 @@
 using ShipMvp.Domain.Files;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.IO.Compression;
 
 namespace Chapi.AI.Services
 {
@@ -23,20 +25,22 @@ namespace Chapi.AI.Services
             int pageSize = 10,
             CancellationToken cancellationToken = default);
 
-        Task<RunPackFileDownloadResult> DownloadRunPackFileAsync(
-            Guid fileId,
+        Task<byte[]?> DownloadRunPackFileAsync(
+            Guid runId,
+            string? specificFile = null,
             CancellationToken cancellationToken = default);
 
         Task DeleteRunPackFileAsync(
-            Guid fileId,
+            Guid runId,
             CancellationToken cancellationToken = default);
     }
 
     public class RunPackFileResult
     {
-        public Guid FileId { get; set; }
-        public string StoragePath { get; set; } = "";
-        public string FileName { get; set; } = "";
+        public Guid RunId { get; set; }
+        public List<string> FilePaths { get; set; } = new();
+        public int FileCount { get; set; }
+        public string ProjectPath { get; set; } = "";
     }
 
     public class RunPackFileDownloadResult
@@ -56,13 +60,13 @@ namespace Chapi.AI.Services
 
     public class RunPackFileInfo
     {
-        public Guid Id { get; set; }
-        public string OriginalFileName { get; set; } = "";
-        public long Size { get; set; }
+        public Guid RunId { get; set; }
+        public Guid ProjectId { get; set; }
+        public string ProjectPath { get; set; } = "";
+        public int FileCount { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string? Tags { get; set; }
-        public string? ProjectId { get; set; }
-        public string? Environment { get; set; }
+        public string Environment { get; set; } = "";
+        public List<string> GeneratedFiles { get; set; } = new();
     }
 
     public class RunPackFileService : IRunPackFileService
@@ -73,10 +77,12 @@ namespace Chapi.AI.Services
 
         private const string CONTAINER_NAME = "chapi-runpacks";
 
-        public RunPackFileService(
-            IFileStorageService fileStorageService,
-            IFileRepository fileRepository,
-            ILogger<RunPackFileService> logger)
+        // Temporary in-memory storage for run pack metadata
+        // TODO: Replace with proper database persistence
+        private static readonly ConcurrentDictionary<Guid, RunPackFileInfo> _runPackMetadata = new(); public RunPackFileService(
+                IFileStorageService fileStorageService,
+                IFileRepository fileRepository,
+                ILogger<RunPackFileService> logger)
         {
             _fileStorageService = fileStorageService;
             _fileRepository = fileRepository;
@@ -89,58 +95,100 @@ namespace Chapi.AI.Services
             string environment,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("=== Saving RunPack to Storage ===");
-            _logger.LogInformation("ProjectId: {ProjectId}, Environment: {Environment}, Size: {Size} bytes",
+            _logger.LogInformation("=== Saving RunPack Files to Storage ===");
+            _logger.LogInformation("ProjectId: {ProjectId}, Environment: {Environment}, ZipSize: {Size} bytes",
                 projectId, environment, zipData.Length);
 
             try
             {
-                var fileId = Guid.NewGuid();
-                var fileName = $"runpack-{fileId}.zip";
+                var runId = Guid.NewGuid();
+                var projectPath = $"{projectId}/{runId}/generated-files";
+                var uploadedFiles = new List<string>();
 
-                // Upload to storage
+                _logger.LogInformation("Extracting ZIP and uploading individual files to: {ProjectPath}", projectPath);
+
+                // Extract ZIP and upload individual files
                 using var zipStream = new MemoryStream(zipData);
-                var storagePath = await _fileStorageService.UploadAsync(
-                    CONTAINER_NAME,
-                    fileName,
-                    zipStream,
-                    "application/zip",
-                    isPublic: false,
-                    cancellationToken);
+                using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
-                // Create file entity
-                var fileEntity = new ShipMvp.Domain.Files.File(
-                    fileId,
-                    CONTAINER_NAME,
-                    fileName,
-                    $"chapi-runpack-{projectId}-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip",
-                    "application/zip",
-                    zipData.Length,
-                    storagePath,
-                    null, // TODO: Get current user ID from authentication context
-                    isPublic: false);
+                foreach (var entry in archive.Entries)
+                {
+                    if (entry.Length == 0) continue; // Skip directories
 
-                // Set tags for easier searching
-                fileEntity.UpdateTags($"runpack,project:{projectId},env:{environment},generated:{DateTime.UtcNow:yyyy-MM-dd}");
+                    var filePath = $"{projectPath}/{entry.FullName}";
 
-                // Save to database
-                var savedFile = await _fileRepository.InsertAsync(fileEntity, cancellationToken);
+                    _logger.LogDebug("Uploading file: {FilePath} ({Size} bytes)", filePath, entry.Length);
 
-                _logger.LogInformation("✓ RunPack saved to storage: FileId={FileId}, StoragePath={StoragePath}",
-                    fileId, storagePath);
+                    // Read file content from ZIP entry
+                    using var entryStream = entry.Open();
+                    using var fileContent = new MemoryStream();
+                    await entryStream.CopyToAsync(fileContent, cancellationToken);
+                    fileContent.Position = 0;
+
+                    // Determine content type based on file extension
+                    var contentType = GetContentType(entry.Name);
+
+                    // Upload individual file to storage
+                    var storagePath = await _fileStorageService.UploadAsync(
+                        CONTAINER_NAME,
+                        filePath,
+                        fileContent,
+                        contentType,
+                        isPublic: false,
+                        cancellationToken);
+
+                    uploadedFiles.Add(filePath);
+                }
+
+                // Store metadata for this run pack
+                var runPackInfo = new RunPackFileInfo
+                {
+                    RunId = runId,
+                    ProjectId = projectId,
+                    ProjectPath = projectPath,
+                    FileCount = uploadedFiles.Count,
+                    CreatedAt = DateTime.UtcNow,
+                    Environment = environment,
+                    GeneratedFiles = uploadedFiles
+                };
+
+                _runPackMetadata[runId] = runPackInfo;
+
+                _logger.LogInformation("✓ RunPack saved successfully: RunId={RunId}, Files={FileCount}, Path={ProjectPath}",
+                    runId, uploadedFiles.Count, projectPath);
 
                 return new RunPackFileResult
                 {
-                    FileId = fileId,
-                    StoragePath = storagePath,
-                    FileName = fileEntity.OriginalFileName
+                    RunId = runId,
+                    FilePaths = uploadedFiles,
+                    FileCount = uploadedFiles.Count,
+                    ProjectPath = projectPath
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to save RunPack to storage");
+                _logger.LogError(ex, "❌ Failed to save RunPack files to storage");
                 throw;
             }
+        }
+
+        private static string GetContentType(string fileName)
+        {
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".json" => "application/json",
+                ".js" => "application/javascript",
+                ".ts" => "text/typescript",
+                ".py" => "text/x-python",
+                ".md" => "text/markdown",
+                ".txt" => "text/plain",
+                ".yml" or ".yaml" => "application/x-yaml",
+                ".xml" => "application/xml",
+                ".html" => "text/html",
+                ".css" => "text/css",
+                _ => "text/plain"
+            };
         }
 
         public async Task<RunPackFileListResult> GetRunPackFilesAsync(
@@ -153,37 +201,30 @@ namespace Chapi.AI.Services
             _logger.LogInformation("ProjectId: {ProjectId}, Page: {Page}, PageSize: {PageSize}",
                 projectId, page, pageSize);
 
+            await Task.CompletedTask; // For async signature consistency
+
             try
             {
-                var skip = (page - 1) * pageSize;
-
-                // Get files from the runpack container
-                var (files, totalCount) = await _fileRepository.GetPaginatedAsync(
-                    skip,
-                    pageSize,
-                    userId: null, // TODO: Filter by current user when auth is implemented
-                    containerName: CONTAINER_NAME,
-                    cancellationToken);
+                var allRunPacks = _runPackMetadata.Values.AsEnumerable();
 
                 // Filter by project if specified
                 if (projectId.HasValue)
                 {
-                    files = files.Where(f => f.Tags != null && f.Tags.Contains($"project:{projectId.Value}"));
-                    totalCount = files.Count();
+                    allRunPacks = allRunPacks.Where(rp => rp.ProjectId == projectId.Value);
                 }
+
+                // Apply pagination
+                var totalCount = allRunPacks.Count();
+                var skip = (page - 1) * pageSize;
+                var pagedRunPacks = allRunPacks
+                    .OrderByDescending(rp => rp.CreatedAt)
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .ToList();
 
                 var result = new RunPackFileListResult
                 {
-                    Files = files.Select(f => new RunPackFileInfo
-                    {
-                        Id = f.Id,
-                        OriginalFileName = f.OriginalFileName,
-                        Size = f.Size,
-                        CreatedAt = f.CreatedAt,
-                        Tags = f.Tags,
-                        ProjectId = ExtractProjectIdFromTags(f.Tags),
-                        Environment = ExtractEnvironmentFromTags(f.Tags)
-                    }),
+                    Files = pagedRunPacks,
                     TotalCount = totalCount,
                     CurrentPage = page,
                     PageSize = pageSize
@@ -198,79 +239,111 @@ namespace Chapi.AI.Services
             }
         }
 
-        public async Task<RunPackFileDownloadResult> DownloadRunPackFileAsync(
-            Guid fileId,
+        public async Task<byte[]?> DownloadRunPackFileAsync(
+            Guid runId,
+            string? specificFile = null,
             CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("=== Downloading RunPack File ===");
-            _logger.LogInformation("FileId: {FileId}", fileId);
+            _logger.LogInformation("RunId: {RunId}, SpecificFile: {SpecificFile}", runId, specificFile);
 
             try
             {
-                var file = await _fileRepository.GetByIdAsync(fileId, cancellationToken);
-                if (file == null || file.IsDeleted)
+                if (!_runPackMetadata.TryGetValue(runId, out var runInfo))
                 {
-                    throw new FileNotFoundException("RunPack file not found");
+                    _logger.LogWarning("RunPack not found: {RunId}", runId);
+                    return null;
                 }
 
-                // Ensure it's a runpack file
-                if (file.ContainerName != CONTAINER_NAME)
+                if (!string.IsNullOrEmpty(specificFile))
                 {
-                    throw new InvalidOperationException("Not a RunPack file");
+                    // Download specific file
+                    var containerName = CONTAINER_NAME;
+                    var fileName = $"{runInfo.ProjectPath}/{specificFile}";
+                    _logger.LogInformation("Downloading specific file: {FileName}", fileName);
+
+                    using var fileStream = await _fileStorageService.DownloadAsync(containerName, fileName, cancellationToken);
+                    using var memoryStream = new MemoryStream();
+                    await fileStream.CopyToAsync(memoryStream, cancellationToken);
+                    return memoryStream.ToArray();
                 }
-
-                // Download from storage
-                var fileStream = await _fileStorageService.DownloadAsync(
-                    file.ContainerName,
-                    file.FileName,
-                    cancellationToken);
-
-                return new RunPackFileDownloadResult
+                else
                 {
-                    FileStream = fileStream,
-                    FileName = file.OriginalFileName,
-                    MimeType = file.MimeType
-                };
+                    // Download all files as ZIP
+                    _logger.LogInformation("Creating ZIP from {FileCount} files", runInfo.GeneratedFiles.Count);
+                    using var zipStream = new MemoryStream();
+                    using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                    {
+                        foreach (var fileName in runInfo.GeneratedFiles)
+                        {
+                            var containerName = CONTAINER_NAME;
+                            var fullFileName = $"{runInfo.ProjectPath}/{fileName}";
+
+                            try
+                            {
+                                using var fileStream = await _fileStorageService.DownloadAsync(containerName, fullFileName, cancellationToken);
+                                var entry = zipArchive.CreateEntry(fileName);
+                                using var entryStream = entry.Open();
+                                await fileStream.CopyToAsync(entryStream, cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "File not found in storage: {FileName}", fullFileName);
+                            }
+                        }
+                    }
+
+                    _logger.LogInformation("✓ ZIP created successfully with {Size} bytes", zipStream.Length);
+                    return zipStream.ToArray();
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error downloading RunPack file: {FileId}", fileId);
-                throw;
+                _logger.LogError(ex, "❌ Error downloading run pack file. RunId: {RunId}, SpecificFile: {SpecificFile}", runId, specificFile);
+                return null;
             }
         }
 
         public async Task DeleteRunPackFileAsync(
-            Guid fileId,
-            CancellationToken cancellationToken = default)
+        Guid runId,
+        CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("=== Deleting RunPack File ===");
-            _logger.LogInformation("FileId: {FileId}", fileId);
+            _logger.LogInformation("=== Deleting RunPack ===");
+            _logger.LogInformation("RunId: {RunId}", runId);
 
             try
             {
-                var file = await _fileRepository.GetByIdAsync(fileId, cancellationToken);
-                if (file == null || file.IsDeleted)
+                if (!_runPackMetadata.TryGetValue(runId, out var runInfo))
                 {
-                    throw new FileNotFoundException("RunPack file not found");
+                    _logger.LogWarning("RunPack not found: {RunId}", runId);
+                    return;
                 }
 
-                // Ensure it's a runpack file
-                if (file.ContainerName != CONTAINER_NAME)
+                // Delete all individual files from storage
+                foreach (var fileName in runInfo.GeneratedFiles)
                 {
-                    throw new InvalidOperationException("Not a RunPack file");
+                    var containerName = CONTAINER_NAME;
+                    var fullFileName = $"{runInfo.ProjectPath}/{fileName}";
+                    try
+                    {
+                        await _fileStorageService.DeleteAsync(containerName, fullFileName, cancellationToken);
+                        _logger.LogDebug("Deleted file: {FileName}", fullFileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete file: {FileName}", fullFileName);
+                        // Continue deleting other files even if one fails
+                    }
                 }
 
-                // Delete from storage
-                await _fileStorageService.DeleteAsync(file.ContainerName, file.FileName, cancellationToken);
+                // Remove from metadata
+                _runPackMetadata.TryRemove(runId, out _);
 
-                // Soft delete from database
-                await _fileRepository.DeleteAsync(fileId, cancellationToken);
-
-                _logger.LogInformation("✓ RunPack file deleted successfully: {FileId}", fileId);
+                _logger.LogInformation("✓ RunPack deleted successfully: {RunId}", runId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error deleting RunPack file: {FileId}", fileId);
+                _logger.LogError(ex, "❌ Error deleting RunPack: {RunId}", runId);
                 throw;
             }
         }
