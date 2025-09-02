@@ -24,8 +24,11 @@ public class ChapiAIModule : IModule
         services.AddScoped<RunPackService>();
         services.AddScoped<EndpointSelectorService>();
 
-        // Register RunPackBuilder as a shared service
-        services.AddTransient<Chapi.AI.Utilities.RunPackBuilder>();
+        // Register RunPackPlugin as scoped so each request gets its own instance
+        services.AddScoped<Chapi.AI.Plugins.RunPack.RunPackPlugin>();
+
+        // Register RunPackBuilder as scoped so each request gets its own instance
+        services.AddScoped<Chapi.AI.Utilities.RunPackBuilder>();
 
         // Replace the default Semantic Kernel service with our custom one
         var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(ISemanticKernelService));
