@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
+import { chatApi, ConversationDto } from '@/lib/api/chat';
 import { EnvironmentDto, environmentsApi } from '@/lib/api/environments';
 import { llmsApi } from '@/lib/api/llms';
 import { ProjectDto, projectsApi } from '@/lib/api/projects';
@@ -51,11 +52,13 @@ export default function ChatView() {
   const [envOptions, setEnvOptions] = useState<EnvironmentDto[]>([]);
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [messages, setMessages] = useState<MessageModel[]>(
-    mockMessages as MessageModel[]
-  );
+  const [messages, setMessages] = useState<MessageModel[]>([]);
+  const [conversations, setConversations] = useState<ConversationDto[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
+  const [loadingConversations, setLoadingConversations] = useState(false);
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
   const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string>('');
@@ -292,12 +295,86 @@ All smoke tests are passing. Ready to merge!`,
   };
 
   const handleCommandSelect = async (command: string) => {
+    if (!selectedProject?.id) {
+      toast({ title: 'Please select a project first' });
+      return;
+    }
+
     // Simulate command execution
     const assistantResponse = await executeCommand(command);
 
     const userMessage: MessageModel = { role: 'user', content: command };
 
-    setMessages(prev => [...prev, userMessage, assistantResponse]);
+    try {
+      // If no current conversation, create a new one
+      if (!currentConversationId) {
+        const newConversation = await chatApi.createConversation({
+          title: command.substring(0, 50) + (command.length > 50 ? '...' : ''),
+          projectId: selectedProject.id,
+          firstUserMessage: command,
+        });
+
+        setCurrentConversationId(newConversation.id || null);
+
+        // The conversation is created with the first message, so we only need to add the assistant response
+        if (assistantResponse) {
+          await chatApi.appendMessage({
+            conversationId: newConversation.id || '',
+            role: assistantResponse.role,
+            content: assistantResponse.content,
+            cardType: assistantResponse.cards?.length ? 'generated' : undefined,
+            cardPayload: assistantResponse.cards?.length
+              ? JSON.stringify(assistantResponse.cards[0])
+              : undefined,
+          });
+        }
+
+        // Refresh the conversation list to show the new conversation with updated message count
+        await refreshConversations();
+      } else {
+        // Append to existing conversation - use batch append for both user and assistant messages
+        const messagesToAppend = [
+          {
+            conversationId: currentConversationId,
+            role: userMessage.role,
+            content: userMessage.content,
+            cardType: undefined,
+            cardPayload: undefined,
+          },
+        ];
+
+        if (assistantResponse) {
+          messagesToAppend.push({
+            conversationId: currentConversationId,
+            role: assistantResponse.role,
+            content: assistantResponse.content,
+            cardType: assistantResponse.cards?.length ? 'generated' : undefined,
+            cardPayload: assistantResponse.cards?.length
+              ? JSON.stringify(assistantResponse.cards[0])
+              : undefined,
+          });
+        }
+
+        await chatApi.appendMessages({
+          conversationId: currentConversationId,
+          messages: messagesToAppend,
+        });
+
+        // Refresh the conversation list to update the message count and last updated time
+        await refreshConversations();
+      }
+
+      // Update local state
+      setMessages(prev => [...prev, userMessage, assistantResponse]);
+    } catch (error) {
+      console.error('Failed to save conversation:', error);
+      toast({
+        title: 'Failed to save conversation. Using local storage only.',
+      });
+
+      // Fall back to local state only
+      setMessages(prev => [...prev, userMessage, assistantResponse]);
+    }
 
     // Show drawer for certain commands
     if (
@@ -325,6 +402,49 @@ All smoke tests are passing. Ready to merge!`,
   const browseFiles = (runId: string) => {
     setSelectedRunId(runId);
     setFileBrowserOpen(true);
+  };
+
+  const handleNewConversation = () => {
+    setCurrentConversationId(null);
+    setMessages([]);
+  };
+
+  // Function to refresh conversation list
+  const refreshConversations = async () => {
+    if (!selectedProject?.id) return;
+
+    try {
+      const conversationList = await chatApi.getConversations(
+        selectedProject.id
+      );
+      setConversations(conversationList);
+    } catch (error) {
+      console.error('Failed to refresh conversations:', error);
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const conversation = await chatApi.getConversation(conversationId);
+      setCurrentConversationId(conversationId);
+
+      // Convert conversation messages to MessageModel format
+      const messageModels: MessageModel[] =
+        conversation.messages?.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content || '',
+          cards:
+            msg.cardType && msg.cardPayload
+              ? [JSON.parse(msg.cardPayload)]
+              : undefined,
+          buttons: undefined,
+        })) || [];
+
+      setMessages(messageModels);
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+      toast({ title: 'Failed to load conversation' });
+    }
   };
 
   const downloadRunPack = async (messageModel: MessageModel) => {
@@ -356,9 +476,7 @@ All smoke tests are passing. Ready to merge!`,
       const lm = messageModel as LlmMessage;
       const result = await runPacksApi.generate({
         projectId: selectedProject?.id ?? '',
-        card:
-          lm.llmCard ??
-          (messageModel as unknown as components['schemas']['Chapi.AI.Controllers.RunPackController.GenerateRequest']),
+        card: lm.llmCard,
         userQuery: messageModel.content,
         env: selectedEnv ?? 'local',
       });
@@ -397,13 +515,17 @@ All smoke tests are passing. Ready to merge!`,
           const m = { ...copy[idx] } as LlmMessage & {
             buttons?: Array<{ label: string; variant: string }>;
           };
-          // If llmCard exists, restore the original action buttons
+          // If llmCard exists, restore the original action buttons plus Browse Files if runId exists
           const hasLl = !!m.llmCard;
+          const hasRunId = !!m.runId;
           m.buttons = hasLl
             ? [
-                { label: 'Run in Cloud', variant: 'primary' },
-                { label: 'Download Run Pack', variant: 'secondary' },
-                { label: 'Add Negatives', variant: 'secondary' },
+                { label: 'Run in Cloud', variant: 'primary' as const },
+                { label: 'Download Run Pack', variant: 'secondary' as const },
+                ...(hasRunId
+                  ? [{ label: 'Browse Files', variant: 'secondary' as const }]
+                  : []),
+                { label: 'Add Negatives', variant: 'secondary' as const },
               ]
             : [];
           copy[idx] = m;
@@ -493,19 +615,67 @@ All smoke tests are passing. Ready to merge!`,
     };
   }, [selectedProject]);
 
+  // Load conversations when selectedProject changes
+  useEffect(() => {
+    if (!selectedProject?.id) return;
+
+    let mounted = true;
+    setLoadingConversations(true);
+
+    chatApi
+      .getConversations(selectedProject.id)
+      .then(conversationList => {
+        if (!mounted) return;
+        setConversations(conversationList);
+
+        // If there are conversations, select the most recent one
+        if (conversationList.length > 0) {
+          const mostRecent = conversationList[0]; // Assuming they're ordered by date
+          setCurrentConversationId(mostRecent.id || null);
+
+          // Convert conversation messages to MessageModel format
+          const messageModels: MessageModel[] =
+            mostRecent.messages?.map(msg => ({
+              role: msg.role as 'user' | 'assistant',
+              content: msg.content || '',
+              cards:
+                msg.cardType && msg.cardPayload
+                  ? [JSON.parse(msg.cardPayload)]
+                  : undefined,
+              buttons: undefined,
+            })) || [];
+
+          setMessages(messageModels);
+        } else {
+          // No conversations, start with empty messages
+          setMessages([]);
+          setCurrentConversationId(null);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          toast({ title: 'Failed to load conversations' });
+          // Fall back to mock messages if conversation loading fails
+          setMessages(mockMessages as MessageModel[]);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoadingConversations(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedProject]);
+
   // Toggle dark mode
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
 
   return (
     <SidebarProvider>
-      <div
-        className={`h-screen w-full bg-background text-foreground overflow-hidden ${
-          darkMode ? 'dark' : ''
-        }`}
-      >
+      <div className="h-screen w-full bg-background text-foreground overflow-hidden">
         <div className="flex h-full w-full">
           {/* Sidebar */}
           <AppSidebar />
@@ -583,12 +753,14 @@ All smoke tests are passing. Ready to merge!`,
                     className="w-48 bg-popover z-50"
                   >
                     <DropdownMenuItem onClick={toggleDarkMode}>
-                      {darkMode ? (
+                      {document.documentElement.classList.contains('dark') ? (
                         <Sun className="w-4 h-4 mr-2" />
                       ) : (
                         <Moon className="w-4 h-4 mr-2" />
                       )}
-                      {darkMode ? 'Light mode' : 'Dark mode'}
+                      {document.documentElement.classList.contains('dark')
+                        ? 'Light mode'
+                        : 'Dark mode'}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Settings className="w-4 h-4 mr-2" />
@@ -616,7 +788,13 @@ All smoke tests are passing. Ready to merge!`,
                   </div>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <HistoryList />
+                  <HistoryList
+                    conversations={conversations}
+                    currentConversationId={currentConversationId}
+                    onConversationSelect={loadConversation}
+                    onNewConversation={handleNewConversation}
+                    loading={loadingConversations}
+                  />
                 </div>
               </div>
 
@@ -644,6 +822,12 @@ All smoke tests are passing. Ready to merge!`,
                             if (label === 'Run in Cloud') await runInCloud();
                             if (label === 'Download Run Pack')
                               await downloadRunPack(message as MessageModel);
+                            if (label === 'Browse Files') {
+                              const runId = (
+                                message as unknown as { runId?: string }
+                              ).runId;
+                              if (runId) browseFiles(runId);
+                            }
                             if (label === 'Add Negatives')
                               await addNegatives(message as MessageModel);
                           }}
@@ -738,6 +922,75 @@ All smoke tests are passing. Ready to merge!`,
                           }
                           return copy;
                         });
+
+                        // Save conversation in background
+                        try {
+                          // If no current conversation, create a new one
+                          if (!currentConversationId) {
+                            const newConversation =
+                              await chatApi.createConversation({
+                                title:
+                                  msg.substring(0, 50) +
+                                  (msg.length > 50 ? '...' : ''),
+                                projectId: selectedProject.id,
+                                firstUserMessage: msg,
+                              });
+
+                            setCurrentConversationId(
+                              newConversation.id || null
+                            );
+
+                            // Add the assistant response
+                            await chatApi.appendMessage({
+                              conversationId: newConversation.id || '',
+                              role: assistantMessage.role,
+                              content: assistantMessage.content,
+                              cardType: assistantMessage.cards?.length
+                                ? 'generated'
+                                : undefined,
+                              cardPayload: assistantMessage.cards?.length
+                                ? JSON.stringify(assistantMessage.cards[0])
+                                : undefined,
+                            });
+
+                            // Refresh conversation list
+                            await refreshConversations();
+                          } else {
+                            // Append to existing conversation - use batch append for both user and assistant messages
+                            await chatApi.appendMessages({
+                              conversationId: currentConversationId,
+                              messages: [
+                                {
+                                  conversationId: currentConversationId,
+                                  role: userMessage.role,
+                                  content: userMessage.content,
+                                  cardType: undefined,
+                                  cardPayload: undefined,
+                                },
+                                {
+                                  conversationId: currentConversationId,
+                                  role: assistantMessage.role,
+                                  content: assistantMessage.content,
+                                  cardType: assistantMessage.cards?.length
+                                    ? 'generated'
+                                    : undefined,
+                                  cardPayload: assistantMessage.cards?.length
+                                    ? JSON.stringify(assistantMessage.cards[0])
+                                    : undefined,
+                                },
+                              ],
+                            });
+
+                            // Refresh conversation list
+                            await refreshConversations();
+                          }
+                        } catch (convError) {
+                          console.error(
+                            'Failed to save conversation:',
+                            convError
+                          );
+                          // Continue with UI update even if conversation save fails
+                        }
                       } catch (err) {
                         console.error('Error calling LLM generate:', err);
                         toast({ title: 'Failed to call LLM' });

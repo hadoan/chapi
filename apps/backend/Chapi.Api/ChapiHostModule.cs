@@ -17,7 +17,9 @@ using System.Reflection;
 using Chapi.Api.Data;
 using Projects;
 using Environments;
-
+using Chat;
+using RunPack;
+using Runs;
 namespace Chapi.Api;
 
 
@@ -27,6 +29,9 @@ namespace Chapi.Api;
 [DependsOn<ChapiDbModule>]
 [DependsOn<ProjectsModule>]
 [DependsOn<EnvironmentsModule>]
+[DependsOn<ChatModule>]
+[DependsOn<RunPackModule>]
+[DependsOn<RunsModule>]
 [DependsOn<Chapi.ApiSpecs.ApiSpecsModule>]
 [DependsOn<Chapi.EndpointCatalog.EndpointCatalogModule>]
 [DependsOn<Chapi.AI.ChapiAIModule>]

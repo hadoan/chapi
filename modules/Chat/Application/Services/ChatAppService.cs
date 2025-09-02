@@ -47,6 +47,28 @@ public class ChatAppService : IChatAppService
         return msg.ToDto();
     }
 
+    public async Task<List<MessageDto>> AppendMessagesAsync(AppendMessagesRequest request, CancellationToken ct)
+    {
+        var conv = await _repo.GetByIdAsync(request.ConversationId, ct);
+        if (conv == null) return new List<MessageDto>();
+
+        var addedMessages = new List<MessageDto>();
+
+        foreach (var messageRequest in request.Messages)
+        {
+            if (!Enum.TryParse<MessageRole>(messageRequest.Role, true, out var role))
+                throw new ArgumentException($"Invalid role: {messageRequest.Role}");
+
+            Enum.TryParse<MessageCardType>(messageRequest.CardType, true, out var cardType);
+            var msg = conv.Append(role, messageRequest.Content, cardType, messageRequest.CardPayload);
+            addedMessages.Add(msg.ToDto());
+        }
+
+        // Single database update for all messages
+        await _repo.UpdateAsync(conv, ct);
+        return addedMessages;
+    }
+
     public async Task SaveDiffAsSuiteAsync(SaveDiffAsSuiteRequest request, CancellationToken ct)
     {
         // TODO: integrate with Suites module (create new Suite based on diff payload)

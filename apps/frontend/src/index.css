@@ -7,30 +7,30 @@
 @layer base {
   :root {
     /* Jetstream Core Colors */
-    --jetstream-primary: 213 84% 63%;      /* #2563EB Blue 600 */
-    --jetstream-primary-fg: 0 0% 100%;     /* #FFFFFF */
-    --jetstream-accent: 188 88% 53%;       /* #22D3EE Cyan 400 */
-    --jetstream-accent-fg: 228 45% 7%;     /* #0B1020 */
-    
+    --jetstream-primary: 213 84% 63%; /* #2563EB Blue 600 */
+    --jetstream-primary-fg: 0 0% 100%; /* #FFFFFF */
+    --jetstream-accent: 188 88% 53%; /* #22D3EE Cyan 400 */
+    --jetstream-accent-fg: 228 45% 7%; /* #0B1020 */
+
     /* Jetstream Surfaces */
-    --jetstream-bg-light: 233 100% 98%;    /* #F6F8FF */
-    --jetstream-surface-light: 0 0% 100%;  /* #FFFFFF */
-    --jetstream-text-light: 228 45% 7%;    /* #0B1020 */
-    
-    --jetstream-bg-dark: 228 45% 7%;       /* #0B1020 */
+    --jetstream-bg-light: 233 100% 98%; /* #F6F8FF */
+    --jetstream-surface-light: 0 0% 100%; /* #FFFFFF */
+    --jetstream-text-light: 228 45% 7%; /* #0B1020 */
+
+    --jetstream-bg-dark: 228 45% 7%; /* #0B1020 */
     --jetstream-surface-dark: 230 38% 13%; /* #12182A */
-    --jetstream-text-dark: 233 100% 97%;   /* #F5F7FF */
-    
+    --jetstream-text-dark: 233 100% 97%; /* #F5F7FF */
+
     /* Jetstream Status */
-    --jetstream-success: 142 69% 41%;      /* #16A34A */
-    --jetstream-warning: 36 91% 48%;       /* #F59E0B */
-    --jetstream-error: 0 84% 60%;          /* #EF4444 */
-    
+    --jetstream-success: 142 69% 41%; /* #16A34A */
+    --jetstream-warning: 36 91% 48%; /* #F59E0B */
+    --jetstream-error: 0 84% 60%; /* #EF4444 */
+
     /* Jetstream Borders */
     --jetstream-border-light: 233 53% 91%; /* #E6EAF5 */
-    --jetstream-border-dark: 230 26% 18%;  /* #1E2438 */
-    --jetstream-muted-light: 218 20% 35%;  /* #44516B */
-    --jetstream-muted-dark: 220 20% 70%;   /* #9AA4BF */
+    --jetstream-border-dark: 230 26% 18%; /* #1E2438 */
+    --jetstream-muted-light: 218 20% 35%; /* #44516B */
+    --jetstream-muted-dark: 220 20% 70%; /* #9AA4BF */
 
     /* Light Mode Defaults */
     --background: var(--jetstream-bg-light);
@@ -45,8 +45,8 @@
     --secondary-foreground: var(--jetstream-text-light);
     --muted: 233 53% 96%;
     --muted-foreground: var(--jetstream-muted-light);
-    --accent: var(--jetstream-accent);
-    --accent-foreground: var(--jetstream-accent-fg);
+    --accent: 233 53% 91%; /* Use border color for subtle highlight */
+    --accent-foreground: var(--jetstream-text-light);
     --destructive: var(--jetstream-error);
     --destructive-foreground: var(--jetstream-primary-fg);
     --border: var(--jetstream-border-light);
@@ -55,9 +55,9 @@
     --radius: 1.25rem;
 
     /* Shadows */
-    --shadow-soft: 0 6px 24px rgba(0,0,0,.18), 0 1px 2px rgba(0,0,0,.24);
+    --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.24);
     --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.15);
-    
+
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -116,7 +116,8 @@
   }
 
   /* Code styles */
-  code, pre {
+  code,
+  pre {
     @apply font-mono;
   }
 

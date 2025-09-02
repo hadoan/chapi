@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\..\modules\Chapi.ApiSpecs\Chapi.ApiSpecs.csproj" />
     <ProjectReference Include="..\..\..\modules\Chapi.EndpointCatalog\Chapi.EndpointCatalog.csproj" />
   <ProjectReference Include="..\..\..\modules\Chapi.AI\Chapi.AI.csproj" />
+  <ProjectReference Include="..\..\..\modules\Runs\Runs.csproj" />
+  <ProjectReference Include="..\..\..\modules\RunPack\RunPack.csproj" />
   </ItemGroup>
 
 </Project>

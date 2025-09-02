@@ -18,6 +18,8 @@ public class Conversation : Entity<Guid>
     { if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title required", nameof(title)); return new(Guid.NewGuid(), title.Trim(), projectId); }
     public Message Append(MessageRole role, string content, MessageCardType cardType = MessageCardType.None, string? cardPayload = null)
     { var msg = Message.Create(Id, role, content, cardType, cardPayload); _messages.Add(msg); UpdatedAt = DateTime.UtcNow; return msg; }
+
+    public void Touch() => UpdatedAt = DateTime.UtcNow;
 }
 
 // Ports (to be implemented later by LLM and diff engines)

@@ -19,9 +19,40 @@ public class ConversationRepository : IConversationRepository
     }
     public async Task<Conversation> UpdateAsync(Conversation entity, CancellationToken ct)
     {
-        _set.Update(entity);
-        await _db.SaveChangesAsync(ct);
-        return entity;
+        const int maxRetries = 3;
+        var retryCount = 0;
+
+        while (retryCount < maxRetries)
+        {
+            try
+            {
+                _set.Update(entity);
+                await _db.SaveChangesAsync(ct);
+                return entity;
+            }
+            catch (DbUpdateConcurrencyException) when (retryCount < maxRetries - 1)
+            {
+                retryCount++;
+
+                // Reload the entity from the database to get the latest version
+                var freshEntity = await _set.Include(c => c.Messages).AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == entity.Id, ct);
+
+                if (freshEntity == null)
+                    throw new InvalidOperationException("Entity no longer exists in database");
+
+                // Update the timestamp to reflect the new version
+                entity.Touch();
+
+                // Clear change tracking and try again
+                _db.ChangeTracker.Clear();
+
+                // Add a small delay before retry
+                await Task.Delay(TimeSpan.FromMilliseconds(50 * retryCount), ct);
+            }
+        }
+
+        throw new InvalidOperationException($"Failed to update conversation after {maxRetries} attempts");
     }
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {

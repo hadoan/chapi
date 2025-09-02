@@ -325,7 +325,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["Chat.Application.Dtos.ConversationDto"][];
+                        "application/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"][];
+                        "text/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"][];
+                    };
                 };
                 /** @description Unauthorized - Authentication required */
                 401: {
@@ -371,7 +375,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                        "application/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                        "text/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                    };
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -425,7 +433,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                        "application/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                        "text/json": components["schemas"]["Chat.Application.Dtos.ConversationDto"];
+                    };
                 };
                 /** @description Unauthorized - Authentication required */
                 401: {
@@ -487,7 +499,75 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
+                    content: {
+                        "text/plain": components["schemas"]["Chat.Application.Dtos.MessageDto"];
+                        "application/json": components["schemas"]["Chat.Application.Dtos.MessageDto"];
+                        "text/json": components["schemas"]["Chat.Application.Dtos.MessageDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
                     content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/append-messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chat.Application.Requests.AppendMessagesRequest"];
+                    "text/json": components["schemas"]["Chat.Application.Requests.AppendMessagesRequest"];
+                    "application/*+json": components["schemas"]["Chat.Application.Requests.AppendMessagesRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chat.Application.Dtos.MessageDto"][];
+                        "application/json": components["schemas"]["Chat.Application.Dtos.MessageDto"][];
+                        "text/json": components["schemas"]["Chat.Application.Dtos.MessageDto"][];
+                    };
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -3281,6 +3361,828 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/run-pack/runs/{runId}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    runId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.UpdateFileRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.UpdateFileRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.RunPackController.UpdateFileRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runpacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                    suiteId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RunPack.Application.Requests.BuildRunPackRequest"];
+                    "text/json": components["schemas"]["RunPack.Application.Requests.BuildRunPackRequest"];
+                    "application/*+json": components["schemas"]["RunPack.Application.Requests.BuildRunPackRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runpacks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runpacks/{id}/signed-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    minutes?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SuiteId?: string;
+                    Status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"][];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"][];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"][];
+                    };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
+                    "text/json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
+                    "application/*+json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SuiteId?: string;
+                    Status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}/succeed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}/fail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
+                    "text/json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
+                    "application/*+json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/SemanticKernelIntegration/status": {
         parameters: {
             query?: never;
@@ -4732,6 +5634,10 @@ export interface components {
             userQuery?: string | null;
             env?: string | null;
         };
+        "Chapi.AI.Controllers.RunPackController.UpdateFileRequest": {
+            filePath?: string | null;
+            content?: string | null;
+        };
         "Chapi.AI.Dto.ApiTestGenerateRequest": {
             user_query?: string | null;
             /** Format: uuid */
@@ -4792,6 +5698,28 @@ export interface components {
             request?: unknown;
             responses?: unknown;
         };
+        "Chat.Application.Dtos.ConversationDto": {
+            /** Format: uuid */
+            id?: string;
+            title?: string | null;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            messages?: components["schemas"]["Chat.Application.Dtos.MessageDto"][] | null;
+        };
+        "Chat.Application.Dtos.MessageDto": {
+            /** Format: uuid */
+            id?: string;
+            role?: string | null;
+            content?: string | null;
+            cardType?: string | null;
+            cardPayload?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         "Chat.Application.Requests.AppendMessageRequest": {
             /** Format: uuid */
             conversationId?: string;
@@ -4799,6 +5727,11 @@ export interface components {
             content?: string | null;
             cardType?: string | null;
             cardPayload?: string | null;
+        };
+        "Chat.Application.Requests.AppendMessagesRequest": {
+            /** Format: uuid */
+            conversationId?: string;
+            messages?: components["schemas"]["Chat.Application.Requests.AppendMessageRequest"][] | null;
         };
         "Chat.Application.Requests.CreateConversationRequest": {
             /** Format: uuid */
@@ -4899,6 +5832,40 @@ export interface components {
             name?: string | null;
             description?: string | null;
             tasks?: components["schemas"]["Projects.Application.Dtos.CreateProjectTaskRequest"][] | null;
+        };
+        "RunPack.Application.Requests.BuildRunPackRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: uuid */
+            suiteId?: string;
+        };
+        "Runs.Application.Dtos.AddRunStepRequest": {
+            name?: string | null;
+            log?: string | null;
+        };
+        "Runs.Application.Dtos.QueueRunRequest": {
+            /** Format: uuid */
+            suiteId?: string;
+        };
+        "Runs.Application.Dtos.RunDto": {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            suiteId?: string;
+            status?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            steps?: components["schemas"]["Runs.Application.Dtos.RunStepDto"][] | null;
+        };
+        "Runs.Application.Dtos.RunStepDto": {
+            /** Format: uuid */
+            id?: string;
+            name?: string | null;
+            log?: string | null;
         };
         /** @description DTO for user registration */
         "ShipMvp.Api.Controllers.AuthController.RegisterDto": {
