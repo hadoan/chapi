@@ -299,20 +299,11 @@ All smoke tests are passing. Ready to merge!`,
     const userMessage: MessageModel = { role: 'user', content: command };
 
     try {
-      // If no current conversation, create a new one
+      // If no current conversation, create a new one with both messages atomically
       if (!currentConversationId) {
-        const newConversation = await chatApi.createConversation({
-          title: command.substring(0, 50) + (command.length > 50 ? '...' : ''),
-          projectId: selectedProject.id,
-          firstUserMessage: command,
-        });
-
-        setCurrentConversationId(newConversation.id || null);
-
-        // The conversation is created with the first message, so we only need to add the assistant response
+        const additionalMessages = [];
         if (assistantResponse) {
-          await chatApi.appendMessage({
-            conversationId: newConversation.id || '',
+          additionalMessages.push({
             role: assistantResponse.role,
             content: assistantResponse.content,
             cardType: assistantResponse.cards?.length ? 'generated' : undefined,
@@ -321,6 +312,15 @@ All smoke tests are passing. Ready to merge!`,
               : undefined,
           });
         }
+
+        const newConversation = await chatApi.createConversation({
+          title: command.substring(0, 50) + (command.length > 50 ? '...' : ''),
+          projectId: selectedProject.id,
+          firstUserMessage: command,
+          additionalMessages,
+        });
+
+        setCurrentConversationId(newConversation.id || null);
 
         // Refresh the conversation list to show the new conversation with updated message count
         await refreshConversations();
@@ -916,7 +916,7 @@ All smoke tests are passing. Ready to merge!`,
 
                         // Save conversation in background
                         try {
-                          // If no current conversation, create a new one
+                          // If no current conversation, create a new one with both messages atomically
                           if (!currentConversationId) {
                             const newConversation =
                               await chatApi.createConversation({
@@ -925,24 +925,25 @@ All smoke tests are passing. Ready to merge!`,
                                   (msg.length > 50 ? '...' : ''),
                                 projectId: selectedProject.id,
                                 firstUserMessage: msg,
+                                additionalMessages: [
+                                  {
+                                    role: assistantMessage.role,
+                                    content: assistantMessage.content,
+                                    cardType: assistantMessage.cards?.length
+                                      ? 'generated'
+                                      : undefined,
+                                    cardPayload: assistantMessage.cards?.length
+                                      ? JSON.stringify(
+                                          assistantMessage.cards[0]
+                                        )
+                                      : undefined,
+                                  },
+                                ],
                               });
 
                             setCurrentConversationId(
                               newConversation.id || null
                             );
-
-                            // Add the assistant response
-                            await chatApi.appendMessage({
-                              conversationId: newConversation.id || '',
-                              role: assistantMessage.role,
-                              content: assistantMessage.content,
-                              cardType: assistantMessage.cards?.length
-                                ? 'generated'
-                                : undefined,
-                              cardPayload: assistantMessage.cards?.length
-                                ? JSON.stringify(assistantMessage.cards[0])
-                                : undefined,
-                            });
 
                             // Refresh conversation list
                             await refreshConversations();

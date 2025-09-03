@@ -5,6 +5,7 @@ using System.Text.Json;
 using Chapi.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -13,9 +14,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chapi.Api.Migrations
 {
     [DbContext(typeof(ChapiDbContext))]
-    partial class ChapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250903144053_UpdateConversation")]
+    partial class UpdateConversation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,6 +258,9 @@ namespace Chapi.Api.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ConversationId1")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -284,6 +290,8 @@ namespace Chapi.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId");
+
+                    b.HasIndex("ConversationId1");
 
                     b.ToTable("Messages", (string)null);
                 });
@@ -1466,10 +1474,14 @@ namespace Chapi.Api.Migrations
             modelBuilder.Entity("Chat.Domain.Message", b =>
                 {
                     b.HasOne("Chat.Domain.Conversation", null)
-                        .WithMany("_messages")
+                        .WithMany()
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Chat.Domain.Conversation", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId1");
                 });
 
             modelBuilder.Entity("Environments.Domain.EnvironmentHeader", b =>
@@ -1623,7 +1635,7 @@ namespace Chapi.Api.Migrations
 
             modelBuilder.Entity("Chat.Domain.Conversation", b =>
                 {
-                    b.Navigation("_messages");
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Environments.Domain.Environment", b =>

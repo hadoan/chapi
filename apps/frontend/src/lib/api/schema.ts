@@ -6004,6 +6004,7 @@ export interface components {
             projectId?: string;
             title?: string | null;
             firstUserMessage?: string | null;
+            additionalMessages?: components["schemas"]["Chat.Application.Requests.AppendMessageRequest"][] | null;
         };
         "Chat.Application.Requests.SaveDiffAsSuiteRequest": {
             /** Format: uuid */

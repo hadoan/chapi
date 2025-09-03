@@ -10,6 +10,7 @@ export type CreateConversationRequest =
   components['schemas']['Chat.Application.Requests.CreateConversationRequest'];
 export type AppendMessageRequest =
   components['schemas']['Chat.Application.Requests.AppendMessageRequest'];
+
 export type AppendMessagesRequest =
   components['schemas']['Chat.Application.Requests.AppendMessagesRequest'];
 export type SaveDiffAsSuiteRequest =

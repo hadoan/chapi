@@ -12,7 +12,6 @@ public class Message : Entity<Guid>
     public string Content { get; private set; } = string.Empty;
     public MessageCardType CardType { get; private set; }
     public string? CardPayload { get; private set; }
-    public DateTime CreatedAt { get; private set; }
     private Message() : base(Guid.Empty) { }
     private Message(Guid id, Guid conversationId, MessageRole role, string content, MessageCardType cardType, string? cardPayload) : base(id)
     { ConversationId = conversationId; Role = role; Content = content; CardType = cardType; CardPayload = cardPayload; CreatedAt = DateTime.UtcNow; }

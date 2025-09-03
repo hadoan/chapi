@@ -8,18 +8,30 @@ public class Conversation : Entity<Guid>
     public string Title { get; private set; } = string.Empty;
     public Guid ProjectId { get; private set; }
     public IReadOnlyCollection<Message> Messages => _messages;
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+
+    // Remove shadowing properties - use base class properties instead
+    // public DateTime CreatedAt { get; private set; }  ❌ REMOVED - shadows base
+    // public DateTime UpdatedAt { get; private set; }  ❌ REMOVED - shadows base
 
     private Conversation() : base(Guid.Empty) { }
     private Conversation(Guid id, string title, Guid projectId) : base(id)
-    { Title = title; ProjectId = projectId; CreatedAt = UpdatedAt = DateTime.UtcNow; }
+    {
+        Title = title;
+        ProjectId = projectId;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow; // Base class UpdatedAt is DateTime?, so this works
+    }
     public static Conversation Create(string title, Guid projectId)
     { if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title required", nameof(title)); return new(Guid.NewGuid(), title.Trim(), projectId); }
     public Message Append(MessageRole role, string content, MessageCardType cardType = MessageCardType.None, string? cardPayload = null)
-    { var msg = Message.Create(Id, role, content, cardType, cardPayload); _messages.Add(msg); UpdatedAt = DateTime.UtcNow; return msg; }
+    {
+        var msg = Message.Create(Id, role, content, cardType, cardPayload);
+        _messages.Add(msg);
+        UpdatedAt = DateTime.UtcNow; // Use base class property
+        return msg;
+    }
 
-    public void Touch() => UpdatedAt = DateTime.UtcNow;
+    public void Touch() => UpdatedAt = DateTime.UtcNow; // Use base class property
 }
 
 // Ports (to be implemented later by LLM and diff engines)

@@ -5,6 +5,7 @@ using System.Text.Json;
 using Chapi.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -13,9 +14,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chapi.Api.Migrations
 {
     [DbContext(typeof(ChapiDbContext))]
-    partial class ChapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250903141330_AddConcurencyStamp")]
+    partial class AddConcurencyStamp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -216,7 +219,7 @@ namespace Chapi.Api.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("UpdatedBy")
@@ -1466,7 +1469,7 @@ namespace Chapi.Api.Migrations
             modelBuilder.Entity("Chat.Domain.Message", b =>
                 {
                     b.HasOne("Chat.Domain.Conversation", null)
-                        .WithMany("_messages")
+                        .WithMany("Messages")
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1623,7 +1626,7 @@ namespace Chapi.Api.Migrations
 
             modelBuilder.Entity("Chat.Domain.Conversation", b =>
                 {
-                    b.Navigation("_messages");
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Environments.Domain.Environment", b =>
