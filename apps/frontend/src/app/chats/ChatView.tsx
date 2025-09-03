@@ -20,6 +20,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
 import { chatApi, ConversationDto } from '@/lib/api/chat';
@@ -29,7 +35,7 @@ import { ProjectDto, projectsApi } from '@/lib/api/projects';
 import { runPacksApi } from '@/lib/api/run-packs';
 import type { components } from '@/lib/api/schema';
 import mockMessages from '@/lib/mock/messages/chat-1.json';
-import { ChevronDown, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Settings, Sun, User, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Card = MessageCard;
@@ -55,6 +61,7 @@ export default function ChatView() {
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
   const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string>('');
+  const [showMobileHistory, setShowMobileHistory] = useState(false);
 
   type LlmMessage = MessageModel & {
     llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
@@ -721,9 +728,9 @@ All smoke tests are passing. Ready to merge!`,
           {/* Main Content */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {/* Top Bar */}
-            <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur-sm p-4">
+            <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur-sm p-2 sm:p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
                   <SidebarTrigger />
 
                   {/* Project Selector */}
@@ -731,13 +738,16 @@ All smoke tests are passing. Ready to merge!`,
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
-                        className="justify-between min-w-[200px]"
+                        className="justify-between min-w-[120px] sm:min-w-[200px] max-w-[200px] truncate"
+                        size="sm"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-accent"></div>
-                          {selectedProject?.name ?? 'Select project'}
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
+                          <span className="truncate">
+                            {selectedProject?.name ?? 'Select project'}
+                          </span>
                         </div>
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-4 h-4 flex-shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[200px] bg-popover z-50">
@@ -755,8 +765,8 @@ All smoke tests are passing. Ready to merge!`,
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Environment Selector */}
-                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  {/* Environment Selector - Hidden on small screens, shown as dropdown on medium */}
+                  <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
                     {envOptions.map(env => (
                       <button
                         key={env.id}
@@ -771,6 +781,34 @@ All smoke tests are passing. Ready to merge!`,
                       </button>
                     ))}
                   </div>
+
+                  {/* Mobile Environment Selector */}
+                  {envOptions.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild className="sm:hidden">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="px-2"
+                        >
+                          <span className="truncate">
+                            {selectedEnv || 'Env'}
+                          </span>
+                          <ChevronDown className="w-3 h-3 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-32 bg-popover z-50">
+                        {envOptions.map(env => (
+                          <DropdownMenuItem
+                            key={env.id}
+                            onClick={() => setSelectedEnv(env.name ?? null)}
+                          >
+                            {env.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 {/* User Menu */}
@@ -779,7 +817,7 @@ All smoke tests are passing. Ready to merge!`,
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 rounded-full"
+                      className="h-8 w-8 rounded-full flex-shrink-0"
                     >
                       <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
                         <User className="w-4 h-4" />
@@ -815,8 +853,8 @@ All smoke tests are passing. Ready to merge!`,
 
             {/* Chat Layout */}
             <div className="flex-1 flex min-h-0 overflow-hidden">
-              {/* History Sidebar */}
-              <div className="w-80 flex-shrink-0 border-r border-border bg-card flex flex-col overflow-hidden">
+              {/* History Sidebar - Hidden on mobile, collapsible on tablet */}
+              <div className="hidden lg:flex w-80 flex-shrink-0 border-r border-border bg-card flex-col overflow-hidden">
                 <div className="flex-shrink-0 p-4 border-b border-border">
                   <div className="flex items-center gap-2 mb-4">
                     <ChapiLogo size={32} />
@@ -835,10 +873,21 @@ All smoke tests are passing. Ready to merge!`,
               </div>
 
               {/* Chat Area */}
-              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+                {/* Mobile Chat History Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="lg:hidden absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm border shadow-md"
+                  onClick={() => setShowMobileHistory(true)}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">History</span>
+                </Button>
+
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto">
-                  <div className="p-6 max-w-4xl mx-auto">
+                  <div className="p-3 sm:p-6 max-w-4xl mx-auto w-full pt-16 lg:pt-6">
                     {messages.map((message, idx) => (
                       <div key={idx} className="animate-fade-in">
                         <ChatMessage
@@ -1053,8 +1102,37 @@ All smoke tests are passing. Ready to merge!`,
             </div>
           </div>
 
-          {/* Right Drawer */}
-          <RightDrawer isOpen={rightDrawerOpen} activeTab="diff" />
+          {/* Right Drawer - Hidden on mobile */}
+          <div className="hidden xl:block">
+            <RightDrawer isOpen={rightDrawerOpen} activeTab="diff" />
+          </div>
+
+          {/* Mobile History Drawer */}
+          <Drawer open={showMobileHistory} onOpenChange={setShowMobileHistory}>
+            <DrawerContent className="max-h-[85vh]">
+              <DrawerHeader>
+                <DrawerTitle className="flex items-center gap-2">
+                  <ChapiLogo size={24} />
+                  Chat History
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="flex-1 overflow-hidden px-4 pb-4">
+                <HistoryList
+                  conversations={conversations}
+                  currentConversationId={currentConversationId}
+                  onConversationSelect={(id) => {
+                    loadConversation(id);
+                    setShowMobileHistory(false);
+                  }}
+                  onNewConversation={() => {
+                    handleNewConversation();
+                    setShowMobileHistory(false);
+                  }}
+                  loading={loadingConversations}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
 
           {/* Command Palette */}
           <CommandPalette
