@@ -1,3 +1,4 @@
+import { ChapiLogo } from '@/components/ChapiLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,9 +41,7 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <ChapiLogo size={32} />
             <span className="font-semibold text-xl">Chapi</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -344,9 +343,7 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4 text-primary-foreground" />
-                </div>
+                <ChapiLogo size={24} />
                 <span className="font-semibold">Chapi</span>
               </div>
               <p className="text-muted-foreground text-sm">
@@ -415,7 +412,7 @@ const Index = () => {
           </div>
 
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            © 2024 Chapi. All rights reserved.
+            © {new Date().getFullYear()} Chapi. All rights reserved.
           </div>
         </div>
       </footer>

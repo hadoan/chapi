@@ -1,6 +1,7 @@
 'use client';
 
 import { AppSidebar } from '@/components/AppSidebar';
+import { ChapiLogo } from '@/components/ChapiLogo';
 import { ChatComposer } from '@/components/ChatComposer';
 import {
   ChatMessage,
@@ -28,15 +29,7 @@ import { ProjectDto, projectsApi } from '@/lib/api/projects';
 import { runPacksApi } from '@/lib/api/run-packs';
 import type { components } from '@/lib/api/schema';
 import mockMessages from '@/lib/mock/messages/chat-1.json';
-import {
-  ChevronDown,
-  LogOut,
-  MessageSquare,
-  Moon,
-  Settings,
-  Sun,
-  User,
-} from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Card = MessageCard;
@@ -781,9 +774,7 @@ All smoke tests are passing. Ready to merge!`,
               <div className="w-80 flex-shrink-0 border-r border-border bg-card flex flex-col overflow-hidden">
                 <div className="flex-shrink-0 p-4 border-b border-border">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5 text-primary-foreground" />
-                    </div>
+                    <ChapiLogo size={32} />
                     <span className="font-semibold text-lg">Chat History</span>
                   </div>
                 </div>
