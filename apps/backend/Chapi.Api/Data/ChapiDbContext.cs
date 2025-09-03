@@ -7,6 +7,7 @@ using Environments.Infrastructure;
 using Chat.Infrastructure;
 using Chapi.ApiSpecs.Infrastructure;
 using Chapi.EndpointCatalog.Infrastructure;
+using Contacts.Infrastructure;
 
 namespace Chapi.Api.Data;
 
@@ -25,6 +26,7 @@ public sealed class ChapiDbContext : AppDbContext
         modelBuilder.ConfigureChatEntities();
         modelBuilder.ConfigureApiSpecsEntities();
         modelBuilder.ConfigureEndpointCatalogEntities();
+        modelBuilder.ConfigureContactsEntities();
     }
 
 }

@@ -1,7 +1,6 @@
 {
   "dotnet.defaultSolution": "Chapi.sln",
   "omnisharp.enableEditorConfigSupport": true,
-  "omnisharp.enableImportCompletion": true,
   "omnisharp.enableRoslynAnalyzers": true,
   "files.exclude": {
     "**/bin": true,

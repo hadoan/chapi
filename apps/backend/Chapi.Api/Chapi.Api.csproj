@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\..\modules\Projects\Project.csproj" />
     <ProjectReference Include="..\..\..\modules\Environments\Environment.csproj" />
     <ProjectReference Include="..\..\..\modules\Chat\Chat.csproj" />
+  <ProjectReference Include="..\..\..\modules\Contacts\Contacts.csproj" />
     <ProjectReference Include="..\..\..\modules\Chapi.ApiSpecs\Chapi.ApiSpecs.csproj" />
     <ProjectReference Include="..\..\..\modules\Chapi.EndpointCatalog\Chapi.EndpointCatalog.csproj" />
   <ProjectReference Include="..\..\..\modules\Chapi.AI\Chapi.AI.csproj" />
