@@ -427,9 +427,19 @@ All smoke tests are passing. Ready to merge!`,
       const messageModels: MessageModel[] =
         conversation.messages?.map((msg, index) => {
           const hasCardData = msg.cardType && msg.cardPayload;
-          const parsedCard = hasCardData
-            ? JSON.parse(msg.cardPayload)
-            : undefined;
+          let parsedCard;
+
+          if (hasCardData) {
+            try {
+              parsedCard = JSON.parse(msg.cardPayload);
+              console.log(`Message ${index} parsed card:`, parsedCard);
+            } catch (e) {
+              console.error(
+                `Failed to parse card payload for message ${index}:`,
+                e
+              );
+            }
+          }
 
           console.log(`Message ${index}:`, {
             role: msg.role,
@@ -437,7 +447,7 @@ All smoke tests are passing. Ready to merge!`,
             hasCardPayload: !!msg.cardPayload,
             cardPayload: msg.cardPayload?.substring(0, 100) + '...',
             hasCardData,
-            parsedCard: parsedCard ? 'Has parsed card' : 'No parsed card'
+            parsedCard: parsedCard ? 'Has parsed card' : 'No parsed card',
           });
 
           // Generate buttons for assistant messages that have card data
@@ -454,11 +464,15 @@ All smoke tests are passing. Ready to merge!`,
 
           console.log(`Message ${index} buttons:`, buttons);
 
+          // Extract runId from card data if it exists
+          const runId = parsedCard?.runId || parsedCard?.id;
+
           return {
             role: msg.role as 'user' | 'assistant',
             content: msg.content || '',
             cards: parsedCard ? [parsedCard] : undefined,
             buttons,
+            runId, // Add runId to the message model
             llmCard: parsedCard, // Set llmCard for messages with card data
           };
         }) || [];
