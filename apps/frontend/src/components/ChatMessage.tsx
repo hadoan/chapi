@@ -87,6 +87,17 @@ export const ChatMessage = ({
   onButtonClick,
   onBrowseFiles,
 }: ChatMessageProps) => {
+  
+  // Debug logging
+  console.log('ChatMessage props:', {
+    role,
+    hasContent: !!content,
+    cardsCount: cards?.length || 0,
+    buttonsCount: buttons?.length || 0,
+    hasRunId: !!runId,
+    buttons: buttons?.map(b => b.label)
+  });
+
   if (role === 'user') {
     return (
       <div className="flex justify-end mb-6">

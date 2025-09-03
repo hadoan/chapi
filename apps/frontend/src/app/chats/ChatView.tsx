@@ -421,18 +421,49 @@ All smoke tests are passing. Ready to merge!`,
       const conversation = await chatApi.getConversation(conversationId);
       setCurrentConversationId(conversationId);
 
+      console.log('Raw conversation data:', conversation);
+
       // Convert conversation messages to MessageModel format
       const messageModels: MessageModel[] =
-        conversation.messages?.map(msg => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content || '',
-          cards:
-            msg.cardType && msg.cardPayload
-              ? [JSON.parse(msg.cardPayload)]
-              : undefined,
-          buttons: undefined,
-        })) || [];
+        conversation.messages?.map((msg, index) => {
+          const hasCardData = msg.cardType && msg.cardPayload;
+          const parsedCard = hasCardData
+            ? JSON.parse(msg.cardPayload)
+            : undefined;
 
+          console.log(`Message ${index}:`, {
+            role: msg.role,
+            cardType: msg.cardType,
+            hasCardPayload: !!msg.cardPayload,
+            cardPayload: msg.cardPayload?.substring(0, 100) + '...',
+            hasCardData,
+            parsedCard: parsedCard ? 'Has parsed card' : 'No parsed card'
+          });
+
+          // Generate buttons for assistant messages that have card data
+          // Make role comparison case-insensitive
+          const isAssistant = msg.role?.toLowerCase() === 'assistant';
+          const buttons =
+            isAssistant && hasCardData
+              ? [
+                  { label: 'Run in Cloud', variant: 'primary' as const },
+                  { label: 'Download Run Pack', variant: 'secondary' as const },
+                  { label: 'Add Negatives', variant: 'secondary' as const },
+                ]
+              : undefined;
+
+          console.log(`Message ${index} buttons:`, buttons);
+
+          return {
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content || '',
+            cards: parsedCard ? [parsedCard] : undefined,
+            buttons,
+            llmCard: parsedCard, // Set llmCard for messages with card data
+          };
+        }) || [];
+
+      console.log('Final messageModels:', messageModels);
       setMessages(messageModels);
     } catch (error) {
       console.error('Failed to load conversation:', error);

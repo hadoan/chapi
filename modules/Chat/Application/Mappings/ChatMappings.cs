@@ -13,5 +13,5 @@ public static class ChatMappings
     public static ConversationDto ToDto(this Conversation c) =>
         new(c.Id, c.Title, c.ProjectId, c.CreatedAt, c.UpdatedAt ?? DateTime.UtcNow, Enumerable.Empty<MessageDto>());
 
-    public static MessageDto ToDto(this Message m) => new(m.Id, m.Role.ToString(), m.Content, m.CardType.ToString(), m.CardPayload, m.CreatedAt);
+    public static MessageDto ToDto(this Message m) => new(m.Id, m.Role.ToString().ToLower(), m.Content, m.CardType.ToString(), m.CardPayload, m.CreatedAt);
 }
