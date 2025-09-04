@@ -10,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddRunPackInfrastructure(this IServiceCollection services)
     {
         services.AddScoped<IRunPackRepository, RunPackRepository>();
+        services.AddScoped<IRunPackFileRepository, RunPackFileRepository>();
         services.AddScoped<IRunPackAppService, RunPackAppService>();
         return services;
     }

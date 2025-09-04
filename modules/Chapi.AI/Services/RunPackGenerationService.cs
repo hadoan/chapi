@@ -94,7 +94,7 @@ namespace Chapi.AI.Services
             _logger.LogInformation("✓ RunPack ZIP generated successfully ({ZipSize} bytes)", zipData.Length);
 
             // 6) Create RunPack entity in database first
-            Guid? runPackId = null;
+            Guid runPackId = Guid.Empty; 
             try
             {
                 if (request.ConversationId.HasValue)

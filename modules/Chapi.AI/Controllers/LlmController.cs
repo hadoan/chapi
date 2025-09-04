@@ -15,9 +15,9 @@ namespace Chapi.AI.Controllers
     [Route("api/llm")]
     public class LlmController : ControllerBase
     {
-    private readonly IApiTestGenerationService _apiTestService;
-    private readonly ILogger<LlmController> _logger;
-    private readonly IEndpointContextService _endpointContextService;
+        private readonly IApiTestGenerationService _apiTestService;
+        private readonly ILogger<LlmController> _logger;
+        private readonly IEndpointContextService _endpointContextService;
 
         public LlmController(IApiTestGenerationService apiTestService, IEndpointContextService endpointContextService, ILogger<LlmController> logger)
         {
@@ -37,9 +37,6 @@ namespace Chapi.AI.Controllers
 
             return card;
         }
-        
+
     }
-
-
-    // ...existing code...
 }

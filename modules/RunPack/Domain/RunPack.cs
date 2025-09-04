@@ -19,7 +19,7 @@ public class RunPack : Entity<Guid>
     // Navigation properties
     private readonly List<RunPackFile> _files = new();
     public IReadOnlyList<RunPackFile> Files => _files.AsReadOnly();
-    
+
     public RunPackInput? Input { get; private set; }
 
     private RunPack() : base(Guid.Empty) { }
@@ -35,21 +35,20 @@ public class RunPack : Entity<Guid>
     public static RunPack Create(Guid projectId, string mode = "hybrid")
         => new(Guid.NewGuid(), projectId, mode);
 
-    public static RunPack CreateFromConversation(Guid projectId, Guid conversationId, string mode = "hybrid")
+    public static RunPack CreateFromConversation(Guid id, Guid projectId, Guid conversationId, string mode = "hybrid")
     {
-        var runPack = new RunPack(Guid.NewGuid(), projectId, mode);
+        var runPack = new RunPack(id, projectId, mode);
         runPack.ConversationId = conversationId;
         return runPack;
     }
 
-    public void AddFile(string path, string content, string role = "GENERATED")
+    public void AddFile(RunPackFile file)
     {
-        var file = RunPackFile.Create(Id, path, content, role);
         _files.Add(file);
         FilesCount = _files.Count;
     }
 
-    public void SetInput(string fileRolesJson, string roleContextsJson, string endpointsContext, 
+    public void SetInput(string fileRolesJson, string roleContextsJson, string endpointsContext,
         string allowedOps, string environment)
     {
         Input = RunPackInput.Create(Id, fileRolesJson, roleContextsJson, endpointsContext, allowedOps, environment);

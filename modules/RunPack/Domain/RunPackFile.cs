@@ -27,32 +27,11 @@ public class RunPackFile : Entity<Guid>
         CreatedAt = DateTime.UtcNow;
     }
 
-    public static RunPackFile Create(Guid runPackId, Guid fileId, string role = "GENERATED")
-        => new(Guid.NewGuid(), runPackId, fileId, role);
-
+   
     // New overload that creates a File entity from given path and content
-    public static RunPackFile Create(Guid runPackId, string path, string content, string role = "GENERATED")
+    public static RunPackFile Create(Guid runPackId, Guid runPackFileId, Guid fileId,  string role = "GENERATED")
     {
-        var fileId = Guid.NewGuid();
-        var fileName = Path.GetFileName(path) ?? path;
-        var bytes = content is null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(content);
-        var mime = GetMimeType(path);
-
-        // Create File entity (using minimal sensible defaults)
-        var file = new ShipMvp.Domain.Files.File(
-            fileId,
-            containerName: "runpacks",
-            fileName: fileName,
-            originalFileName: fileName,
-            mimeType: mime,
-            size: bytes.LongLength,
-            storagePath: path,
-            userId: null,
-            isPublic: false
-        );
-
-        var runPackFile = new RunPackFile(Guid.NewGuid(), runPackId, fileId, role);
-        runPackFile.File = file;
+        var runPackFile = new RunPackFile(runPackFileId, runPackId,fileId, role);
         return runPackFile;
     }
 

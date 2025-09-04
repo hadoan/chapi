@@ -10,6 +10,7 @@ using System.Collections.Concurrent;
 using System.IO.Compression;
 using RunPack.Domain;
 using Microsoft.EntityFrameworkCore;
+using ShipMvp.Core.Abstractions;
 
 namespace Chapi.AI.Services
 {
@@ -19,7 +20,7 @@ namespace Chapi.AI.Services
             byte[] zipData,
             Guid projectId,
             string environment,
-            Guid? runPackId = null, // Add optional RunPack ID to link files
+            Guid runPackId, 
             CancellationToken cancellationToken = default);
 
         Task<RunPackFileListResult> GetRunPackFilesAsync(
@@ -47,7 +48,7 @@ namespace Chapi.AI.Services
     public class RunPackFileResult
     {
         public Guid RunId { get; set; }
-        public List<string> FilePaths { get; set; } = new();
+        //public List<string> FilePaths { get; set; } = new();
         public int FileCount { get; set; }
         public string ProjectPath { get; set; } = "";
     }
@@ -82,8 +83,10 @@ namespace Chapi.AI.Services
     {
         private readonly IFileStorageService _fileStorageService;
         private readonly IFileRepository _fileRepository;
+        private readonly IRunPackFileRepository _runPackFileRepository;
         private readonly IRunPackRepository _runPackRepository;
         private readonly ILogger<RunPackFileService> _logger;
+        private readonly IGuidGenerator _guidGenerator;
 
         private const string CONTAINER_NAME = "chapi-runpacks";
 
@@ -91,11 +94,15 @@ namespace Chapi.AI.Services
                 IFileStorageService fileStorageService,
                 IFileRepository fileRepository,
                 IRunPackRepository runPackRepository,
+                IRunPackFileRepository runPackFileRepository,
+                IGuidGenerator guidGenerator,
                 ILogger<RunPackFileService> logger)
         {
             _fileStorageService = fileStorageService;
             _fileRepository = fileRepository;
             _runPackRepository = runPackRepository;
+            _guidGenerator = guidGenerator;
+            _runPackFileRepository = runPackFileRepository;
             _logger = logger;
         }
 
@@ -103,7 +110,7 @@ namespace Chapi.AI.Services
             byte[] zipData,
             Guid projectId,
             string environment,
-            Guid? runPackId = null, // Add optional RunPack ID to link files
+            Guid runPackId,
             CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("=== Saving RunPack Files to Storage and Database ===");
@@ -112,22 +119,17 @@ namespace Chapi.AI.Services
 
             try
             {
-                var runId = Guid.NewGuid();
-                var projectPath = $"{projectId}/{runId}/generated-files";
-                var uploadedFiles = new List<string>();
+                var projectPath = $"{projectId}/{runPackId}/generated-files";
                 var createdFiles = new List<ShipMvp.Domain.Files.File>();
+                var createdPackFiles = new List<RunPackFile>();
 
                 _logger.LogInformation("Extracting ZIP and uploading individual files to: {ProjectPath}", projectPath);
 
                 // Get the RunPack entity if provided to add files to it
-                RunPack.Domain.RunPack? runPack = null;
-                if (runPackId.HasValue)
+                var runPack = await _runPackRepository.GetByIdAsync(runPackId, cancellationToken);
+                if (runPack == null)
                 {
-                    runPack = await _runPackRepository.GetByIdAsync(runPackId.Value, cancellationToken);
-                    if (runPack == null)
-                    {
-                        _logger.LogWarning("RunPack not found: {RunPackId}, proceeding without linking files", runPackId);
-                    }
+                    _logger.LogWarning("RunPack not found: {RunPackId}, proceeding without linking files", runPackId);
                 }
 
                 // Extract ZIP and upload individual files
@@ -162,7 +164,7 @@ namespace Chapi.AI.Services
 
                     // Create File entity and save to database
                     var fileEntity = new ShipMvp.Domain.Files.File(
-                        Guid.NewGuid(),
+                        _guidGenerator.Create(),
                         containerName: CONTAINER_NAME,
                         fileName: entry.Name,
                         originalFileName: entry.Name,
@@ -174,37 +176,34 @@ namespace Chapi.AI.Services
                     );
 
                     // Set additional properties
-                    fileEntity.Tags = $"project:{projectId},env:{environment},runpack:{runId}";
+                    fileEntity.Tags = $"project:{projectId},env:{environment},runpack:{runPackId}";
+                    createdFiles.Add(fileEntity);
 
-                    var savedFile = await _fileRepository.InsertAsync(fileEntity, cancellationToken);
-                    createdFiles.Add(savedFile);
-                    uploadedFiles.Add(filePath);
+                    //createdFiles.Add(savedFile);
+                    //uploadedFiles.Add(filePath);
 
                     // Link file to RunPack if RunPack entity exists
                     if (runPack != null)
                     {
-                        runPack.AddFile(entry.FullName, System.Text.Encoding.UTF8.GetString(fileContent.ToArray()), "GENERATED");
-                        _logger.LogDebug("✓ File linked to RunPack: {FileId} -> {RunPackId}", savedFile.Id, runPack.Id);
+                        var runPackFile = RunPackFile.Create(runPackId, _guidGenerator.Create(), fileEntity.Id);
+                        createdPackFiles.Add(runPackFile);
                     }
 
-                    _logger.LogDebug("✓ File saved to database: {FileId} -> {FilePath}", savedFile.Id, filePath);
                 }
 
                 // Update RunPack if it exists
                 if (runPack != null)
                 {
-                    await _runPackRepository.UpdateAsync(runPack, cancellationToken);
+                    await _fileRepository.InsertManyAsync(createdFiles);
+                    await _runPackFileRepository.InsertManyAsync(createdPackFiles);
                     _logger.LogInformation("✓ RunPack updated with {FileCount} files", createdFiles.Count);
                 }
 
-                _logger.LogInformation("✓ RunPack saved successfully: RunId={RunId}, Files={FileCount}, Path={ProjectPath}",
-                    runId, uploadedFiles.Count, projectPath);
 
                 return new RunPackFileResult
                 {
-                    RunId = runPackId ?? runId, // Return RunPack ID if provided, otherwise use generated ID
-                    FilePaths = uploadedFiles,
-                    FileCount = uploadedFiles.Count,
+                    RunId = runPackId,
+                    FileCount = createdFiles.Count,
                     ProjectPath = projectPath
                 };
             }
