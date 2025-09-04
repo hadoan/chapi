@@ -16,6 +16,8 @@ public class RunPack : Entity<Guid>
     public string? InputsHash { get; private set; }
     public DateTime? FinalizedAt { get; private set; }
 
+    public Guid MessageId { get; set; }
+
     // Navigation properties
     private readonly List<RunPackFile> _files = new();
     public IReadOnlyList<RunPackFile> Files => _files.AsReadOnly();

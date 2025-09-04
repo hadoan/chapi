@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\RunPack\RunPack.csproj" />
     <ProjectReference Include="..\\..\\shipmvp\\ShipMvp.Core\\ShipMvp.Core.csproj" />
     <ProjectReference Include="..\\..\\shipmvp\\ShipMvp.Domain\\ShipMvp.Domain.csproj" />
     <ProjectReference Include="..\\..\\shipmvp\\ShipMvp.Application\\ShipMvp.Application.csproj" />

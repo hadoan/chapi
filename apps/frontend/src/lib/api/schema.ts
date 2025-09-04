@@ -3492,9 +3492,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
-                    "text/json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
-                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.RunPackController.GenerateRequest"];
+                    "application/json": components["schemas"]["Chapi.AI.Services.GenerateRunPackRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Services.GenerateRunPackRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Services.GenerateRunPackRequest"];
                 };
             };
             responses: {
@@ -5950,15 +5950,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        "Chapi.AI.Controllers.RunPackController.GenerateRequest": {
-            /** Format: uuid */
-            projectId?: string;
-            card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
-            userQuery?: string | null;
-            env?: string | null;
-            /** Format: uuid */
-            conversationId?: string | null;
-        };
         "Chapi.AI.Controllers.RunPackController.UpdateFileRequest": {
             filePath?: string | null;
             content?: string | null;
@@ -5982,6 +5973,17 @@ export interface components {
             path?: string | null;
             /** Format: int32 */
             addedLines?: number;
+        };
+        "Chapi.AI.Services.GenerateRunPackRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+            userQuery?: string | null;
+            environment?: string | null;
+            /** Format: uuid */
+            conversationId?: string;
+            /** Format: uuid */
+            messageId?: string;
         };
         "Chapi.ApiSpecs.Application.ApiSpecDto": {
             /** Format: uuid */
@@ -6044,6 +6046,8 @@ export interface components {
             cardPayload?: string | null;
             /** Format: date-time */
             createdAt?: string;
+            /** Format: uuid */
+            runPackId?: string | null;
         };
         "Chat.Application.Requests.AppendMessageRequest": {
             /** Format: uuid */
@@ -6178,6 +6182,8 @@ export interface components {
             projectId?: string;
             /** Format: uuid */
             conversationId?: string;
+            /** Format: uuid */
+            messageId?: string;
             mode?: string | null;
         };
         "RunPack.Application.Requests.BuildRunPackRequest": {

@@ -26,23 +26,14 @@ namespace Chapi.AI.Controllers
             _logger = logger;
         }
 
-        public record GenerateRequest(Guid ProjectId, ChapiCard Card, string UserQuery, string Env = "local", Guid? ConversationId = null);
         public record UpdateFileRequest(string FilePath, string Content);
 
         [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromBody] GenerateRequest body)
+        public async Task<IActionResult> Generate([FromBody] GenerateRunPackRequest request)
         {
             try
             {
-                var request = new GenerateRunPackRequest
-                {
-                    ProjectId = body.ProjectId,
-                    Card = body.Card,
-                    UserQuery = body.UserQuery,
-                    Environment = body.Env,
-                    ConversationId = body.ConversationId
-                };
-
+             
                 var result = await _generationService.GenerateRunPackAsync(request);
 
                 // Add metadata headers if file was saved and RunPack was created

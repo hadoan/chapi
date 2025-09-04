@@ -45,11 +45,13 @@ export interface ChatMessageProps {
 }
 
 export interface MessageModel {
+  id?: string; // Message ID from the backend
   role: 'user' | 'assistant';
   content: string;
   cards?: MessageCard[];
   buttons?: MessageButton[];
   runId?: string;
+  runPackId?: string; // RunPack ID from the backend for Browse Files functionality
   // Optional original ChapiCard returned from the LLM
   llmCard?: Record<string, unknown>;
 }
@@ -268,16 +270,21 @@ export const ChatMessage = ({
                 </Button>
               ))}
 
-              {/* Browse Files Button - shown when runId exists */}
+              {/* Browse Files Button - only shown when runId exists AND not already in buttons array */}
               {(() => {
+                const hasBrowseFilesButton = buttons?.some(
+                  b => b.label === 'Browse Files'
+                );
                 console.log('🔍 Browse Files button check:', {
                   runId,
                   hasRunId: !!runId,
                   onBrowseFiles: !!onBrowseFiles,
                   role: role,
+                  hasBrowseFilesButton,
                 });
                 return (
-                  runId && (
+                  runId &&
+                  !hasBrowseFilesButton && (
                     <Button
                       variant="outline"
                       size="sm"

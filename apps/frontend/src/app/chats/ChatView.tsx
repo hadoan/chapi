@@ -468,31 +468,48 @@ All smoke tests are passing. Ready to merge!`,
             cardPayload: msg.cardPayload?.substring(0, 100) + '...',
             hasCardData,
             parsedCard: parsedCard ? 'Has parsed card' : 'No parsed card',
+            runPackId: msg.runPackId,
+            hasValidRunPackId:
+              !!msg.runPackId &&
+              msg.runPackId !== '00000000-0000-0000-0000-000000000000',
           });
 
           // Generate buttons for assistant messages that have card data
           // Make role comparison case-insensitive
           const isAssistant = msg.role?.toLowerCase() === 'assistant';
+          const hasValidRunPackId =
+            !!msg.runPackId &&
+            msg.runPackId !== '00000000-0000-0000-0000-000000000000';
+
           const buttons =
             isAssistant && hasCardData
               ? [
                   { label: 'Run in Cloud', variant: 'primary' as const },
                   { label: 'Download Run Pack', variant: 'secondary' as const },
+                  ...(hasValidRunPackId
+                    ? [{ label: 'Browse Files', variant: 'secondary' as const }]
+                    : []),
                   { label: 'Add Negatives', variant: 'secondary' as const },
                 ]
               : undefined;
-
           console.log(`Message ${index} buttons:`, buttons);
 
-          // Extract runId from card data if it exists
-          const runId = parsedCard?.runId || parsedCard?.id;
+          // Extract runId from card data if it exists, or use runPackId from backend (but only if it's not the null GUID)
+          const validRunPackId =
+            msg.runPackId &&
+            msg.runPackId !== '00000000-0000-0000-0000-000000000000'
+              ? msg.runPackId
+              : null;
+          const runId = parsedCard?.runId || parsedCard?.id || validRunPackId;
 
           return {
+            id: msg.id, // Preserve message ID from backend
             role: msg.role as 'user' | 'assistant',
             content: msg.content || '',
             cards: parsedCard ? [parsedCard] : undefined,
             buttons,
-            runId, // Add runId to the message model
+            runId, // Add runId to the message model (could be from card or runPackId)
+            runPackId: msg.runPackId, // Preserve runPackId from backend
             llmCard: parsedCard, // Set llmCard for messages with card data
           };
         }) || [];
@@ -544,16 +561,18 @@ All smoke tests are passing. Ready to merge!`,
         projectId: selectedProject?.id,
         hasCard: !!lm.llmCard,
         userQuery: messageModel.content,
-        env: selectedEnv,
+        environment: selectedEnv,
         conversationId: currentConversationId,
+        messageId: messageModel.id,
       });
 
       const generateRequest = {
         projectId: selectedProject?.id ?? '',
         card: lm.llmCard,
         userQuery: messageModel.content,
-        env: selectedEnv ?? 'local',
+        environment: selectedEnv ?? 'local',
         conversationId: currentConversationId || undefined,
+        messageId: messageModel.id, // Add messageId from the current message
       };
 
       const result = await runPacksApi.generate(generateRequest);
@@ -570,8 +589,12 @@ All smoke tests are passing. Ready to merge!`,
         console.log('💾 Storing runPackId in message as runId:', result.runId);
         setMessages(prev => {
           const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & { runId?: string };
+          const m = { ...copy[idx] } as LlmMessage & {
+            runId?: string;
+            runPackId?: string;
+          };
           m.runId = result.runId; // This is now RunPack ID
+          m.runPackId = result.runPackId; // Store the explicit runPackId
           copy[idx] = m;
           console.log('✅ Message updated with runPackId:', m.runId);
           return copy;
@@ -606,17 +629,16 @@ All smoke tests are passing. Ready to merge!`,
           const copy = [...prev];
           const m = { ...copy[idx] } as LlmMessage & {
             buttons?: Array<{ label: string; variant: string }>;
+            runPackId?: string;
           };
-          // If llmCard exists, restore the original action buttons plus Browse Files if runId exists
+          // If llmCard exists, restore the original action buttons plus Browse Files since we now have a runPackId
           const hasLl = !!m.llmCard;
-          const hasRunId = !!m.runId;
+          // After download, we always have a runPackId, so always show Browse Files button
           m.buttons = hasLl
             ? [
                 { label: 'Run in Cloud', variant: 'primary' as const },
                 { label: 'Download Run Pack', variant: 'secondary' as const },
-                ...(hasRunId
-                  ? [{ label: 'Browse Files', variant: 'secondary' as const }]
-                  : []),
+                { label: 'Browse Files', variant: 'secondary' as const }, // Always show after successful download
                 { label: 'Add Negatives', variant: 'secondary' as const },
               ]
             : [];
@@ -935,6 +957,7 @@ All smoke tests are passing. Ready to merge!`,
                         buttonCount: message.buttons?.length || 0,
                         buttons: message.buttons?.map(b => b.label),
                         runId: (message as MessageModel).runId,
+                        runPackId: (message as MessageModel).runPackId,
                         messageType: typeof message,
                       });
 
@@ -945,7 +968,14 @@ All smoke tests are passing. Ready to merge!`,
                             content={message.content}
                             cards={message.cards as Card[]}
                             buttons={message.buttons as CmdButton[]}
-                            runId={message.runId}
+                            runId={
+                              message.runId ||
+                              (message.runPackId &&
+                              message.runPackId !==
+                                '00000000-0000-0000-0000-000000000000'
+                                ? message.runPackId
+                                : null)
+                            }
                             onBrowseFiles={browseFiles}
                             onButtonClick={async (label: string) => {
                               console.log(
@@ -962,17 +992,32 @@ All smoke tests are passing. Ready to merge!`,
                               if (label === 'Download Run Pack')
                                 await downloadRunPack(message as MessageModel);
                               if (label === 'Browse Files') {
-                                const runId = (
-                                  message as unknown as { runId?: string }
-                                ).runId;
+                                const messageWithIds = message as unknown as {
+                                  runId?: string;
+                                  runPackId?: string;
+                                };
+                                const validRunPackId =
+                                  messageWithIds.runPackId &&
+                                  messageWithIds.runPackId !==
+                                    '00000000-0000-0000-0000-000000000000'
+                                    ? messageWithIds.runPackId
+                                    : null;
+                                const runId =
+                                  messageWithIds.runId || validRunPackId;
                                 console.log(
                                   '🗂️ Browse Files action - runId:',
-                                  runId
+                                  runId,
+                                  'from runId:',
+                                  messageWithIds.runId,
+                                  'from runPackId:',
+                                  messageWithIds.runPackId,
+                                  'validRunPackId:',
+                                  validRunPackId
                                 );
                                 if (runId) browseFiles(runId);
                                 else
                                   console.warn(
-                                    '❌ No runId found for Browse Files'
+                                    '❌ No valid runId or runPackId found for Browse Files'
                                   );
                               }
                               if (label === 'Add Negatives')

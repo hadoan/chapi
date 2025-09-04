@@ -28,198 +28,243 @@ This document is the canonical reference for the Chapi.app database. It covers *
 ## Entities & Fields
 
 ### 1) Projects
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| name | text | human-friendly name |
-| description | text? | optional |
-| created_at | timestamptz | default now() |
-| updated_at | timestamptz | maintained by app/trigger |
+
+| Field       | Type        | Notes                     |
+| ----------- | ----------- | ------------------------- |
+| id          | uuid PK     |                           |
+| name        | text        | human-friendly name       |
+| description | text?       | optional                  |
+| created_at  | timestamptz | default now()             |
+| updated_at  | timestamptz | maintained by app/trigger |
 
 **Purpose:** Root container for everything else.
 
 ---
 
 ### 2) Environments
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | cascade delete optional |
-| name | text | e.g., local, staging, prod |
-| base_url | text | like `http://localhost:5066` |
-| secrets | jsonb | masked in UI (e.g., `{ "TOKEN": "...", "API_KEY": "..." }`) |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+
+| Field      | Type                   | Notes                                                       |
+| ---------- | ---------------------- | ----------------------------------------------------------- |
+| id         | uuid PK                |                                                             |
+| project_id | uuid FK → projects(id) | cascade delete optional                                     |
+| name       | text                   | e.g., local, staging, prod                                  |
+| base_url   | text                   | like `http://localhost:5066`                                |
+| secrets    | jsonb                  | masked in UI (e.g., `{ "TOKEN": "...", "API_KEY": "..." }`) |
+| created_at | timestamptz            |                                                             |
+| updated_at | timestamptz            |                                                             |
 
 **Purpose:** Connection & secret store for a project.
 
 ---
 
 ### 3) ApiSpecs
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| version | text | e.g., v1 |
-| raw_json | jsonb | full OpenAPI document |
-| source_url | text? | swagger.json URL if imported |
-| created_at | timestamptz | |
+
+| Field      | Type                   | Notes                        |
+| ---------- | ---------------------- | ---------------------------- |
+| id         | uuid PK                |                              |
+| project_id | uuid FK → projects(id) |                              |
+| version    | text                   | e.g., v1                     |
+| raw_json   | jsonb                  | full OpenAPI document        |
+| source_url | text?                  | swagger.json URL if imported |
+| created_at | timestamptz            |                              |
 
 **Purpose:** Spec storage with versioning.
 
 ---
 
 ### 4) EndpointCatalog
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| spec_id | uuid FK → api_specs(id) | |
-| method | text | GET/POST/PUT/PATCH/DELETE |
-| path | text | `/api/users/{id}` |
-| summary | text | short operation summary |
-| auth | text | `bearer`, `apikey`, `basic`, `oauth2`, `none`, or mapped name |
-| req_content | text | request content type or `-` |
-| success_content | text | `200:application/json` etc. |
-| created_at | timestamptz | |
+
+| Field           | Type                    | Notes                                                         |
+| --------------- | ----------------------- | ------------------------------------------------------------- |
+| id              | uuid PK                 |                                                               |
+| project_id      | uuid FK → projects(id)  |                                                               |
+| spec_id         | uuid FK → api_specs(id) |                                                               |
+| method          | text                    | GET/POST/PUT/PATCH/DELETE                                     |
+| path            | text                    | `/api/users/{id}`                                             |
+| summary         | text                    | short operation summary                                       |
+| auth            | text                    | `bearer`, `apikey`, `basic`, `oauth2`, `none`, or mapped name |
+| req_content     | text                    | request content type or `-`                                   |
+| success_content | text                    | `200:application/json` etc.                                   |
+| created_at      | timestamptz             |                                                               |
 
 **Purpose:** Normalized endpoints for search and LLM context.
 
 ---
 
 ### 5) EndpointDiscovery (optional)
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| code_snippet | text | extracted code |
-| detected_path | text | |
-| detected_method | text | |
-| status | text | `candidate` \| `accepted` \| `rejected` |
-| created_at | timestamptz | |
+
+| Field           | Type                   | Notes                                   |
+| --------------- | ---------------------- | --------------------------------------- |
+| id              | uuid PK                |                                         |
+| project_id      | uuid FK → projects(id) |                                         |
+| code_snippet    | text                   | extracted code                          |
+| detected_path   | text                   |                                         |
+| detected_method | text                   |                                         |
+| status          | text                   | `candidate` \| `accepted` \| `rejected` |
+| created_at      | timestamptz            |                                         |
 
 **Purpose:** Ingest endpoints from source code for review.
 
 ---
 
-### 6) RunPacks
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | owner |
-| run_id | uuid FK → runs(id)? | optional linkage |
-| mode | text | `bash-curl` \| `json-ir` \| `hybrid` |
-| files_count | integer | number of files added |
-| zip_url | text? | storage URL if persisted |
-| status | text | `draft` \| `finalized` \| `expired` |
-| generator_version | text | prompt/tooling version |
-| card_hash | text | hash of card manifest |
-| inputs_hash | text | hash of inputs (contexts/env) |
-| created_at | timestamptz | |
-| finalized_at | timestamptz? | |
+### 6) Conversations
 
-**Purpose:** Cacheable bundle of generated test files.
+| Field      | Type                   | Notes                                    |
+| ---------- | ---------------------- | ---------------------------------------- |
+| id         | uuid PK                |                                          |
+| project_id | uuid FK → projects(id) | owner project                            |
+| title      | text                   | conversation title (auto-generated/user) |
+| created_at | timestamptz            |                                          |
+| updated_at | timestamptz            |                                          |
+
+**Purpose:** Chat conversation containers for organizing user interactions.
 
 ---
 
-### 7) RunPackFiles
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| runpack_id | uuid FK → run_packs(id) | |
-| path | text | `tests/email-service/auth.sh` |
-| content | text | full file body |
-| size_bytes | integer | convenience |
-| role | text | `AUTH` \| `SMOKE` \| `CRUD` |
-| created_at | timestamptz | |
+### 7) Messages
+
+| Field           | Type                        | Notes                                        |
+| --------------- | --------------------------- | -------------------------------------------- |
+| id              | uuid PK                     |                                              |
+| conversation_id | uuid FK → conversations(id) | parent conversation                          |
+| role            | text                        | `user` \| `assistant`                        |
+| content         | text                        | message text content                         |
+| card_type       | text                        | `none` \| `plan` \| `diff` \| `run`          |
+| card_payload    | jsonb?                      | structured card data (plans, diffs, results) |
+| created_at      | timestamptz                 |                                              |
+
+**Purpose:** Individual chat messages with optional structured card data.
+
+---
+
+### 8) RunPacks
+
+| Field             | Type                        | Notes                                |
+| ----------------- | --------------------------- | ------------------------------------ |
+| id                | uuid PK                     |                                      |
+| project_id        | uuid FK → projects(id)      | owner                                |
+| conversation_id   | uuid FK → conversations(id) | optional chat context linkage        |
+| message_id        | uuid FK → messages(id)?     | optional specific message linkage    |
+| run_id            | uuid FK → runs(id)?         | optional execution linkage           |
+| mode              | text                        | `bash-curl` \| `json-ir` \| `hybrid` |
+| files_count       | integer                     | number of files added                |
+| zip_url           | text?                       | storage URL if persisted             |
+| status            | text                        | `draft` \| `finalized` \| `expired`  |
+| generator_version | text                        | prompt/tooling version               |
+| card_hash         | text                        | hash of card manifest                |
+| inputs_hash       | text                        | hash of inputs (contexts/env)        |
+| created_at        | timestamptz                 |                                      |
+| finalized_at      | timestamptz?                |                                      |
+
+**Purpose:** Cacheable bundle of generated test files with chat context.
+
+---
+
+### 9) RunPackFiles
+
+| Field      | Type                    | Notes                         |
+| ---------- | ----------------------- | ----------------------------- |
+| id         | uuid PK                 |                               |
+| runpack_id | uuid FK → run_packs(id) |                               |
+| path       | text                    | `tests/email-service/auth.sh` |
+| content    | text                    | full file body                |
+| size_bytes | integer                 | convenience                   |
+| role       | text                    | `AUTH` \| `SMOKE` \| `CRUD`   |
+| created_at | timestamptz             |                               |
 
 **Purpose:** Files included in a RunPack (pre-zip).
 
 ---
 
-### 8) RunPackInputs
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| runpack_id | uuid FK → run_packs(id) | |
-| file_roles_json | jsonb | map: path → role |
-| role_contexts_json | jsonb | map: role → compact endpoints |
-| endpoints_context | text | compact endpoints string used |
-| allowed_ops | text | guardrail list |
-| env | text | local/staging/prod |
-| selector_output_json | jsonb? | LLM picks (if used) |
-| notes | text? | extra hints |
-| created_at | timestamptz | |
+### 10) RunPackInputs
+
+| Field                | Type                    | Notes                         |
+| -------------------- | ----------------------- | ----------------------------- |
+| id                   | uuid PK                 |                               |
+| runpack_id           | uuid FK → run_packs(id) |                               |
+| file_roles_json      | jsonb                   | map: path → role              |
+| role_contexts_json   | jsonb                   | map: role → compact endpoints |
+| endpoints_context    | text                    | compact endpoints string used |
+| allowed_ops          | text                    | guardrail list                |
+| env                  | text                    | local/staging/prod            |
+| selector_output_json | jsonb?                  | LLM picks (if used)           |
+| notes                | text?                   | extra hints                   |
+| created_at           | timestamptz             |                               |
 
 **Purpose:** Provenance for deterministic rebuilds.
 
 ---
 
-### 9) RunPackValidations
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| runpack_id | uuid FK → run_packs(id) | |
-| file_path | text | target path |
-| rule | text | e.g., `NoRootUrl`, `AuthThreeCases`, `NoDangerousShell`, `JsonSchemaValid` |
-| passed | boolean | |
-| details | jsonb? | failure info |
-| created_at | timestamptz | |
+### 11) RunPackValidations
+
+| Field      | Type                    | Notes                                                                      |
+| ---------- | ----------------------- | -------------------------------------------------------------------------- |
+| id         | uuid PK                 |                                                                            |
+| runpack_id | uuid FK → run_packs(id) |                                                                            |
+| file_path  | text                    | target path                                                                |
+| rule       | text                    | e.g., `NoRootUrl`, `AuthThreeCases`, `NoDangerousShell`, `JsonSchemaValid` |
+| passed     | boolean                 |                                                                            |
+| details    | jsonb?                  | failure info                                                               |
+| created_at | timestamptz             |                                                                            |
 
 **Purpose:** Guardrails before packaging/running.
 
 ---
 
-### 10) Runs
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| env_id | uuid FK → environments(id) | |
-| status | text | `queued` \| `running` \| `passed` \| `failed` |
-| user_query | text | original chat instruction |
-| card | jsonb | LLM card (plan, files, actions) |
-| created_at | timestamptz | |
-| completed_at | timestamptz? | |
+### 12) Runs
+
+| Field        | Type                       | Notes                                         |
+| ------------ | -------------------------- | --------------------------------------------- |
+| id           | uuid PK                    |                                               |
+| project_id   | uuid FK → projects(id)     |                                               |
+| env_id       | uuid FK → environments(id) |                                               |
+| status       | text                       | `queued` \| `running` \| `passed` \| `failed` |
+| user_query   | text                       | original chat instruction                     |
+| card         | jsonb                      | LLM card (plan, files, actions)               |
+| created_at   | timestamptz                |                                               |
+| completed_at | timestamptz?               |                                               |
 
 **Purpose:** Execution lifecycle record.
 
 ---
 
-### 11) Artifacts
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| run_id | uuid FK → runs(id) | |
-| path | text | file path |
-| content | text | file body (if you store per run) |
-| created_at | timestamptz | |
+### 13) Artifacts
+
+| Field      | Type               | Notes                            |
+| ---------- | ------------------ | -------------------------------- |
+| id         | uuid PK            |                                  |
+| run_id     | uuid FK → runs(id) |                                  |
+| path       | text               | file path                        |
+| content    | text               | file body (if you store per run) |
+| created_at | timestamptz        |                                  |
 
 **Purpose:** Files produced/used by a run. If using RunPack as cache, you may copy from RunPackFiles into Artifacts at execution time.
 
 ---
 
-### 12) Integrations_GitHub (optional)
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| installation_id | text | GitHub App installation |
-| repo | text | owner/repo |
-| created_at | timestamptz | |
+### 14) Integrations_GitHub (optional)
+
+| Field           | Type                   | Notes                   |
+| --------------- | ---------------------- | ----------------------- |
+| id              | uuid PK                |                         |
+| project_id      | uuid FK → projects(id) |                         |
+| installation_id | text                   | GitHub App installation |
+| repo            | text                   | owner/repo              |
+| created_at      | timestamptz            |                         |
 
 **Purpose:** GitHub checks/PR integration.
 
 ---
 
-### 13) Policies (optional)
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| project_id | uuid FK → projects(id) | |
-| type | text | e.g., `require-auth`, `validate-json-schema` |
-| rules | jsonb | policy JSON |
-| created_at | timestamptz | |
+### 15) Policies (optional)
+
+| Field      | Type                   | Notes                                        |
+| ---------- | ---------------------- | -------------------------------------------- |
+| id         | uuid PK                |                                              |
+| project_id | uuid FK → projects(id) |                                              |
+| type       | text                   | e.g., `require-auth`, `validate-json-schema` |
+| rules      | jsonb                  | policy JSON                                  |
+| created_at | timestamptz            |                                              |
 
 **Purpose:** Governance rules applied to packs/runs.
 
@@ -232,11 +277,16 @@ erDiagram
   Projects ||--o{ Environments : has
   Projects ||--o{ ApiSpecs : has
   Projects ||--o{ EndpointCatalog : owns
+  Projects ||--o{ Conversations : owns
   Projects ||--o{ RunPacks : owns
   Projects ||--o{ Runs : has
   Projects ||--o{ Policies : governs
   Projects ||--o{ Integrations_GitHub : integrates
   Projects ||--o{ EndpointDiscovery : discovers
+
+  Conversations ||--o{ Messages : contains
+  Conversations ||--o{ RunPacks : generates
+  Messages ||--o{ RunPacks : may_generate
 
   ApiSpecs ||--o{ EndpointCatalog : defines
   Runs }o--|| RunPacks : produces
@@ -255,8 +305,12 @@ erDiagram
 - `environments(project_id, name)` unique
 - `api_specs(project_id, version)` unique (optional)
 - `endpoint_catalog(project_id, path, method)` non-unique (supports multiple specs)
+- `conversations(project_id, created_at)`
+- `messages(conversation_id, created_at)`
 - `runs(project_id, created_at)`
 - `run_packs(project_id, inputs_hash)` (cache)
+- `run_packs(conversation_id, created_at)` (chat context)
+- `run_packs(message_id)` unique (message linkage)
 - `run_pack_files(runpack_id, path)`
 - `run_pack_validations(runpack_id, file_path)`
 - `artifacts(run_id, path)`
@@ -314,9 +368,31 @@ CREATE TABLE endpoint_catalog (
 );
 CREATE INDEX ix_endpoint_catalog_project_path_method ON endpoint_catalog(project_id, path, method);
 
+CREATE TABLE conversations (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_conversations_project_created ON conversations(project_id, created_at DESC);
+
+CREATE TABLE messages (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id uuid NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  role text NOT NULL,
+  content text NOT NULL,
+  card_type text NOT NULL DEFAULT 'none',
+  card_payload jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_messages_conversation_created ON messages(conversation_id, created_at);
+
 CREATE TABLE run_packs (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  conversation_id uuid REFERENCES conversations(id) ON DELETE SET NULL,
+  message_id uuid REFERENCES messages(id) ON DELETE SET NULL,
   run_id uuid REFERENCES runs(id) ON DELETE SET NULL,
   mode text NOT NULL,
   files_count integer NOT NULL DEFAULT 0,
@@ -328,6 +404,9 @@ CREATE TABLE run_packs (
   created_at timestamptz NOT NULL DEFAULT now(),
   finalized_at timestamptz
 );
+CREATE INDEX ix_run_packs_project_created ON run_packs(project_id, created_at DESC);
+CREATE INDEX ix_run_packs_conversation ON run_packs(conversation_id, created_at DESC);
+CREATE UNIQUE INDEX ix_run_packs_message ON run_packs(message_id) WHERE message_id IS NOT NULL;
 
 CREATE TABLE run_pack_files (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -419,13 +498,14 @@ CREATE TABLE endpoint_discovery (
 
 - **ProjectsModule**: Projects, Environments  
 - **SpecsModule**: ApiSpecs, EndpointCatalog  
+- **ChatModule**: Conversations, Messages
 - **RunPacksModule**: RunPacks, RunPackFiles, RunPackInputs, RunPackValidations  
 - **RunsModule**: Runs, Artifacts  
 - **IntegrationsModule**: Integrations_GitHub  
 - **GovernanceModule**: Policies  
 - **DiscoveryModule** (optional): EndpointDiscovery
 
-Keep each module with its own DbContext & migrations; aggregate roots: Project, RunPack, Run.
+Keep each module with its own DbContext & migrations; aggregate roots: Project, Conversation, RunPack, Run.
 
 ---
 

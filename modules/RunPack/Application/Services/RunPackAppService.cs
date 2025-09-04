@@ -29,6 +29,7 @@ public class RunPackAppService : IRunPackAppService
     public async Task<RunPackDto> BuildFromConversationAsync(BuildRunPackFromConversationRequest request, CancellationToken ct)
     {
         var pack = Domain.RunPack.CreateFromConversation(_guidGenerator.Create(), request.ProjectId, request.ConversationId, request.Mode ?? "hybrid");
+        pack.MessageId = request.MessageId;
         pack.SetGeneratorVersion("1.0.0");
         await _repo.AddAsync(pack, ct);
         return pack.ToDto();

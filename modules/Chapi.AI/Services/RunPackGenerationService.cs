@@ -23,7 +23,9 @@ namespace Chapi.AI.Services
         public ChapiCard Card { get; set; } = null!;
         public string UserQuery { get; set; } = "";
         public string Environment { get; set; } = "local";
-        public Guid? ConversationId { get; set; }
+        public Guid ConversationId { get; set; }
+
+        public Guid MessageId { get; set; }
     }
 
     public class RunPackGenerationResult
@@ -94,29 +96,21 @@ namespace Chapi.AI.Services
             _logger.LogInformation("✓ RunPack ZIP generated successfully ({ZipSize} bytes)", zipData.Length);
 
             // 6) Create RunPack entity in database first
-            Guid runPackId = Guid.Empty; 
+            Guid runPackId = Guid.Empty;
             try
             {
-                if (request.ConversationId.HasValue)
-                {
-                    var runPackDto = await _runPackAppService.BuildFromConversationAsync(
-                        new BuildRunPackFromConversationRequest(
-                            request.ProjectId,
-                            request.ConversationId.Value,
-                            "hybrid"
-                        ),
-                        default);
-                    runPackId = runPackDto.Id;
-                    _logger.LogInformation("✓ RunPack entity created and linked to conversation: {RunPackId}", runPackId);
-                }
-                else
-                {
-                    var runPackDto = await _runPackAppService.BuildAsync(
-                        new BuildRunPackRequest(request.ProjectId, "hybrid"),
-                        default);
-                    runPackId = runPackDto.Id;
-                    _logger.LogInformation("✓ RunPack entity created: {RunPackId}", runPackId);
-                }
+
+                var runPackDto = await _runPackAppService.BuildFromConversationAsync(
+                    new BuildRunPackFromConversationRequest(
+                        request.ProjectId,
+                        request.ConversationId,
+                        request.MessageId,
+                        "hybrid"
+                    ),
+                    default);
+                runPackId = runPackDto.Id;
+                _logger.LogInformation("✓ RunPack entity created and linked to conversation: {RunPackId}", runPackId);
+
             }
             catch (Exception dbEx)
             {
