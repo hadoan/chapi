@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Settings, Edit, Github, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
-import { Layout } from "@/components/Layout";
-import { EnvEditorDrawer } from "@/components/EnvEditorDrawer";
+import { EnvEditorDrawer } from '@/components/EnvEditorDrawer';
+import { GithubIntegrationCard } from '@/components/GithubIntegrationCard';
+import { Layout } from '@/components/Layout';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/hooks/use-toast';
 import { EnvProvider, useEnvStore } from '@/lib/state/envStore';
 import type { EnvModel } from '@/lib/state/types';
-import { GithubIntegrationCard } from "@/components/GithubIntegrationCard";
+import { Edit, Plus, Settings } from 'lucide-react';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 interface ProjectSettingsPageProps {
   params: { id: string };
@@ -29,7 +29,7 @@ export function ProjectSettingsPageInner() {
   const [showEnvEditor, setShowEnvEditor] = useState(false);
   const [policies, setPolicies] = useState({
     failOnContractBreak: true,
-    artifactRedaction: true
+    artifactRedaction: true,
   });
 
   const handleEditEnvironment = (envId: string) => {
@@ -37,7 +37,9 @@ export function ProjectSettingsPageInner() {
     setShowEnvEditor(true);
   };
 
-  const handleSaveEnvironment = async (env: Partial<EnvModel> & { id?: string }) => {
+  const handleSaveEnvironment = async (
+    env: Partial<EnvModel> & { id?: string }
+  ) => {
     // env will match EnvModel shape from the drawer
     if (env.id) {
       await updateEnv(env.id, env);
@@ -48,10 +50,10 @@ export function ProjectSettingsPageInner() {
         baseUrl: env.baseUrl as string,
         timeoutMs: env.timeoutMs ?? 30000,
         followRedirects: env.followRedirects ?? true,
-        headers: env.headers ?? {}
+        headers: env.headers ?? {},
       } as Omit<EnvModel, 'id' | 'createdAt'>;
 
-  await createEnv(payload, id ?? undefined);
+      await createEnv(payload, id ?? undefined);
     }
     setShowEnvEditor(false);
     setSelectedEnvId(null);
@@ -59,7 +61,7 @@ export function ProjectSettingsPageInner() {
 
   const handlePolicyChange = (key: keyof typeof policies, value: boolean) => {
     setPolicies(prev => ({ ...prev, [key]: value }));
-    toast({ title: "Policy updated" });
+    toast({ title: 'Policy updated' });
   };
 
   return (
@@ -69,7 +71,9 @@ export function ProjectSettingsPageInner() {
           <Settings className="w-8 h-8" />
           <div>
             <h1 className="text-3xl font-bold">Project Settings</h1>
-            <p className="text-muted-foreground">Configure environments, policies, and integrations</p>
+            <p className="text-muted-foreground">
+              Configure environments, policies, and integrations
+            </p>
           </div>
         </div>
 
@@ -96,22 +100,31 @@ export function ProjectSettingsPageInner() {
                   {loading ? (
                     <div>Loading environments...</div>
                   ) : (
-                    envs.map((env) => (
-                      <div key={env.id} className="flex items-center justify-between p-4 border rounded-lg hover-scale">
+                    envs.map(env => (
+                      <div
+                        key={env.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover-scale"
+                      >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant={env.locked ? 'destructive' : 'outline'}>
+                            <Badge
+                              variant={env.locked ? 'destructive' : 'outline'}
+                            >
                               {env.name}
                             </Badge>
                             {env.locked && (
-                              <span className="text-xs text-muted-foreground">Read-only</span>
+                              <span className="text-xs text-muted-foreground">
+                                Read-only
+                              </span>
                             )}
                           </div>
                           <p className="text-sm font-mono">{env.baseUrl}</p>
-                          <p className="text-xs text-muted-foreground">Created {env.createdAt}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Created {env.createdAt}
+                          </p>
                         </div>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEditEnvironment(env.id)}
                           disabled={env.locked}
@@ -135,21 +148,28 @@ export function ProjectSettingsPageInner() {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label htmlFor="fail-contract">Fail on contract break</Label>
+                    <Label htmlFor="fail-contract">
+                      Fail on contract break
+                    </Label>
                     <p className="text-sm text-muted-foreground">
-                      Automatically fail tests when API responses don't match the contract
+                      Automatically fail tests when API responses don't match
+                      the contract
                     </p>
                   </div>
                   <Switch
                     id="fail-contract"
                     checked={policies.failOnContractBreak}
-                    onCheckedChange={(checked) => handlePolicyChange('failOnContractBreak', checked)}
+                    onCheckedChange={checked =>
+                      handlePolicyChange('failOnContractBreak', checked)
+                    }
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label htmlFor="artifact-redaction">Artifact redaction</Label>
+                    <Label htmlFor="artifact-redaction">
+                      Artifact redaction
+                    </Label>
                     <p className="text-sm text-muted-foreground">
                       Automatically redact sensitive data in test artifacts
                     </p>
@@ -157,13 +177,16 @@ export function ProjectSettingsPageInner() {
                   <Switch
                     id="artifact-redaction"
                     checked={policies.artifactRedaction}
-                    onCheckedChange={(checked) => handlePolicyChange('artifactRedaction', checked)}
+                    onCheckedChange={checked =>
+                      handlePolicyChange('artifactRedaction', checked)
+                    }
                   />
                 </div>
 
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    <strong>Advanced policies coming soon:</strong> YAML editor, custom rules, and more granular controls.
+                    <strong>Advanced policies coming soon:</strong> YAML editor,
+                    custom rules, and more granular controls.
                   </p>
                 </div>
               </CardContent>
@@ -176,7 +199,11 @@ export function ProjectSettingsPageInner() {
         </Tabs>
 
         <EnvEditorDrawer
-          environment={selectedEnvId ? envs.find(e => e.id === selectedEnvId) ?? null : null}
+          environment={
+            selectedEnvId
+              ? envs.find(e => e.id === selectedEnvId) ?? null
+              : null
+          }
           open={showEnvEditor}
           onOpenChange={setShowEnvEditor}
           onSave={handleSaveEnvironment}

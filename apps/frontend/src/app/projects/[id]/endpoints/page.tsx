@@ -2,9 +2,15 @@
 
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { endpointsApi } from '@/lib/api/endpoints';
 import { useEffect, useState } from 'react';
@@ -29,16 +35,19 @@ export default function ProjectEndpointsPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    endpointsApi.listByProject(id)
-      .then(list => setEndpoints(
-        list.map(x => ({
-          id: x.id ?? '',
-          method: (x.method ?? 'GET').toString(),
-          path: x.path ?? '',
-          summary: x.summary ?? null,
-          tags: x.tags ?? []
-        }))
-      ))
+    endpointsApi
+      .listByProject(id)
+      .then(list =>
+        setEndpoints(
+          list.map(x => ({
+            id: x.id ?? '',
+            method: (x.method ?? 'GET').toString(),
+            path: x.path ?? '',
+            summary: x.summary ?? null,
+            tags: x.tags ?? [],
+          }))
+        )
+      )
       .catch(err =>
         toast({ title: 'Failed', description: err?.message ?? String(err) })
       )
@@ -63,7 +72,10 @@ export default function ProjectEndpointsPage() {
         <div className="grid gap-4">
           <div className="flex gap-2 items-center">
             <div style={{ width: 160 }}>
-              <Select onValueChange={(v) => setMethodFilter(v)} defaultValue="ALL">
+              <Select
+                onValueChange={v => setMethodFilter(v)}
+                defaultValue="ALL"
+              >
                 <SelectTrigger>
                   <SelectValue>{methodFilter}</SelectValue>
                 </SelectTrigger>
@@ -77,7 +89,11 @@ export default function ProjectEndpointsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Input placeholder="Search path, summary or tags" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} />
+            <Input
+              placeholder="Search path, summary or tags"
+              value={textFilter}
+              onChange={e => setTextFilter(e.target.value)}
+            />
           </div>
           {loading ? (
             <div>Loading...</div>
@@ -86,34 +102,42 @@ export default function ProjectEndpointsPage() {
           ) : (
             endpoints
               .filter(ep => {
-                if (methodFilter && methodFilter !== 'ALL' && ep.method.toUpperCase() !== methodFilter) return false;
+                if (
+                  methodFilter &&
+                  methodFilter !== 'ALL' &&
+                  ep.method.toUpperCase() !== methodFilter
+                )
+                  return false;
                 if (!textFilter) return true;
                 const q = textFilter.toLowerCase();
                 if (ep.path?.toLowerCase().includes(q)) return true;
                 if (ep.summary?.toLowerCase().includes(q)) return true;
-                if (ep.tags && ep.tags.join(',').toLowerCase().includes(q)) return true;
+                if (ep.tags && ep.tags.join(',').toLowerCase().includes(q))
+                  return true;
                 return false;
               })
               .map(ep => (
-              <Card key={ep.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="font-mono text-sm">
-                      {ep.method.toUpperCase()}
-                    </span>
-                    <span className="text-sm">{ep.path}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{ep.summary}</p>
-                  {ep.tags && ep.tags.length > 0 && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Tags: {ep.tags.join(', ')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                <Card key={ep.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="font-mono text-sm">
+                        {ep.method.toUpperCase()}
+                      </span>
+                      <span className="text-sm">{ep.path}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {ep.summary}
+                    </p>
+                    {ep.tags && ep.tags.length > 0 && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Tags: {ep.tags.join(', ')}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
           )}
         </div>
       </div>
