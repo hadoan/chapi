@@ -28,13 +28,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
-import { chatApi, ConversationDto } from '@/lib/api/chat';
+import { chatApi } from '@/lib/api/chat';
 import { EnvironmentDto, environmentsApi } from '@/lib/api/environments';
 import { llmsApi } from '@/lib/api/llms';
 import { ProjectDto, projectsApi } from '@/lib/api/projects';
-import { runPacksApi } from '@/lib/api/run-packs';
 import type { components } from '@/lib/api/schema';
-import mockMessages from '@/lib/mock/messages/chat-1.json';
 import {
   ChevronDown,
   LogOut,
@@ -44,7 +42,8 @@ import {
   Sun,
   User,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useConversations } from './hooks/useConversations';
 
 type Card = MessageCard;
 type CmdButton = MessageButton;
@@ -60,18 +59,27 @@ export default function ChatView() {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [messages, setMessages] = useState<MessageModel[]>([]);
-  const [conversations, setConversations] = useState<ConversationDto[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<
-    string | null
-  >(null);
-  const [loadingConversations, setLoadingConversations] = useState(false);
+  const {
+    conversations,
+    currentConversationId,
+    messages,
+    loadingConversations,
+    isNewConversation,
+    setMessages,
+    setCurrentConversationId,
+    setIsNewConversation,
+    refreshConversations,
+    loadConversation,
+    handleNewConversation,
+    downloadRunPack,
+    addNegatives,
+  } = useConversations(selectedProject, selectedEnv);
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
   const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string>('');
   const [selectedRunPackId, setSelectedRunPackId] = useState<string>('');
   const [showMobileHistory, setShowMobileHistory] = useState(false);
-  const [isNewConversation, setIsNewConversation] = useState(false);
+  // conversation state and actions are provided by useConversations hook
 
   type LlmMessage = MessageModel & {
     llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
@@ -330,6 +338,7 @@ All smoke tests are passing. Ready to merge!`,
           });
         }
 
+        // create conversation via API and refresh; keep the hook responsible for loading
         const newConversation = await chatApi.createConversation({
           title: command.substring(0, 50) + (command.length > 50 ? '...' : ''),
           projectId: selectedProject.id,
@@ -338,11 +347,7 @@ All smoke tests are passing. Ready to merge!`,
         });
 
         setCurrentConversationId(newConversation.id || null);
-
-        // Reset the new conversation flag since we now have an actual conversation
         setIsNewConversation(false);
-
-        // Refresh the conversation list to show the new conversation with updated message count
         await refreshConversations();
       } else {
         // Append to existing conversation - use batch append for both user and assistant messages
@@ -372,8 +377,6 @@ All smoke tests are passing. Ready to merge!`,
           conversationId: currentConversationId,
           messages: messagesToAppend,
         });
-
-        // Refresh the conversation list to update the message count and last updated time
         await refreshConversations();
       }
 
@@ -428,304 +431,6 @@ All smoke tests are passing. Ready to merge!`,
       fileBrowserOpen: true,
     });
   };
-
-  const handleNewConversation = () => {
-    // Clear current conversation and all chat-related state
-    setCurrentConversationId(null);
-    setMessages([]);
-
-    // Set flag to indicate this is an intentional new conversation
-    setIsNewConversation(true);
-
-    // Clear any ongoing operations
-    setDownloadingIndex(-1);
-    setFileBrowserOpen(false);
-    setSelectedRunId('');
-    setSelectedRunPackId('');
-
-    // Close any open modals/drawers related to chat
-    setShowCommandPalette(false);
-
-    // Note: We preserve project/environment selections as they're user preferences
-
-    toast({
-      title: 'New conversation started',
-      description: 'Ready for new conversation.',
-    });
-  };
-
-  // Function to refresh conversation list
-  const refreshConversations = async () => {
-    if (!selectedProject?.id) return;
-
-    try {
-      const conversationList = await chatApi.getConversations(
-        selectedProject.id
-      );
-      setConversations(conversationList);
-    } catch (error) {
-      console.error('Failed to refresh conversations:', error);
-    }
-  };
-
-  const loadConversation = useCallback(async (conversationId: string) => {
-    try {
-      const conversation = await chatApi.getConversation(conversationId);
-      setCurrentConversationId(conversationId);
-
-      // Reset the new conversation flag when loading an existing conversation
-      setIsNewConversation(false);
-
-      console.log('Raw conversation data:', conversation);
-
-      // Convert conversation messages to MessageModel format
-      const messageModels: MessageModel[] =
-        conversation.messages?.map((msg, index) => {
-          const hasCardData = msg.cardType && msg.cardPayload;
-          let parsedCard;
-
-          if (hasCardData) {
-            try {
-              parsedCard = JSON.parse(msg.cardPayload);
-              console.log(`Message ${index} parsed card:`, parsedCard);
-            } catch (e) {
-              console.error(
-                `Failed to parse card payload for message ${index}:`,
-                e
-              );
-            }
-          }
-
-          console.log(`Message ${index}:`, {
-            role: msg.role,
-            cardType: msg.cardType,
-            hasCardPayload: !!msg.cardPayload,
-            cardPayload: msg.cardPayload?.substring(0, 100) + '...',
-            hasCardData,
-            parsedCard: parsedCard ? 'Has parsed card' : 'No parsed card',
-            runPackId: msg.runPackId,
-            hasValidRunPackId:
-              !!msg.runPackId &&
-              msg.runPackId !== '00000000-0000-0000-0000-000000000000',
-          });
-
-          // Generate buttons for assistant messages that have card data
-          // Make role comparison case-insensitive
-          const isAssistant = msg.role?.toLowerCase() === 'assistant';
-          const hasValidRunPackId =
-            !!msg.runPackId &&
-            msg.runPackId !== '00000000-0000-0000-0000-000000000000';
-
-          const buttons =
-            isAssistant && hasCardData
-              ? [
-                  { label: 'Run in Cloud', variant: 'primary' as const },
-                  { label: 'Download Run Pack', variant: 'secondary' as const },
-                  ...(hasValidRunPackId
-                    ? [{ label: 'Browse Files', variant: 'secondary' as const }]
-                    : []),
-                  { label: 'Add Negatives', variant: 'secondary' as const },
-                ]
-              : undefined;
-          console.log(`Message ${index} buttons:`, buttons);
-
-          // Extract runId from card data if it exists, or use runPackId from backend (but only if it's not the null GUID)
-          const validRunPackId =
-            msg.runPackId &&
-            msg.runPackId !== '00000000-0000-0000-0000-000000000000'
-              ? msg.runPackId
-              : null;
-          const runId = parsedCard?.runId || parsedCard?.id || validRunPackId;
-
-          return {
-            id: msg.id, // Preserve message ID from backend
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content || '',
-            cards: parsedCard ? [parsedCard] : undefined,
-            buttons,
-            runId, // Add runId to the message model (could be from card or runPackId)
-            runPackId: msg.runPackId, // Preserve runPackId from backend
-            llmCard: parsedCard, // Set llmCard for messages with card data
-          };
-        }) || [];
-
-      console.log('Final messageModels:', messageModels);
-      setMessages(messageModels);
-    } catch (error) {
-      console.error('Failed to load conversation:', error);
-      toast({ title: 'Failed to load conversation' });
-    }
-  }, []);
-
-  const downloadRunPack = async (messageModel: MessageModel) => {
-    console.log('🚀 downloadRunPack started', {
-      messageModel,
-      currentConversationId,
-      selectedProject,
-    });
-
-    // Find the message index to show loading state
-    const idx = messages.indexOf(messageModel as MessageModel);
-    console.log('📍 Message index found:', idx);
-
-    try {
-      toast({ title: 'Preparing run pack...' });
-      if (idx >= 0) {
-        setDownloadingIndex(idx);
-        // Mark the message's buttons as loading
-        setMessages(prev => {
-          const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & {
-            buttons?: Array<{
-              label: string;
-              variant: string;
-              loading?: boolean;
-            }>;
-          };
-          m.buttons = [
-            { label: 'Downloading...', variant: 'secondary', loading: true },
-          ];
-          copy[idx] = m;
-          return copy;
-        });
-      }
-
-      // Call run-packs API which returns a blob and runId
-      const lm = messageModel as LlmMessage;
-      console.log('📦 Calling runPacksApi.generate with:', {
-        projectId: selectedProject?.id,
-        hasCard: !!lm.llmCard,
-        userQuery: messageModel.content,
-        environment: selectedEnv,
-        conversationId: currentConversationId,
-        messageId: messageModel.id,
-      });
-
-      const generateRequest = {
-        projectId: selectedProject?.id ?? '',
-        card: lm.llmCard,
-        userQuery: messageModel.content,
-        environment: selectedEnv ?? 'local',
-        conversationId: currentConversationId || undefined,
-        messageId: messageModel.id, // Add messageId from the current message
-      };
-
-      const result = await runPacksApi.generate(generateRequest);
-
-      console.log('✅ RunPack generation result:', {
-        runId: result.runId,
-        runPackId: result.runPackId,
-        blobSize: result.blob.size,
-        storagePath: result.storagePath,
-      });
-
-      // Store runId (which is now RunPack ID) in the message for future reference
-      if (idx >= 0 && result.runId) {
-        console.log('💾 Storing runPackId in message as runId:', result.runId);
-        setMessages(prev => {
-          const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & {
-            runId?: string;
-            runPackId?: string;
-          };
-          m.runId = result.runId; // This is now RunPack ID
-          m.runPackId = result.runPackId; // Store the explicit runPackId
-          copy[idx] = m;
-          console.log('✅ Message updated with runPackId:', m.runId);
-          return copy;
-        });
-      } else {
-        console.warn('⚠️ No runPackId received or invalid message index', {
-          idx,
-          runId: result.runId,
-          runPackId: result.runPackId,
-        });
-      }
-
-      const url = URL.createObjectURL(result.blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'chapi-run-pack.zip';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast({
-        title: `Run pack downloaded (ID: ${result.runId.substring(0, 8)}...)`,
-      });
-    } catch (err) {
-      console.error('Download failed', err);
-      toast({ title: 'Failed to download run pack' });
-    } finally {
-      if (idx >= 0) {
-        setDownloadingIndex(-1);
-        // Restore buttons (remove loading)
-        setMessages(prev => {
-          const copy = [...prev];
-          const m = { ...copy[idx] } as LlmMessage & {
-            buttons?: Array<{ label: string; variant: string }>;
-            runPackId?: string;
-          };
-          // If llmCard exists, restore the original action buttons plus Browse Files since we now have a runPackId
-          const hasLl = !!m.llmCard;
-          // After download, we always have a runPackId, so always show Browse Files button
-          m.buttons = hasLl
-            ? [
-                { label: 'Run in Cloud', variant: 'primary' as const },
-                { label: 'Download Run Pack', variant: 'secondary' as const },
-                { label: 'Browse Files', variant: 'secondary' as const }, // Always show after successful download
-                { label: 'Add Negatives', variant: 'secondary' as const },
-              ]
-            : [];
-          copy[idx] = m;
-          return copy;
-        });
-      }
-    }
-  };
-
-  const addNegatives = async (messageModel: MessageModel) => {
-    try {
-      toast({ title: 'Adding negative tests...' });
-      // Reuse llms.generate with an augmented prompt to ask for negatives
-      const req = {
-        user_query: `${
-          selectedProject?.name ?? ''
-        } Add 3 negative tests for the generated suite`,
-        projectId: selectedProject?.id ?? '',
-        max_files: 3,
-        openApiJson: null,
-      };
-      const negCard = await llmsApi.generate(req);
-      // Append a message with the negatives
-      const assistantMessage: MessageModel = {
-        role: 'assistant',
-        content: negCard.heading ?? 'Added negative tests',
-        cards: negCard.files
-          ? [
-              {
-                type: 'diff',
-                title: negCard.heading ?? 'Negative Tests',
-                files: negCard.files.map(
-                  (f: { path?: string; addedLines?: number }) => ({
-                    path: f.path ?? '',
-                    change: 'added' as const,
-                    lines: f.addedLines ?? 0,
-                  })
-                ),
-              },
-            ]
-          : undefined,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      toast({ title: 'Negative tests added' });
-    } catch (err) {
-      console.error('Add negatives failed', err);
-      toast({ title: 'Failed to add negatives' });
-    }
-  };
-
   // Load projects on mount
   useEffect(() => {
     let mounted = true;
@@ -764,65 +469,7 @@ All smoke tests are passing. Ready to merge!`,
     };
   }, [selectedProject]);
 
-  // Load conversations when selectedProject changes
-  useEffect(() => {
-    if (!selectedProject?.id) return;
-
-    let mounted = true;
-    setLoadingConversations(true);
-
-    chatApi
-      .getConversations(selectedProject.id)
-      .then(async conversationList => {
-        if (!mounted) return;
-        setConversations(conversationList);
-
-        // If there are conversations and no conversation is currently selected, auto-select the latest one
-        // BUT only if this is NOT an intentional new conversation
-        if (
-          conversationList.length > 0 &&
-          !currentConversationId &&
-          !isNewConversation
-        ) {
-          // Find the most recent conversation by updatedAt or createdAt
-          const sortedConversations = [...conversationList].sort((a, b) => {
-            const dateA = new Date(a.updatedAt || a.createdAt || '').getTime();
-            const dateB = new Date(b.updatedAt || b.createdAt || '').getTime();
-            return dateB - dateA; // Most recent first
-          });
-
-          const latestConversation = sortedConversations[0];
-
-          if (latestConversation.id) {
-            // Use the existing loadConversation function to properly load messages with all features
-            await loadConversation(latestConversation.id);
-          }
-        } else if (conversationList.length === 0 || isNewConversation) {
-          // No conversations, or intentional new conversation - start with empty messages
-          setMessages([]);
-          setCurrentConversationId(null);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          toast({ title: 'Failed to load conversations' });
-          // Fall back to mock messages if conversation loading fails
-          setMessages(mockMessages as MessageModel[]);
-        }
-      })
-      .finally(() => {
-        if (mounted) setLoadingConversations(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [
-    selectedProject,
-    currentConversationId,
-    loadConversation,
-    isNewConversation,
-  ]);
+  // Conversation loading/selection is handled inside useConversations hook
 
   // Toggle dark mode
   const toggleDarkMode = () => {
