@@ -27,6 +27,8 @@ public sealed class ChapiDbContext : AppDbContext
         modelBuilder.ConfigureApiSpecsEntities();
         modelBuilder.ConfigureEndpointCatalogEntities();
         modelBuilder.ConfigureContactsEntities();
+        modelBuilder.ConfigureRunsEntities();
+        modelBuilder.ConfigureRunPacksEntities();
     }
 
 }
