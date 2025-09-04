@@ -17,7 +17,6 @@ public class RunPackInput : Entity<Guid>
     public int? MaxTokens { get; private set; }
     public int? ContextSize { get; private set; }
     public string? StopSequences { get; private set; }
-    public new DateTime CreatedAt { get; private set; }
 
     private RunPackInput() : base(Guid.Empty) { }
 

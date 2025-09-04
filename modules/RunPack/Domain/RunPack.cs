@@ -13,7 +13,6 @@ public class RunPack : Entity<Guid>
     public string? GeneratorVersion { get; private set; }
     public string? CardHash { get; private set; }
     public string? InputsHash { get; private set; }
-    public new DateTime CreatedAt { get; private set; }
     public DateTime? FinalizedAt { get; private set; }
 
     // Navigation properties
@@ -29,7 +28,6 @@ public class RunPack : Entity<Guid>
         ProjectId = projectId;
         Mode = mode;
         Status = "draft";
-        CreatedAt = DateTime.UtcNow;
         FilesCount = 0;
     }
 
