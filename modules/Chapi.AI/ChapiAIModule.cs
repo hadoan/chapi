@@ -6,6 +6,7 @@ using ShipMvp.Core.Modules;
 using Chapi.AI.Services;
 using ShipMvp.Integration.SemanticKernel;
 using ShipMvp.Integration.SemanticKernel.Infrastructure;
+using RunPack.Infrastructure;
 using System.Linq;
 
 namespace Chapi.AI;
@@ -17,6 +18,9 @@ public class ChapiAIModule : IModule
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers().AddApplicationPart(typeof(ChapiAIModule).Assembly);
+
+        // Register RunPack infrastructure (required for RunPack domain services)
+        services.AddRunPackInfrastructure();
 
         // Register AI related services here
         services.AddTransient<Chapi.AI.Services.IApiTestGenerationService, Chapi.AI.Services.ApiTestGenerationService>();

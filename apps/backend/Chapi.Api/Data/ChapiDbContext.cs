@@ -8,6 +8,8 @@ using Chat.Infrastructure;
 using Chapi.ApiSpecs.Infrastructure;
 using Chapi.EndpointCatalog.Infrastructure;
 using Contacts.Infrastructure;
+using Runs.Infrastructure;
+using RunPack.Infrastructure;
 
 namespace Chapi.Api.Data;
 
@@ -27,6 +29,8 @@ public sealed class ChapiDbContext : AppDbContext
         modelBuilder.ConfigureApiSpecsEntities();
         modelBuilder.ConfigureEndpointCatalogEntities();
         modelBuilder.ConfigureContactsEntities();
+        modelBuilder.ConfigureRunsEntities();
+        modelBuilder.ConfigureRunPacksEntities();
     }
 
 }

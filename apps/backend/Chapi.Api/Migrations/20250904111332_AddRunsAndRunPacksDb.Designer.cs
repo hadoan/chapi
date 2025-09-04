@@ -5,6 +5,7 @@ using System.Text.Json;
 using Chapi.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -13,9 +14,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chapi.Api.Migrations
 {
     [DbContext(typeof(ChapiDbContext))]
-    partial class ChapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250904111332_AddRunsAndRunPacksDb")]
+    partial class AddRunsAndRunPacksDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -830,9 +833,6 @@ namespace Chapi.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("ConversationId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -863,9 +863,6 @@ namespace Chapi.Api.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Mode")
                         .IsRequired()
@@ -898,8 +895,6 @@ namespace Chapi.Api.Migrations
                         .HasColumnType("character varying(512)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
 
                     b.HasIndex("CreatedAt");
 

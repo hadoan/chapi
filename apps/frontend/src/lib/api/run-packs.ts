@@ -3,13 +3,31 @@ import { config } from '../config/app.config';
 import { AuthService } from './auth-service';
 import type { components } from './schema';
 
-export type GenerateRequest =
-  components['schemas']['Chapi.AI.Controllers.RunPackController.GenerateRequest'];
+export type GenerateRunPackRequest =
+  components['schemas']['Chapi.AI.Services.GenerateRunPackRequest'];
 
 export interface GenerateResponse {
   blob: Blob;
-  runId: string;
+  runId: string; // This will now be RunPack ID from X-RunPack-Id header
+  runPackId: string; // Explicit RunPack ID field
   storagePath?: string;
+}
+
+export interface RunPackDto {
+  id: string;
+  projectId: string;
+  conversationId?: string;
+  runId?: string;
+  mode: string;
+  filesCount: number;
+  zipUrl?: string;
+  status: string;
+  generatorVersion?: string;
+  cardHash?: string;
+  inputsHash?: string;
+  finalizedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RunPackFileListResult {
@@ -28,7 +46,7 @@ export interface RunPackFileListResult {
 }
 
 export const runPacksApi = {
-  async generate(body: GenerateRequest): Promise<GenerateResponse> {
+  async generate(body: GenerateRunPackRequest): Promise<GenerateResponse> {
     // Use axios directly to access headers
     const token = AuthService.getToken();
     if (!token) {
@@ -49,22 +67,27 @@ export const runPacksApi = {
 
     const runId =
       response.headers['x-file-id'] || response.headers['X-File-Id'] || '';
+    const runPackId =
+      response.headers['x-runpack-id'] ||
+      response.headers['X-RunPack-Id'] ||
+      runId; // Fallback to runId if no RunPack ID
     const storagePath =
       response.headers['x-storage-path'] || response.headers['X-Storage-Path'];
 
     return {
       blob: response.data,
-      runId,
+      runId: runPackId, // Use RunPack ID as the primary ID for Browse Files
+      runPackId,
       storagePath,
     };
   },
 
-  async downloadRun(runId: string, specificFile?: string): Promise<Blob> {
+  async downloadRun(runPackId: string, specificFile?: string): Promise<Blob> {
     const params = specificFile
       ? `?file=${encodeURIComponent(specificFile)}`
       : '';
     return await AuthService.authenticatedFetch<Blob>(
-      `/api/run-pack/runs/${runId}${params}`,
+      `/api/run-pack/runs/${runPackId}${params}`,
       {
         method: 'GET',
         responseType: 'blob',
@@ -72,8 +95,8 @@ export const runPacksApi = {
     );
   },
 
-  async deleteRun(runId: string): Promise<void> {
-    await AuthService.authenticatedFetch(`/api/run-pack/runs/${runId}`, {
+  async deleteRun(runPackId: string): Promise<void> {
+    await AuthService.authenticatedFetch(`/api/run-pack/runs/${runPackId}`, {
       method: 'DELETE',
     });
   },
@@ -90,6 +113,37 @@ export const runPacksApi = {
 
     return await AuthService.authenticatedFetch(
       `/api/run-pack/files?${params}`,
+      {
+        method: 'GET',
+      }
+    );
+  },
+
+  // RunPack management functions
+  async listByConversation(conversationId: string): Promise<RunPackDto[]> {
+    return await AuthService.authenticatedFetch<RunPackDto[]>(
+      `/api/runpacks/conversation/${conversationId}`,
+      {
+        method: 'GET',
+      }
+    );
+  },
+
+  async getById(id: string): Promise<RunPackDto> {
+    return await AuthService.authenticatedFetch<RunPackDto>(
+      `/api/runpacks/${id}`,
+      {
+        method: 'GET',
+      }
+    );
+  },
+
+  async list(projectId: string): Promise<RunPackDto[]> {
+    const params = new URLSearchParams();
+    params.append('projectId', projectId);
+
+    return await AuthService.authenticatedFetch<RunPackDto[]>(
+      `/api/runpacks?${params}`,
       {
         method: 'GET',
       }

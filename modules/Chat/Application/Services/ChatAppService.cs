@@ -4,6 +4,7 @@ using Chat.Application.Requests;
 using Chat.Domain;
 using Microsoft.EntityFrameworkCore;
 using ShipMvp.Core.Persistence;
+using RunPack.Domain;
 
 namespace Chat.Application.Services;
 
@@ -11,11 +12,23 @@ public class ChatAppService : IChatAppService
 {
     private readonly IConversationRepository _repo;
     private readonly IDbContext _db;
+    private readonly IRunPackRepository _runPackRepository;
     private readonly ISpecGenerator _specGenerator; // TODO implement
     private readonly IOpenApiDiff _openApiDiff; // TODO implement
-    public ChatAppService(IConversationRepository repo, IDbContext db, ISpecGenerator specGenerator, IOpenApiDiff openApiDiff)
-    { _repo = repo; _db = db; _specGenerator = specGenerator; _openApiDiff = openApiDiff; }
 
+    public ChatAppService(
+        IConversationRepository repo,
+        IDbContext db,
+        IRunPackRepository runPackRepository,
+        ISpecGenerator specGenerator,
+        IOpenApiDiff openApiDiff)
+    {
+        _repo = repo;
+        _db = db;
+        _runPackRepository = runPackRepository;
+        _specGenerator = specGenerator;
+        _openApiDiff = openApiDiff;
+    }
     public async Task<ConversationDto> CreateAsync(CreateConversationRequest request, CancellationToken ct)
     {
         var conv = Conversation.Create(request.Title, request.ProjectId);
@@ -48,7 +61,38 @@ public class ChatAppService : IChatAppService
 
         // Load messages separately since we no longer use navigation properties
         var messages = await _db.Set<Message>().Where(m => m.ConversationId == id).ToListAsync(ct);
-        return conv.ToDto(messages);
+        
+        // Find all assistant message IDs
+        var assistantMessageIds = messages
+            .Where(m => m.Role == MessageRole.Assistant)
+            .Select(m => m.Id)
+            .ToList();
+
+        // Create message-to-runpack mapping
+        var messageRunPackMap = new Dictionary<Guid, Guid>();
+        
+        if (assistantMessageIds.Any())
+        {
+            // Get all RunPacks for these messages and process in memory to avoid EF Core GroupBy issues
+            var allRunPacks = await _runPackRepository.Query()
+                .Where(rp => assistantMessageIds.Contains(rp.MessageId))
+                .Select(rp => new { rp.Id, rp.MessageId, rp.CreatedAt })
+                .ToListAsync(ct);
+
+            // Group by MessageId and take the latest one per message (in memory)
+            var latestRunPacks = allRunPacks
+                .GroupBy(rp => rp.MessageId)
+                .Select(group => group.OrderByDescending(rp => rp.CreatedAt).First())
+                .ToList();
+
+            // Build the mapping dictionary
+            foreach (var runPack in latestRunPacks)
+            {
+                messageRunPackMap[runPack.MessageId] = runPack.Id;
+            }
+        }
+
+        return conv.ToDto(messages, messageRunPackMap);
     }
 
     public async Task<IEnumerable<ConversationDto>> ListAsync(Guid projectId, int page, int pageSize, CancellationToken ct)

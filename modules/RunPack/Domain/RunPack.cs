@@ -5,18 +5,91 @@ namespace RunPack.Domain;
 public class RunPack : Entity<Guid>
 {
     public Guid ProjectId { get; private set; }
-    public Guid SuiteId { get; private set; }
-    public int Version { get; private set; }
-    public string ZipBlob { get; private set; } = string.Empty; // blob reference
-    public DateTime CreatedAt { get; private set; }
+    public Guid? ConversationId { get; private set; } // Link to the chat conversation that generated this pack
+    public Guid? RunId { get; private set; } // Link to Runs table if executed
+    public string Mode { get; private set; } = "hybrid";
+    public int FilesCount { get; private set; }
+    public string? ZipUrl { get; private set; }
+    public string Status { get; private set; } = "draft";
+    public string? GeneratorVersion { get; private set; }
+    public string? CardHash { get; private set; }
+    public string? InputsHash { get; private set; }
+    public DateTime? FinalizedAt { get; private set; }
+
+    public Guid MessageId { get; set; }
+
+    // Navigation properties
+    private readonly List<RunPackFile> _files = new();
+    public IReadOnlyList<RunPackFile> Files => _files.AsReadOnly();
+
+    public RunPackInput? Input { get; private set; }
+
     private RunPack() : base(Guid.Empty) { }
-    private RunPack(Guid id, Guid projectId, Guid suiteId, int version, string zipBlob) : base(id)
-    { ProjectId = projectId; SuiteId = suiteId; Version = version; ZipBlob = zipBlob; CreatedAt = DateTime.UtcNow; }
-    public static RunPack Build(Guid projectId, Guid suiteId, int version, string blob) => new(Guid.NewGuid(), projectId, suiteId, version, blob);
+
+    private RunPack(Guid id, Guid projectId, string mode = "hybrid") : base(id)
+    {
+        ProjectId = projectId;
+        Mode = mode;
+        Status = "draft";
+        FilesCount = 0;
+    }
+
+    public static RunPack Create(Guid projectId, string mode = "hybrid")
+        => new(Guid.NewGuid(), projectId, mode);
+
+    public static RunPack CreateFromConversation(Guid id, Guid projectId, Guid conversationId, string mode = "hybrid")
+    {
+        var runPack = new RunPack(id, projectId, mode);
+        runPack.ConversationId = conversationId;
+        return runPack;
+    }
+
+    public void AddFile(RunPackFile file)
+    {
+        _files.Add(file);
+        FilesCount = _files.Count;
+    }
+
+    public void SetInput(string fileRolesJson, string roleContextsJson, string endpointsContext,
+        string allowedOps, string environment)
+    {
+        Input = RunPackInput.Create(Id, fileRolesJson, roleContextsJson, endpointsContext, allowedOps, environment);
+    }
+
+    public void SetZipUrl(string zipUrl)
+    {
+        ZipUrl = zipUrl;
+    }
+
+    public void Complete()
+    {
+        Status = "finalized";
+        FinalizedAt = DateTime.UtcNow;
+    }
+
+    public void LinkToRun(Guid runId)
+    {
+        RunId = runId;
+    }
+
+    public void LinkToConversation(Guid conversationId)
+    {
+        ConversationId = conversationId;
+    }
+
+    public void SetHashes(string cardHash, string inputsHash)
+    {
+        CardHash = cardHash;
+        InputsHash = inputsHash;
+    }
+
+    public void SetGeneratorVersion(string version)
+    {
+        GeneratorVersion = version;
+    }
 }
 
 public interface IRunPackRepository : ShipMvp.Core.Abstractions.IRepository<RunPack, Guid>
 {
     IQueryable<RunPack> Query();
-    Task<int> GetLatestVersionAsync(Guid projectId, Guid suiteId, CancellationToken ct);
 }

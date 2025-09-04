@@ -26,30 +26,28 @@ namespace Chapi.AI.Controllers
             _logger = logger;
         }
 
-        public record GenerateRequest(Guid ProjectId, ChapiCard Card, string UserQuery, string Env = "local");
         public record UpdateFileRequest(string FilePath, string Content);
 
         [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromBody] GenerateRequest body)
+        public async Task<IActionResult> Generate([FromBody] GenerateRunPackRequest request)
         {
             try
             {
-                var request = new GenerateRunPackRequest
-                {
-                    ProjectId = body.ProjectId,
-                    Card = body.Card,
-                    UserQuery = body.UserQuery,
-                    Environment = body.Env
-                };
-
+             
                 var result = await _generationService.GenerateRunPackAsync(request);
 
-                // Add metadata headers if file was saved
+                // Add metadata headers if file was saved and RunPack was created
                 if (result.SavedFileId.HasValue)
                 {
                     Response.Headers["X-File-Id"] = result.SavedFileId.Value.ToString();
                     if (!string.IsNullOrEmpty(result.StoragePath))
                         Response.Headers["X-Storage-Path"] = result.StoragePath;
+                }
+
+                // Add RunPack ID header for frontend to use
+                if (result.RunPackId.HasValue)
+                {
+                    Response.Headers["X-RunPack-Id"] = result.RunPackId.Value.ToString();
                 }
 
                 return File(result.ZipData, "application/zip", result.FileName);
@@ -84,35 +82,35 @@ namespace Chapi.AI.Controllers
             }
         }
 
-        [HttpGet("runs/{runId}")]
-        public async Task<IActionResult> DownloadRunPack(Guid runId, [FromQuery] string? file = null)
+        [HttpGet("runs/{runPackId}")]
+        public async Task<IActionResult> DownloadRunPack(Guid runPackId, [FromQuery] string? file = null)
         {
             try
             {
-                var fileContent = await _fileService.DownloadRunPackFileAsync(runId, file);
+                var fileContent = await _fileService.DownloadRunPackFileAsync(runPackId, file);
                 if (fileContent == null)
                 {
                     return NotFound(new { error = "RunPack not found" });
                 }
 
-                var fileName = string.IsNullOrEmpty(file) ? $"runpack-{runId}.zip" : file;
+                var fileName = string.IsNullOrEmpty(file) ? $"runpack-{runPackId}.zip" : file;
                 var contentType = string.IsNullOrEmpty(file) ? "application/zip" : "application/octet-stream";
 
                 return File(fileContent, contentType, fileName);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error downloading RunPack: {RunId}, File: {File}", runId, file);
+                _logger.LogError(ex, "Error downloading RunPack: {RunPackId}, File: {File}", runPackId, file);
                 return StatusCode(500, new { error = "Failed to download RunPack" });
             }
         }
 
-        [HttpPut("runs/{runId}/files")]
-        public async Task<IActionResult> UpdateRunPackFile(Guid runId, [FromBody] UpdateFileRequest request)
+        [HttpPut("runs/{runPackId}/files")]
+        public async Task<IActionResult> UpdateRunPackFile(Guid runPackId, [FromBody] UpdateFileRequest request)
         {
             try
             {
-                await _fileService.UpdateRunPackFileAsync(runId, request.FilePath, request.Content);
+                await _fileService.UpdateRunPackFileAsync(runPackId, request.FilePath, request.Content);
                 return Ok(new { message = "File updated successfully" });
             }
             catch (FileNotFoundException)
@@ -121,22 +119,22 @@ namespace Chapi.AI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating RunPack file: {RunId}, File: {FilePath}", runId, request.FilePath);
+                _logger.LogError(ex, "Error updating RunPack file: {RunPackId}, File: {FilePath}", runPackId, request.FilePath);
                 return StatusCode(500, new { error = "Failed to update file" });
             }
         }
 
-        [HttpDelete("runs/{runId}")]
-        public async Task<IActionResult> DeleteRunPack(Guid runId)
+        [HttpDelete("runs/{runPackId}")]
+        public async Task<IActionResult> DeleteRunPack(Guid runPackId)
         {
             try
             {
-                await _fileService.DeleteRunPackFileAsync(runId);
+                await _fileService.DeleteRunPackFileAsync(runPackId);
                 return Ok(new { message = "RunPack deleted successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting RunPack: {RunId}", runId);
+                _logger.LogError(ex, "Error deleting RunPack: {RunPackId}", runPackId);
                 return StatusCode(500, new { error = "Failed to delete RunPack" });
             }
         }

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Chapi.AI.Dto;
+using RunPack.Application.Services;
+using RunPack.Application.Requests;
 
 namespace Chapi.AI.Services
 {
@@ -21,6 +23,9 @@ namespace Chapi.AI.Services
         public ChapiCard Card { get; set; } = null!;
         public string UserQuery { get; set; } = "";
         public string Environment { get; set; } = "local";
+        public Guid ConversationId { get; set; }
+
+        public Guid MessageId { get; set; }
     }
 
     public class RunPackGenerationResult
@@ -29,6 +34,7 @@ namespace Chapi.AI.Services
         public string FileName { get; set; } = "";
         public Guid? SavedFileId { get; set; }
         public string? StoragePath { get; set; }
+        public Guid? RunPackId { get; set; }
     }
 
     public class RunPackGenerationService : IRunPackGenerationService
@@ -37,6 +43,7 @@ namespace Chapi.AI.Services
         private readonly EndpointSelectorService _endpointSelector;
         private readonly RunPackService _runPackService;
         private readonly IRunPackFileService _fileService;
+        private readonly IRunPackAppService _runPackAppService;
         private readonly ILogger<RunPackGenerationService> _logger;
 
         public RunPackGenerationService(
@@ -44,12 +51,14 @@ namespace Chapi.AI.Services
             EndpointSelectorService endpointSelector,
             RunPackService runPackService,
             IRunPackFileService fileService,
+            IRunPackAppService runPackAppService,
             ILogger<RunPackGenerationService> logger)
         {
             _endpointAnalysis = endpointAnalysis;
             _endpointSelector = endpointSelector;
             _runPackService = runPackService;
             _fileService = fileService;
+            _runPackAppService = runPackAppService;
             _logger = logger;
         }
 
@@ -86,19 +95,42 @@ namespace Chapi.AI.Services
 
             _logger.LogInformation("✓ RunPack ZIP generated successfully ({ZipSize} bytes)", zipData.Length);
 
-            // 6) Save to storage
+            // 6) Create RunPack entity in database first
+            Guid runPackId = Guid.Empty;
+            try
+            {
+
+                var runPackDto = await _runPackAppService.BuildFromConversationAsync(
+                    new BuildRunPackFromConversationRequest(
+                        request.ProjectId,
+                        request.ConversationId,
+                        request.MessageId,
+                        "hybrid"
+                    ),
+                    default);
+                runPackId = runPackDto.Id;
+                _logger.LogInformation("✓ RunPack entity created and linked to conversation: {RunPackId}", runPackId);
+
+            }
+            catch (Exception dbEx)
+            {
+                _logger.LogWarning(dbEx, "⚠️ Failed to create RunPack entity in database, proceeding without linking");
+            }
+
+            // 7) Save to storage and link files to RunPack
             var fileName = $"chapi-runpack-{request.ProjectId}-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
 
             try
             {
-                var fileResult = await _fileService.SaveRunPackAsync(zipData, request.ProjectId, request.Environment);
+                var fileResult = await _fileService.SaveRunPackAsync(zipData, request.ProjectId, request.Environment, runPackId);
 
                 return new RunPackGenerationResult
                 {
                     ZipData = zipData,
                     FileName = fileName,
                     SavedFileId = fileResult.RunId,
-                    StoragePath = fileResult.ProjectPath
+                    StoragePath = fileResult.ProjectPath,
+                    RunPackId = runPackId
                 };
             }
             catch (Exception ex)
@@ -108,7 +140,8 @@ namespace Chapi.AI.Services
                 return new RunPackGenerationResult
                 {
                     ZipData = zipData,
-                    FileName = fileName
+                    FileName = fileName,
+                    RunPackId = runPackId
                 };
             }
         }

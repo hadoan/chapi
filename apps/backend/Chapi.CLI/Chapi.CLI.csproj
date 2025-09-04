@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\\..\\..\\shipmvp\\ShipMvp.CLI\\ShipMvp.CLI.csproj" />
     <ProjectReference Include="..\\Chapi.Api\\Chapi.Api.csproj" />
     <ProjectReference Include="..\\..\\..\\shipmvp\\ShipMvp.Application\\ShipMvp.Application.csproj" />
     <ProjectReference Include="..\\..\\..\\shipmvp\\ShipMvp.Core\\ShipMvp.Core.csproj" />
