@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { uploadFile } from '@/lib/api/file-service';
 import { runPacksApi } from '@/lib/api/run-packs';
 import {
   Code2,
@@ -28,6 +29,11 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+// Some SheetContent types don't expose children in their props typings in our
+// environment. Create a permissive alias to allow children in JSX usage.
+const SheetContentAny = SheetContent as unknown as React.ComponentType<
+  Record<string, unknown>
+>;
 
 interface RunPackFileBrowserProps {
   isOpen: boolean;
@@ -189,8 +195,21 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
     if (!selectedFile) return;
 
     try {
-      // For now, we'll just show a success message
-      // In a full implementation, this would save back to the server
+      // Create a blob from the edited content and wrap in a File to upload
+      // Create a Blob for upload and cast to File for the upload API.
+      // Some TypeScript/DOM environments may not allow `new File(...)`,
+      // so we cast a Blob to File which works at runtime for fetch/FormData.
+      const fileName = selectedFile.name;
+      const file = new Blob([editedContent], {
+        type: 'text/plain',
+      }) as unknown as File;
+
+      // Use the uploadFile service to save to the server. Use a container
+      // name derived from the runPackId so files are grouped per run pack.
+      const container = `runpack-${runPackId}`;
+
+      await uploadFile(file, container, false);
+
       toast({ title: 'File saved successfully' });
       setIsEditing(false);
 
@@ -236,7 +255,7 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent
+      <SheetContentAny
         side="right"
         className="max-w-full md:max-w-[50vw] lg:max-w-[50vw] xl:max-w-[50vw] w-full p-0"
       >
@@ -392,7 +411,7 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
             )}
           </div>
         </div>
-      </SheetContent>
+      </SheetContentAny>
     </Sheet>
   );
 };

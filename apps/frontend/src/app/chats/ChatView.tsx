@@ -683,7 +683,10 @@ All smoke tests are passing. Ready to merge!`,
                               ).llmCard;
                               if (label === 'Run in Cloud') await runInCloud();
                               if (label === 'Download Run Pack')
-                                await downloadRunPack(message as MessageModel);
+                                await downloadRunPack(
+                                  message as MessageModel,
+                                  selectedProject || undefined
+                                );
                               if (label === 'Browse Files') {
                                 const messageWithIds = message as unknown as {
                                   runId?: string;

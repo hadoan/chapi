@@ -5,7 +5,7 @@
     "gpt-4o": {
       "model_id": "gpt-4o",
       "service_id": "gpt-4o",
-      "temperature": 0.7,
+      "temperature": 0.1,
       "text_format": "json",
       "store": false,
       "response_format": {

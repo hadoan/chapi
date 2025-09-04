@@ -15,6 +15,11 @@ export function useConversations(
   selectedProject?: { id?: string },
   selectedEnv?: string
 ) {
+  const isNonZeroGuid = (id?: string | null) => {
+    if (!id) return false;
+    const zero = '00000000-0000-0000-0000-000000000000';
+    return id !== '' && id !== zero;
+  };
   const [conversations, setConversations] = useState<ConversationDto[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
@@ -111,6 +116,17 @@ export function useConversations(
       // copied minimal logic from ChatView; updates messages locally
       const idx = messages.indexOf(messageModel as MessageModel);
       try {
+        // Ensure a project is selected - the backend expects a valid ProjectId (GUID).
+        if (!selectedProject?.id) {
+          toast({
+            title: 'Select a project first',
+            description:
+              'Please select a project before generating a run pack.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         toast({ title: 'Preparing run pack...' });
         if (idx >= 0) {
           // set a temporary loading badge on the message
@@ -134,7 +150,7 @@ export function useConversations(
 
         const lm = messageModel as LlmMessage;
         const generateRequest = {
-          projectId: selectedProject?.id ?? '',
+          projectId: selectedProject!.id,
           card: lm.llmCard,
           userQuery: messageModel.content,
           environment: selectedEnv ?? 'local',
@@ -144,18 +160,87 @@ export function useConversations(
 
         const result = await runPacksApi.generate(generateRequest);
 
-        if (idx >= 0 && result.runId) {
+        // Ensure returned IDs are valid (not empty string or zero-guid)
+        const isNonZeroGuid = (id?: string | null) => {
+          if (!id) return false;
+          const zero = '00000000-0000-0000-0000-000000000000';
+          return id !== '' && id !== zero;
+        };
+
+        if (
+          idx >= 0 &&
+          (isNonZeroGuid(result.runPackId) || isNonZeroGuid(result.runId))
+        ) {
           setMessages(prev => {
             const copy = [...prev];
             const m = { ...copy[idx] } as LlmMessage & {
-              runId?: string;
-              runPackId?: string;
+              runId?: string | null;
+              runPackId?: string | null;
             };
-            m.runId = result.runId;
-            m.runPackId = result.runPackId;
+            // Prefer explicit runPackId, fallback to runId
+            m.runPackId = isNonZeroGuid(result.runPackId)
+              ? result.runPackId
+              : isNonZeroGuid(result.runId)
+              ? result.runId
+              : null;
+            m.runId = isNonZeroGuid(result.runId) ? result.runId : m.runPackId;
             copy[idx] = m;
             return copy;
           });
+        } else {
+          // No valid IDs returned - try to find a RunPack created for this conversation
+          console.warn(
+            'Run pack generated but no valid RunPack ID returned',
+            result
+          );
+          if (currentConversationId) {
+            try {
+              const runPacks = await runPacksApi.listByConversation(
+                currentConversationId
+              );
+              if (runPacks && runPacks.length > 0) {
+                // Prefer the most recent run pack
+                const latest = runPacks[0];
+                setMessages(prev => {
+                  const copy = [...prev];
+                  const m = { ...copy[idx] } as LlmMessage & {
+                    runId?: string | null;
+                    runPackId?: string | null;
+                  };
+                  m.runPackId = latest.id;
+                  m.runId = latest.id;
+                  copy[idx] = m;
+                  return copy;
+                });
+                toast({
+                  title: 'Run pack generated',
+                  description: `RunPack linked: ${runPacks[0].id.substring(
+                    0,
+                    8
+                  )}...`,
+                });
+              } else {
+                toast({
+                  title: 'Run pack generated',
+                  description:
+                    'No RunPack ID returned; browsing files will be unavailable.',
+                });
+              }
+            } catch (err) {
+              console.error('Failed to lookup run packs by conversation', err);
+              toast({
+                title: 'Run pack generated',
+                description:
+                  'No RunPack ID returned; browsing files will be unavailable.',
+              });
+            }
+          } else {
+            toast({
+              title: 'Run pack generated',
+              description:
+                'No RunPack ID returned; browsing files will be unavailable.',
+            });
+          }
         }
 
         const url = URL.createObjectURL(result.blob);
@@ -176,15 +261,23 @@ export function useConversations(
         if (idx >= 0) {
           setMessages(prev => {
             const copy = [...prev];
-            type Btn = { label: string; variant: string };
+            type Btn = {
+              label: string;
+              variant: 'primary' | 'secondary';
+              loading?: boolean;
+            };
             const m = { ...copy[idx] } as LlmMessage & { buttons?: Array<Btn> };
             const hasLl = !!m.llmCard;
+            const canBrowse =
+              !!m.runPackId && isNonZeroGuid(m.runPackId as string);
             m.buttons = hasLl
               ? [
-                  { label: 'Run in Cloud', variant: 'primary' },
-                  { label: 'Download Run Pack', variant: 'secondary' },
-                  { label: 'Browse Files', variant: 'secondary' },
-                  { label: 'Add Negatives', variant: 'secondary' },
+                  { label: 'Run in Cloud', variant: 'primary' as const },
+                  { label: 'Download Run Pack', variant: 'secondary' as const },
+                  ...(canBrowse
+                    ? [{ label: 'Browse Files', variant: 'secondary' as const }]
+                    : []),
+                  { label: 'Add Negatives', variant: 'secondary' as const },
                 ]
               : [];
             copy[idx] = m;
