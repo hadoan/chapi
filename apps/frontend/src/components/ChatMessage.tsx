@@ -40,8 +40,9 @@ export interface ChatMessageProps {
   cards?: MessageCard[];
   buttons?: MessageButton[];
   runId?: string;
+  runPackId?: string;
   onButtonClick?: (label: string) => void;
-  onBrowseFiles?: (runId: string) => void;
+  onBrowseFiles?: (runId: string, runPackId?: string) => void;
 }
 
 export interface MessageModel {
@@ -86,6 +87,7 @@ export const ChatMessage = ({
   cards,
   buttons,
   runId,
+  runPackId,
   onButtonClick,
   onBrowseFiles,
 }: ChatMessageProps) => {
@@ -96,6 +98,7 @@ export const ChatMessage = ({
     cardsCount: cards?.length || 0,
     buttonsCount: buttons?.length || 0,
     hasRunId: !!runId,
+    hasRunPackId: !!runPackId,
     buttons: buttons?.map(b => b.label),
   });
 
@@ -290,8 +293,13 @@ export const ChatMessage = ({
                       size="sm"
                       className="text-xs"
                       onClick={() => {
-                        console.log('🖱️ Browse Files clicked:', runId);
-                        onBrowseFiles?.(runId);
+                        console.log(
+                          '🖱️ Browse Files clicked:',
+                          runId,
+                          'runPackId:',
+                          runPackId
+                        );
+                        onBrowseFiles?.(runId, runPackId);
                       }}
                     >
                       <FolderOpen className="w-3 h-3 mr-1" />

@@ -32,7 +32,7 @@ import React, { useEffect, useState } from 'react';
 interface RunPackFileBrowserProps {
   isOpen: boolean;
   onClose: () => void;
-  runId: string;
+  runPackId: string;
   runPackName?: string;
 }
 
@@ -109,7 +109,7 @@ const getFileLanguage = (fileName: string): string => {
 export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
   isOpen,
   onClose,
-  runId,
+  runPackId,
   runPackName,
 }) => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -124,12 +124,13 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
   const loadRunPackFiles = React.useCallback(async () => {
     setLoading(true);
     try {
-      // For now, we'll use the file list from the backend
-      // This would need to be enhanced to get actual file structure
-      const result = await runPacksApi.getRunPackFiles();
-      const currentRun = result.files.find(f => f.runId === runId);
+      // Use the runPackId to get files for this specific RunPack
+      const result = await runPacksApi.getRunPackFiles(runPackId);
 
-      if (currentRun) {
+      // Since we're querying by runPackId, we should get the specific RunPack's files
+      // The API should return files for this specific RunPack
+      if (result.files && result.files.length > 0) {
+        const currentRun = result.files[0]; // Take the first (and should be only) result
         const fileItems: FileItem[] = currentRun.generatedFiles.map(
           fileName => ({
             name: fileName,
@@ -145,17 +146,17 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [runId]);
+  }, [runPackId]);
 
   useEffect(() => {
-    if (isOpen && runId) {
+    if (isOpen && runPackId) {
       loadRunPackFiles();
     }
-  }, [isOpen, runId, loadRunPackFiles]);
+  }, [isOpen, runPackId, loadRunPackFiles]);
 
   const loadFileContent = async (file: FileItem) => {
     try {
-      const blob = await runPacksApi.downloadRun(runId, file.path);
+      const blob = await runPacksApi.downloadRun(runPackId, file.path);
       const content = await blob.text();
       setFileContent(content);
       setEditedContent(content);
@@ -217,7 +218,7 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
     if (!selectedFile) return;
 
     try {
-      const blob = await runPacksApi.downloadRun(runId, selectedFile.path);
+      const blob = await runPacksApi.downloadRun(runPackId, selectedFile.path);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -242,7 +243,7 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
             Run Pack Files
           </SheetTitle>
           <SheetDescription>
-            {runPackName || `Run Pack ${runId.substring(0, 8)}...`}
+            {runPackName || `Run Pack ${runPackId.substring(0, 8)}...`}
             <Badge variant="outline" className="ml-2">
               {files.length} files
             </Badge>

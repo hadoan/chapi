@@ -69,6 +69,7 @@ export default function ChatView() {
   const [downloadingIndex, setDownloadingIndex] = useState<number>(-1);
   const [fileBrowserOpen, setFileBrowserOpen] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string>('');
+  const [selectedRunPackId, setSelectedRunPackId] = useState<string>('');
   const [showMobileHistory, setShowMobileHistory] = useState(false);
 
   type LlmMessage = MessageModel & {
@@ -407,12 +408,19 @@ All smoke tests are passing. Ready to merge!`,
     }
   };
 
-  const browseFiles = (runId: string) => {
-    console.log('📁 browseFiles called with runId:', runId);
+  const browseFiles = (runId: string, runPackId?: string) => {
+    console.log(
+      '📁 browseFiles called with runId:',
+      runId,
+      'runPackId:',
+      runPackId
+    );
     setSelectedRunId(runId);
+    setSelectedRunPackId(runPackId || runId); // Use runPackId if available, fallback to runId
     setFileBrowserOpen(true);
     console.log('✅ File browser state updated:', {
       selectedRunId: runId,
+      selectedRunPackId: runPackId || runId,
       fileBrowserOpen: true,
     });
   };
@@ -976,6 +984,7 @@ All smoke tests are passing. Ready to merge!`,
                                 ? message.runPackId
                                 : null)
                             }
+                            runPackId={message.runPackId}
                             onBrowseFiles={browseFiles}
                             onButtonClick={async (label: string) => {
                               console.log(
@@ -1014,7 +1023,11 @@ All smoke tests are passing. Ready to merge!`,
                                   'validRunPackId:',
                                   validRunPackId
                                 );
-                                if (runId) browseFiles(runId);
+                                if (runId)
+                                  browseFiles(
+                                    runId,
+                                    validRunPackId || undefined
+                                  );
                                 else
                                   console.warn(
                                     '❌ No valid runId or runPackId found for Browse Files'
@@ -1253,8 +1266,8 @@ All smoke tests are passing. Ready to merge!`,
           <RunPackFileBrowser
             isOpen={fileBrowserOpen}
             onClose={() => setFileBrowserOpen(false)}
-            runId={selectedRunId}
-            runPackName={`Run Pack ${selectedRunId.substring(0, 8)}...`}
+            runPackId={selectedRunPackId}
+            runPackName={`Run Pack ${selectedRunPackId.substring(0, 8)}...`}
           />
         </div>
       </div>

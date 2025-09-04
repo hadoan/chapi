@@ -3530,7 +3530,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    projectId?: string;
+                    runPackId?: string;
                     page?: number;
                     pageSize?: number;
                 };

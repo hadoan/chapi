@@ -66,13 +66,13 @@ namespace Chapi.AI.Controllers
 
         [HttpGet("files")]
         public async Task<IActionResult> GetRunPackFiles(
-            [FromQuery] Guid? projectId = null,
+            [FromQuery] Guid runPackId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
             try
             {
-                var result = await _fileService.GetRunPackFilesAsync(projectId, page, pageSize);
+                var result = await _fileService.GetRunPackFilesAsync(runPackId, page, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)

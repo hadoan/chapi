@@ -102,12 +102,12 @@ export const runPacksApi = {
   },
 
   async getRunPackFiles(
-    projectId?: string,
+    runPackId: string,
     page = 1,
     pageSize = 10
   ): Promise<RunPackFileListResult> {
     const params = new URLSearchParams();
-    if (projectId) params.append('projectId', projectId);
+    params.append('runPackId', runPackId);
     params.append('page', page.toString());
     params.append('pageSize', pageSize.toString());
 

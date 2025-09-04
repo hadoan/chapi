@@ -14,36 +14,6 @@ using ShipMvp.Core.Abstractions;
 
 namespace Chapi.AI.Services
 {
-    public interface IRunPackFileService
-    {
-        Task<RunPackFileResult> SaveRunPackAsync(
-            byte[] zipData,
-            Guid projectId,
-            string environment,
-            Guid runPackId, 
-            CancellationToken cancellationToken = default);
-
-        Task<RunPackFileListResult> GetRunPackFilesAsync(
-            Guid? projectId = null,
-            int page = 1,
-            int pageSize = 10,
-            CancellationToken cancellationToken = default);
-
-        Task<byte[]?> DownloadRunPackFileAsync(
-            Guid runPackId,
-            string? specificFile = null,
-            CancellationToken cancellationToken = default);
-
-        Task UpdateRunPackFileAsync(
-            Guid runPackId,
-            string filePath,
-            string content,
-            CancellationToken cancellationToken = default);
-
-        Task DeleteRunPackFileAsync(
-            Guid runPackId,
-            CancellationToken cancellationToken = default);
-    }
 
     public class RunPackFileResult
     {
@@ -179,9 +149,6 @@ namespace Chapi.AI.Services
                     fileEntity.Tags = $"project:{projectId},env:{environment},runpack:{runPackId}";
                     createdFiles.Add(fileEntity);
 
-                    //createdFiles.Add(savedFile);
-                    //uploadedFiles.Add(filePath);
-
                     // Link file to RunPack if RunPack entity exists
                     if (runPack != null)
                     {
@@ -233,7 +200,7 @@ namespace Chapi.AI.Services
             };
         }
 
-        public async Task<RunPackFileListResult> GetRunPackFilesAsync(
+        public async Task<RunPackFileListResult> GetRunPackFilesByProjectAsync(
             Guid? projectId = null,
             int page = 1,
             int pageSize = 10,
@@ -296,6 +263,64 @@ namespace Chapi.AI.Services
             }
         }
 
+        // Overload to get run pack files for a specific RunPackId
+        public async Task<RunPackFileListResult> GetRunPackFilesAsync(
+            Guid runPackId,
+            int page = 1,
+            int pageSize = 10,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("=== Getting RunPack Files for RunPackId from Database ===");
+            _logger.LogInformation("RunPackId: {RunPackId}, Page: {Page}, PageSize: {PageSize}", runPackId, page, pageSize);
+
+            try
+            {
+                var runPack = await _runPackRepository.Query()
+                    .Include(rp => rp.Files)
+                        .ThenInclude(rpf => rpf.File)
+                    .FirstOrDefaultAsync(rp => rp.Id == runPackId, cancellationToken);
+
+                if (runPack == null)
+                {
+                    _logger.LogWarning("RunPack not found: {RunPackId}", runPackId);
+                    return new RunPackFileListResult
+                    {
+                        Files = new List<RunPackFileInfo>(),
+                        TotalCount = 0,
+                        CurrentPage = page,
+                        PageSize = pageSize
+                    };
+                }
+
+                var runPackFileInfo = new RunPackFileInfo
+                {
+                    RunId = runPack.Id,
+                    ProjectId = runPack.ProjectId,
+                    ProjectPath = $"{runPack.ProjectId}/{runPack.Id}/generated-files",
+                    FileCount = runPack.FilesCount,
+                    CreatedAt = runPack.CreatedAt,
+                    Environment = ExtractEnvironmentFromFiles(runPack.Files) ?? "unknown",
+                    GeneratedFiles = runPack.Files.Select(f => f.File?.FileName ?? "").Where(name => !string.IsNullOrEmpty(name)).ToList()
+                };
+
+                var result = new RunPackFileListResult
+                {
+                    Files = new[] { runPackFileInfo },
+                    TotalCount = 1,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                };
+
+                _logger.LogInformation("✓ Retrieved run pack info for RunPackId: {RunPackId}", runPackId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error retrieving RunPack files for RunPackId: {RunPackId}", runPackId);
+                throw;
+            }
+        }
+
         public async Task<byte[]?> DownloadRunPackFileAsync(
             Guid runPackId, // Changed parameter name to be clearer
             string? specificFile = null,
@@ -331,7 +356,8 @@ namespace Chapi.AI.Services
                     _logger.LogInformation("Downloading specific file: {FileName} from storage path: {StoragePath}",
                         file.FileName, file.StoragePath);
 
-                    using var fileStream = await _fileStorageService.DownloadAsync(file.ContainerName, file.StoragePath, cancellationToken);
+                    var normalizedPath = NormalizeStoragePath(file.StoragePath, file.ContainerName);
+                    using var fileStream = await _fileStorageService.DownloadAsync(file.ContainerName, normalizedPath, cancellationToken);
                     using var memoryStream = new MemoryStream();
                     await fileStream.CopyToAsync(memoryStream, cancellationToken);
                     return memoryStream.ToArray();
@@ -350,7 +376,8 @@ namespace Chapi.AI.Services
 
                             try
                             {
-                                using var fileStream = await _fileStorageService.DownloadAsync(file.ContainerName, file.StoragePath, cancellationToken);
+                                var normalizedPath = NormalizeStoragePath(file.StoragePath, file.ContainerName);
+                                using var fileStream = await _fileStorageService.DownloadAsync(file.ContainerName, normalizedPath, cancellationToken);
                                 var entry = zipArchive.CreateEntry(file.FileName);
                                 using var entryStream = entry.Open();
                                 await fileStream.CopyToAsync(entryStream, cancellationToken);
@@ -407,7 +434,8 @@ namespace Chapi.AI.Services
 
                 // Upload the updated content to storage
                 using var contentStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
-                await _fileStorageService.UploadAsync(file.ContainerName, file.StoragePath, contentStream, contentType, false, cancellationToken);
+                var normalizedPath = NormalizeStoragePath(file.StoragePath, file.ContainerName);
+                await _fileStorageService.UploadAsync(file.ContainerName, normalizedPath, contentStream, contentType, false, cancellationToken);
 
                 _logger.LogInformation("✓ File updated successfully: {FilePath}", filePath);
             }
@@ -447,7 +475,8 @@ namespace Chapi.AI.Services
 
                     try
                     {
-                        await _fileStorageService.DeleteAsync(file.ContainerName, file.StoragePath, cancellationToken);
+                        var normalizedPath = NormalizeStoragePath(file.StoragePath, file.ContainerName);
+                        await _fileStorageService.DeleteAsync(file.ContainerName, normalizedPath, cancellationToken);
                         _logger.LogDebug("Deleted file from storage: {StoragePath}", file.StoragePath);
                     }
                     catch (Exception ex)
@@ -478,5 +507,48 @@ namespace Chapi.AI.Services
             var match = System.Text.RegularExpressions.Regex.Match(firstFile.Tags, @"env:([^,]+)");
             return match.Success ? match.Groups[1].Value : null;
         }
+
+        // Normalize storage path to remove scheme or container prefix if present (e.g., "gs://container/..." or "container/...")
+        private static string NormalizeStoragePath(string storagePath, string containerName)
+        {
+            if (string.IsNullOrEmpty(storagePath)) return storagePath ?? string.Empty;
+
+            // Trim whitespace and leading slashes
+            var path = storagePath.Trim();
+            while (path.StartsWith("/")) path = path[1..];
+
+            // If path starts with gs://, remove scheme
+            if (path.StartsWith("gs://", StringComparison.OrdinalIgnoreCase))
+            {
+                // gs://containerName/whatever
+                var withoutScheme = path[5..];
+                // If it starts with containerName/, strip it
+                if (withoutScheme.StartsWith(containerName + "/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return withoutScheme[(containerName.Length + 1)..];
+                }
+
+                // If it starts with containerName (no slash), strip it
+                if (withoutScheme.Equals(containerName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return string.Empty;
+                }
+
+                return withoutScheme;
+            }
+
+            // If path starts with containerName/, strip it
+            if (path.StartsWith(containerName + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return path[(containerName.Length + 1)..];
+            }
+
+            // If path equals containerName, return empty
+            if (path.Equals(containerName, StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            return path;
+        }
+
     }
 }
