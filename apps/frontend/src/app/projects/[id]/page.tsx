@@ -216,6 +216,14 @@ export default function ProjectOverviewPage() {
                 <Settings className="w-4 h-4 mr-2" />
                 Project Settings
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/app/projects/${id}/endpoints`) }
+                className="w-full justify-start"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View API Endpoints & Specs
+              </Button>
             </CardContent>
           </Card>
 
