@@ -689,9 +689,9 @@ All smoke tests are passing. Ready to merge!`,
             const dateB = new Date(b.updatedAt || b.createdAt || '').getTime();
             return dateB - dateA; // Most recent first
           });
-          
+
           const latestConversation = sortedConversations[0];
-          
+
           if (latestConversation.id) {
             // Use the existing loadConversation function to properly load messages with all features
             await loadConversation(latestConversation.id);
