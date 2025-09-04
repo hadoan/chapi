@@ -408,8 +408,13 @@ All smoke tests are passing. Ready to merge!`,
   };
 
   const browseFiles = (runId: string) => {
+    console.log('📁 browseFiles called with runId:', runId);
     setSelectedRunId(runId);
     setFileBrowserOpen(true);
+    console.log('✅ File browser state updated:', {
+      selectedRunId: runId,
+      fileBrowserOpen: true,
+    });
   };
 
   const handleNewConversation = () => {
@@ -501,8 +506,16 @@ All smoke tests are passing. Ready to merge!`,
   }, []);
 
   const downloadRunPack = async (messageModel: MessageModel) => {
+    console.log('🚀 downloadRunPack started', {
+      messageModel,
+      currentConversationId,
+      selectedProject,
+    });
+
     // Find the message index to show loading state
     const idx = messages.indexOf(messageModel as MessageModel);
+    console.log('📍 Message index found:', idx);
+
     try {
       toast({ title: 'Preparing run pack...' });
       if (idx >= 0) {
@@ -527,22 +540,47 @@ All smoke tests are passing. Ready to merge!`,
 
       // Call run-packs API which returns a blob and runId
       const lm = messageModel as LlmMessage;
-      const result = await runPacksApi.generate({
+      console.log('📦 Calling runPacksApi.generate with:', {
+        projectId: selectedProject?.id,
+        hasCard: !!lm.llmCard,
+        userQuery: messageModel.content,
+        env: selectedEnv,
+        conversationId: currentConversationId,
+      });
+
+      const generateRequest = {
         projectId: selectedProject?.id ?? '',
         card: lm.llmCard,
         userQuery: messageModel.content,
         env: selectedEnv ?? 'local',
         conversationId: currentConversationId || undefined,
-      } as any);
+      };
 
-      // Store runId in the message for future reference
+      const result = await runPacksApi.generate(generateRequest);
+
+      console.log('✅ RunPack generation result:', {
+        runId: result.runId,
+        runPackId: result.runPackId,
+        blobSize: result.blob.size,
+        storagePath: result.storagePath,
+      });
+
+      // Store runId (which is now RunPack ID) in the message for future reference
       if (idx >= 0 && result.runId) {
+        console.log('💾 Storing runPackId in message as runId:', result.runId);
         setMessages(prev => {
           const copy = [...prev];
           const m = { ...copy[idx] } as LlmMessage & { runId?: string };
-          m.runId = result.runId;
+          m.runId = result.runId; // This is now RunPack ID
           copy[idx] = m;
+          console.log('✅ Message updated with runPackId:', m.runId);
           return copy;
+        });
+      } else {
+        console.warn('⚠️ No runPackId received or invalid message index', {
+          idx,
+          runId: result.runId,
+          runPackId: result.runPackId,
         });
       }
 
@@ -890,37 +928,60 @@ All smoke tests are passing. Ready to merge!`,
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-3 sm:p-6 max-w-4xl mx-auto w-full pt-16 lg:pt-6">
-                    {messages.map((message, idx) => (
-                      <div key={idx} className="animate-fade-in">
-                        <ChatMessage
-                          role={message.role as 'user' | 'assistant'}
-                          content={message.content}
-                          cards={message.cards as Card[]}
-                          buttons={message.buttons as CmdButton[]}
-                          runId={message.runId}
-                          onBrowseFiles={browseFiles}
-                          onButtonClick={async (label: string) => {
-                            // MessageModel may include original llmCard under .llmCard
-                            const llmCard = (
-                              message as unknown as {
-                                llmCard?: import('@/lib/api/llms').ChapiCard;
+                    {messages.map((message, idx) => {
+                      console.log(`📨 Rendering message ${idx}:`, {
+                        role: message.role,
+                        hasButtons: !!message.buttons,
+                        buttonCount: message.buttons?.length || 0,
+                        buttons: message.buttons?.map(b => b.label),
+                        runId: (message as MessageModel).runId,
+                        messageType: typeof message,
+                      });
+
+                      return (
+                        <div key={idx} className="animate-fade-in">
+                          <ChatMessage
+                            role={message.role as 'user' | 'assistant'}
+                            content={message.content}
+                            cards={message.cards as Card[]}
+                            buttons={message.buttons as CmdButton[]}
+                            runId={message.runId}
+                            onBrowseFiles={browseFiles}
+                            onButtonClick={async (label: string) => {
+                              console.log(
+                                `🔘 Button clicked: "${label}" on message ${idx}`
+                              );
+
+                              // MessageModel may include original llmCard under .llmCard
+                              const llmCard = (
+                                message as unknown as {
+                                  llmCard?: import('@/lib/api/llms').ChapiCard;
+                                }
+                              ).llmCard;
+                              if (label === 'Run in Cloud') await runInCloud();
+                              if (label === 'Download Run Pack')
+                                await downloadRunPack(message as MessageModel);
+                              if (label === 'Browse Files') {
+                                const runId = (
+                                  message as unknown as { runId?: string }
+                                ).runId;
+                                console.log(
+                                  '🗂️ Browse Files action - runId:',
+                                  runId
+                                );
+                                if (runId) browseFiles(runId);
+                                else
+                                  console.warn(
+                                    '❌ No runId found for Browse Files'
+                                  );
                               }
-                            ).llmCard;
-                            if (label === 'Run in Cloud') await runInCloud();
-                            if (label === 'Download Run Pack')
-                              await downloadRunPack(message as MessageModel);
-                            if (label === 'Browse Files') {
-                              const runId = (
-                                message as unknown as { runId?: string }
-                              ).runId;
-                              if (runId) browseFiles(runId);
-                            }
-                            if (label === 'Add Negatives')
-                              await addNegatives(message as MessageModel);
-                          }}
-                        />
-                      </div>
-                    ))}
+                              if (label === 'Add Negatives')
+                                await addNegatives(message as MessageModel);
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-api": "openapi-typescript ${VITE_API_URL:-http://localhost:5066}/swagger/v1/swagger.json -o src/lib/api/schema.ts"
+    "generate-api": "openapi-typescript http://localhost:5066/swagger/v1/swagger.json -o src/lib/api/schema.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -3564,7 +3564,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/run-pack/runs/{runId}": {
+    "/api/run-pack/runs/{runPackId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3578,7 +3578,7 @@ export interface paths {
                 };
                 header?: never;
                 path: {
-                    runId: string;
+                    runPackId: string;
                 };
                 cookie?: never;
             };
@@ -3607,7 +3607,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    runId: string;
+                    runPackId: string;
                 };
                 cookie?: never;
             };
@@ -3627,7 +3627,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/run-pack/runs/{runId}/files": {
+    "/api/run-pack/runs/{runPackId}/files": {
         parameters: {
             query?: never;
             header?: never;
@@ -3640,7 +3640,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    runId: string;
+                    runPackId: string;
                 };
                 cookie?: never;
             };
@@ -3686,7 +3686,6 @@ export interface paths {
             parameters: {
                 query?: {
                     projectId?: string;
-                    suiteId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -3776,6 +3775,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/runpacks/conversation/{conversationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    conversationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/runpacks/{id}": {
         parameters: {
             query?: never;
@@ -3832,28 +3887,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/runpacks/{id}/signed-url": {
+    "/api/runpacks/from-conversation": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: {
+        get?: never;
+        put?: never;
+        post: {
             parameters: {
-                query?: {
-                    minutes?: number;
-                };
+                query?: never;
                 header?: never;
-                path: {
-                    id: string;
-                };
+                path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RunPack.Application.Requests.BuildRunPackFromConversationRequest"];
+                    "text/json": components["schemas"]["RunPack.Application.Requests.BuildRunPackFromConversationRequest"];
+                    "application/*+json": components["schemas"]["RunPack.Application.Requests.BuildRunPackFromConversationRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3873,17 +3939,8 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Not Found - Resource does not exist */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
             };
         };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5899,6 +5956,8 @@ export interface components {
             card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
             userQuery?: string | null;
             env?: string | null;
+            /** Format: uuid */
+            conversationId?: string | null;
         };
         "Chapi.AI.Controllers.RunPackController.UpdateFileRequest": {
             filePath?: string | null;
@@ -6114,11 +6173,17 @@ export interface components {
             description?: string | null;
             tasks?: components["schemas"]["Projects.Application.Dtos.CreateProjectTaskRequest"][] | null;
         };
-        "RunPack.Application.Requests.BuildRunPackRequest": {
+        "RunPack.Application.Requests.BuildRunPackFromConversationRequest": {
             /** Format: uuid */
             projectId?: string;
             /** Format: uuid */
-            suiteId?: string;
+            conversationId?: string;
+            mode?: string | null;
+        };
+        "RunPack.Application.Requests.BuildRunPackRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            mode?: string | null;
         };
         "Runs.Application.Dtos.AddRunStepRequest": {
             name?: string | null;

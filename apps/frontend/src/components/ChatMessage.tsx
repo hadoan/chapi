@@ -269,17 +269,30 @@ export const ChatMessage = ({
               ))}
 
               {/* Browse Files Button - shown when runId exists */}
-              {runId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => onBrowseFiles?.(runId)}
-                >
-                  <FolderOpen className="w-3 h-3 mr-1" />
-                  Browse Files
-                </Button>
-              )}
+              {(() => {
+                console.log('🔍 Browse Files button check:', {
+                  runId,
+                  hasRunId: !!runId,
+                  onBrowseFiles: !!onBrowseFiles,
+                  role: role,
+                });
+                return (
+                  runId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        console.log('🖱️ Browse Files clicked:', runId);
+                        onBrowseFiles?.(runId);
+                      }}
+                    >
+                      <FolderOpen className="w-3 h-3 mr-1" />
+                      Browse Files
+                    </Button>
+                  )
+                );
+              })()}
             </div>
           )}
         </div>

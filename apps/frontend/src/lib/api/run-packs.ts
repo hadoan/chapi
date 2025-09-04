@@ -8,7 +8,8 @@ export type GenerateRequest =
 
 export interface GenerateResponse {
   blob: Blob;
-  runId: string;
+  runId: string; // This will now be RunPack ID from X-RunPack-Id header
+  runPackId: string; // Explicit RunPack ID field
   storagePath?: string;
 }
 
@@ -49,22 +50,27 @@ export const runPacksApi = {
 
     const runId =
       response.headers['x-file-id'] || response.headers['X-File-Id'] || '';
+    const runPackId =
+      response.headers['x-runpack-id'] ||
+      response.headers['X-RunPack-Id'] ||
+      runId; // Fallback to runId if no RunPack ID
     const storagePath =
       response.headers['x-storage-path'] || response.headers['X-Storage-Path'];
 
     return {
       blob: response.data,
-      runId,
+      runId: runPackId, // Use RunPack ID as the primary ID for Browse Files
+      runPackId,
       storagePath,
     };
   },
 
-  async downloadRun(runId: string, specificFile?: string): Promise<Blob> {
+  async downloadRun(runPackId: string, specificFile?: string): Promise<Blob> {
     const params = specificFile
       ? `?file=${encodeURIComponent(specificFile)}`
       : '';
     return await AuthService.authenticatedFetch<Blob>(
-      `/api/run-pack/runs/${runId}${params}`,
+      `/api/run-pack/runs/${runPackId}${params}`,
       {
         method: 'GET',
         responseType: 'blob',
@@ -72,8 +78,8 @@ export const runPacksApi = {
     );
   },
 
-  async deleteRun(runId: string): Promise<void> {
-    await AuthService.authenticatedFetch(`/api/run-pack/runs/${runId}`, {
+  async deleteRun(runPackId: string): Promise<void> {
+    await AuthService.authenticatedFetch(`/api/run-pack/runs/${runPackId}`, {
       method: 'DELETE',
     });
   },

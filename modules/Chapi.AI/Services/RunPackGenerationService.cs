@@ -93,42 +93,42 @@ namespace Chapi.AI.Services
 
             _logger.LogInformation("✓ RunPack ZIP generated successfully ({ZipSize} bytes)", zipData.Length);
 
-            // 6) Save to storage
+            // 6) Create RunPack entity in database first
+            Guid? runPackId = null;
+            try
+            {
+                if (request.ConversationId.HasValue)
+                {
+                    var runPackDto = await _runPackAppService.BuildFromConversationAsync(
+                        new BuildRunPackFromConversationRequest(
+                            request.ProjectId,
+                            request.ConversationId.Value,
+                            "hybrid"
+                        ),
+                        default);
+                    runPackId = runPackDto.Id;
+                    _logger.LogInformation("✓ RunPack entity created and linked to conversation: {RunPackId}", runPackId);
+                }
+                else
+                {
+                    var runPackDto = await _runPackAppService.BuildAsync(
+                        new BuildRunPackRequest(request.ProjectId, "hybrid"),
+                        default);
+                    runPackId = runPackDto.Id;
+                    _logger.LogInformation("✓ RunPack entity created: {RunPackId}", runPackId);
+                }
+            }
+            catch (Exception dbEx)
+            {
+                _logger.LogWarning(dbEx, "⚠️ Failed to create RunPack entity in database, proceeding without linking");
+            }
+
+            // 7) Save to storage and link files to RunPack
             var fileName = $"chapi-runpack-{request.ProjectId}-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
 
             try
             {
-                var fileResult = await _fileService.SaveRunPackAsync(zipData, request.ProjectId, request.Environment);
-
-                // 7) Create RunPack entity in database and link to conversation
-                Guid? runPackId = null;
-                try
-                {
-                    if (request.ConversationId.HasValue)
-                    {
-                        var runPackDto = await _runPackAppService.BuildFromConversationAsync(
-                            new BuildRunPackFromConversationRequest(
-                                request.ProjectId,
-                                request.ConversationId.Value,
-                                "hybrid"
-                            ),
-                            default);
-                        runPackId = runPackDto.Id;
-                        _logger.LogInformation("✓ RunPack entity created and linked to conversation: {RunPackId}", runPackId);
-                    }
-                    else
-                    {
-                        var runPackDto = await _runPackAppService.BuildAsync(
-                            new BuildRunPackRequest(request.ProjectId, "hybrid"),
-                            default);
-                        runPackId = runPackDto.Id;
-                        _logger.LogInformation("✓ RunPack entity created: {RunPackId}", runPackId);
-                    }
-                }
-                catch (Exception dbEx)
-                {
-                    _logger.LogWarning(dbEx, "⚠️ Failed to create RunPack entity in database, but file was saved successfully");
-                }
+                var fileResult = await _fileService.SaveRunPackAsync(zipData, request.ProjectId, request.Environment, runPackId);
 
                 return new RunPackGenerationResult
                 {
@@ -146,7 +146,8 @@ namespace Chapi.AI.Services
                 return new RunPackGenerationResult
                 {
                     ZipData = zipData,
-                    FileName = fileName
+                    FileName = fileName,
+                    RunPackId = runPackId
                 };
             }
         }
