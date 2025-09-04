@@ -71,6 +71,7 @@ export default function ChatView() {
   const [selectedRunId, setSelectedRunId] = useState<string>('');
   const [selectedRunPackId, setSelectedRunPackId] = useState<string>('');
   const [showMobileHistory, setShowMobileHistory] = useState(false);
+  const [isNewConversation, setIsNewConversation] = useState(false);
 
   type LlmMessage = MessageModel & {
     llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
@@ -338,6 +339,9 @@ All smoke tests are passing. Ready to merge!`,
 
         setCurrentConversationId(newConversation.id || null);
 
+        // Reset the new conversation flag since we now have an actual conversation
+        setIsNewConversation(false);
+
         // Refresh the conversation list to show the new conversation with updated message count
         await refreshConversations();
       } else {
@@ -426,8 +430,28 @@ All smoke tests are passing. Ready to merge!`,
   };
 
   const handleNewConversation = () => {
+    // Clear current conversation and all chat-related state
     setCurrentConversationId(null);
     setMessages([]);
+
+    // Set flag to indicate this is an intentional new conversation
+    setIsNewConversation(true);
+
+    // Clear any ongoing operations
+    setDownloadingIndex(-1);
+    setFileBrowserOpen(false);
+    setSelectedRunId('');
+    setSelectedRunPackId('');
+
+    // Close any open modals/drawers related to chat
+    setShowCommandPalette(false);
+
+    // Note: We preserve project/environment selections as they're user preferences
+
+    toast({
+      title: 'New conversation started',
+      description: 'Ready for new conversation.',
+    });
   };
 
   // Function to refresh conversation list
@@ -448,6 +472,9 @@ All smoke tests are passing. Ready to merge!`,
     try {
       const conversation = await chatApi.getConversation(conversationId);
       setCurrentConversationId(conversationId);
+
+      // Reset the new conversation flag when loading an existing conversation
+      setIsNewConversation(false);
 
       console.log('Raw conversation data:', conversation);
 
@@ -751,7 +778,12 @@ All smoke tests are passing. Ready to merge!`,
         setConversations(conversationList);
 
         // If there are conversations and no conversation is currently selected, auto-select the latest one
-        if (conversationList.length > 0 && !currentConversationId) {
+        // BUT only if this is NOT an intentional new conversation
+        if (
+          conversationList.length > 0 &&
+          !currentConversationId &&
+          !isNewConversation
+        ) {
           // Find the most recent conversation by updatedAt or createdAt
           const sortedConversations = [...conversationList].sort((a, b) => {
             const dateA = new Date(a.updatedAt || a.createdAt || '').getTime();
@@ -765,8 +797,8 @@ All smoke tests are passing. Ready to merge!`,
             // Use the existing loadConversation function to properly load messages with all features
             await loadConversation(latestConversation.id);
           }
-        } else if (conversationList.length === 0) {
-          // No conversations, start with empty messages
+        } else if (conversationList.length === 0 || isNewConversation) {
+          // No conversations, or intentional new conversation - start with empty messages
           setMessages([]);
           setCurrentConversationId(null);
         }
@@ -785,7 +817,12 @@ All smoke tests are passing. Ready to merge!`,
     return () => {
       mounted = false;
     };
-  }, [selectedProject, currentConversationId, loadConversation]);
+  }, [
+    selectedProject,
+    currentConversationId,
+    loadConversation,
+    isNewConversation,
+  ]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -1159,6 +1196,9 @@ All smoke tests are passing. Ready to merge!`,
                             setCurrentConversationId(
                               newConversation.id || null
                             );
+
+                            // Reset the new conversation flag since we now have an actual conversation
+                            setIsNewConversation(false);
 
                             // Refresh conversation list
                             await refreshConversations();

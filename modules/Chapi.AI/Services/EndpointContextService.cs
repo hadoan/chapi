@@ -19,7 +19,7 @@ namespace Chapi.AI.Services
             _logger = logger;
         }
 
-        public async Task<string> BuildContextAsync(Guid projectId, string? title = null, int maxItems = 25)
+        public async Task<string> BuildContextAsync(Guid projectId,  int maxItems = 25)
         {
             var eps = new List<EndpointBriefDto>();
             try
@@ -34,13 +34,13 @@ namespace Chapi.AI.Services
                 _logger.LogWarning(ex, "Failed to load endpoints for project {ProjectId}", projectId);
             }
 
-            return BuildEndpointContext(eps, title ?? "Endpoints (service)", maxItems);
+            return BuildEndpointContext(eps,  maxItems);
         }
 
-        private static string BuildEndpointContext(List<EndpointBriefDto> eps, string title, int maxItems)
+        private static string BuildEndpointContext(List<EndpointBriefDto> eps,  int maxItems)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"## {title}");
+            
             foreach (var e in eps.Take(maxItems))
             {
                 var auth = (e.Tags is not null && e.Tags.Length > 0) ? string.Join("/", e.Tags) : "none";

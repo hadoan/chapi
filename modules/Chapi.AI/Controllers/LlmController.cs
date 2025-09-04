@@ -32,7 +32,7 @@ namespace Chapi.AI.Controllers
         {
             _logger.LogInformation("LLM generate requested (Chapi.AI controller)");
 
-            var endpointsContext = await _endpointContextService.BuildContextAsync(req.ProjectId, "User Service");
+            var endpointsContext = await _endpointContextService.BuildContextAsync(req.ProjectId);
             var card = await _apiTestService.GenerateTestAsync(req.UserQuery, endpointsContext, req.MaxFiles, req.OpenApiJson);
 
             return card;

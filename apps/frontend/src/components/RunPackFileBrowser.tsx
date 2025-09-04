@@ -236,7 +236,10 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[800px] sm:w-[900px] p-0">
+      <SheetContent
+        side="right"
+        className="max-w-full md:max-w-[50vw] lg:max-w-[50vw] xl:max-w-[50vw] w-full p-0"
+      >
         <SheetHeader className="p-6 border-b">
           <SheetTitle className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5" />
