@@ -15,17 +15,17 @@ import { RightDrawer } from '@/components/RightDrawer';
 import { RunPackFileBrowser } from '@/components/RunPackFileBrowser';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
 import { chatApi, ConversationDto } from '@/lib/api/chat';
@@ -35,8 +35,16 @@ import { ProjectDto, projectsApi } from '@/lib/api/projects';
 import { runPacksApi } from '@/lib/api/run-packs';
 import type { components } from '@/lib/api/schema';
 import mockMessages from '@/lib/mock/messages/chat-1.json';
-import { ChevronDown, LogOut, Moon, Settings, Sun, User, MessageSquare } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  ChevronDown,
+  LogOut,
+  MessageSquare,
+  Moon,
+  Settings,
+  Sun,
+  User,
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 type Card = MessageCard;
 type CmdButton = MessageButton;
@@ -423,7 +431,7 @@ All smoke tests are passing. Ready to merge!`,
     }
   };
 
-  const loadConversation = async (conversationId: string) => {
+  const loadConversation = useCallback(async (conversationId: string) => {
     try {
       const conversation = await chatApi.getConversation(conversationId);
       setCurrentConversationId(conversationId);
@@ -490,7 +498,7 @@ All smoke tests are passing. Ready to merge!`,
       console.error('Failed to load conversation:', error);
       toast({ title: 'Failed to load conversation' });
     }
-  };
+  }, []);
 
   const downloadRunPack = async (messageModel: MessageModel) => {
     // Find the message index to show loading state
@@ -669,29 +677,26 @@ All smoke tests are passing. Ready to merge!`,
 
     chatApi
       .getConversations(selectedProject.id)
-      .then(conversationList => {
+      .then(async conversationList => {
         if (!mounted) return;
         setConversations(conversationList);
 
-        // If there are conversations, select the most recent one
-        if (conversationList.length > 0) {
-          const mostRecent = conversationList[0]; // Assuming they're ordered by date
-          setCurrentConversationId(mostRecent.id || null);
-
-          // Convert conversation messages to MessageModel format
-          const messageModels: MessageModel[] =
-            mostRecent.messages?.map(msg => ({
-              role: msg.role as 'user' | 'assistant',
-              content: msg.content || '',
-              cards:
-                msg.cardType && msg.cardPayload
-                  ? [JSON.parse(msg.cardPayload)]
-                  : undefined,
-              buttons: undefined,
-            })) || [];
-
-          setMessages(messageModels);
-        } else {
+        // If there are conversations and no conversation is currently selected, auto-select the latest one
+        if (conversationList.length > 0 && !currentConversationId) {
+          // Find the most recent conversation by updatedAt or createdAt
+          const sortedConversations = [...conversationList].sort((a, b) => {
+            const dateA = new Date(a.updatedAt || a.createdAt || '').getTime();
+            const dateB = new Date(b.updatedAt || b.createdAt || '').getTime();
+            return dateB - dateA; // Most recent first
+          });
+          
+          const latestConversation = sortedConversations[0];
+          
+          if (latestConversation.id) {
+            // Use the existing loadConversation function to properly load messages with all features
+            await loadConversation(latestConversation.id);
+          }
+        } else if (conversationList.length === 0) {
           // No conversations, start with empty messages
           setMessages([]);
           setCurrentConversationId(null);
@@ -711,7 +716,7 @@ All smoke tests are passing. Ready to merge!`,
     return () => {
       mounted = false;
     };
-  }, [selectedProject]);
+  }, [selectedProject, currentConversationId, loadConversation]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -786,11 +791,7 @@ All smoke tests are passing. Ready to merge!`,
                   {envOptions.length > 0 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild className="sm:hidden">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="px-2"
-                        >
+                        <Button variant="outline" size="sm" className="px-2">
                           <span className="truncate">
                             {selectedEnv || 'Env'}
                           </span>
@@ -1120,7 +1121,7 @@ All smoke tests are passing. Ready to merge!`,
                 <HistoryList
                   conversations={conversations}
                   currentConversationId={currentConversationId}
-                  onConversationSelect={(id) => {
+                  onConversationSelect={id => {
                     loadConversation(id);
                     setShowMobileHistory(false);
                   }}

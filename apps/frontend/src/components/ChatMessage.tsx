@@ -115,9 +115,13 @@ export const ChatMessage = ({
         {/* Assistant Avatar */}
         <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
           <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <span className="text-accent font-medium text-xs sm:text-sm">C</span>
+            <span className="text-accent font-medium text-xs sm:text-sm">
+              C
+            </span>
           </div>
-          <div className="font-medium text-xs sm:text-sm text-muted-foreground">Chapi</div>
+          <div className="font-medium text-xs sm:text-sm text-muted-foreground">
+            Chapi
+          </div>
         </div>
 
         {/* Message Content */}
@@ -133,7 +137,9 @@ export const ChatMessage = ({
                 <Card key={idx} className="border-border">
                   <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
                     <CardTitle className="text-xs sm:text-sm flex items-center gap-2 flex-wrap">
-                      {card.type === 'plan' && <FileText className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />}
+                      {card.type === 'plan' && (
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      )}
                       {card.type === 'diff' && (
                         <GitPullRequest className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                       )}
@@ -173,7 +179,9 @@ export const ChatMessage = ({
                             <span className="flex-shrink-0">
                               {getChangeIcon(file.change)}
                             </span>
-                            <span className="text-foreground truncate flex-1 min-w-0">{file.path}</span>
+                            <span className="text-foreground truncate flex-1 min-w-0">
+                              {file.path}
+                            </span>
                             <Badge
                               variant="outline"
                               className="text-xs flex-shrink-0"
@@ -192,10 +200,14 @@ export const ChatMessage = ({
                           <div className="text-muted-foreground mb-1">
                             Environment
                           </div>
-                          <Badge variant="outline" className="text-xs">{card.env}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {card.env}
+                          </Badge>
                         </div>
                         <div>
-                          <div className="text-muted-foreground mb-1">Duration</div>
+                          <div className="text-muted-foreground mb-1">
+                            Duration
+                          </div>
                           <div className="font-mono">{card.duration}</div>
                         </div>
                         <div>
@@ -203,7 +215,9 @@ export const ChatMessage = ({
                           <div className="font-mono">{card.p95}ms</div>
                         </div>
                         <div>
-                          <div className="text-muted-foreground mb-1">Results</div>
+                          <div className="text-muted-foreground mb-1">
+                            Results
+                          </div>
                           <div className="font-mono">
                             <span className="text-green-500">
                               {card.passed}

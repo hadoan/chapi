@@ -3,7 +3,8 @@
 /* Ensure proper touch targets on mobile */
 @media (max-width: 640px) {
   /* Increase touch target size for mobile */
-  button, .clickable {
+  button,
+  .clickable {
     min-height: 44px;
     min-width: 44px;
   }
@@ -38,7 +39,7 @@
   .chat-sidebar {
     width: 320px;
   }
-  
+
   /* Better use of space on large screens */
   .chat-main {
     max-width: 1200px;
@@ -69,7 +70,7 @@
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
   }
-  
+
   .chat-messages {
     padding-top: 0.5rem;
   }
@@ -77,7 +78,9 @@
 
 /* Animation improvements for performance */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

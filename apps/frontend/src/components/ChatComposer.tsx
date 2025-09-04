@@ -1,27 +1,27 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Send, Zap, Plus, Play, Download, Menu } from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Download, Menu, Play, Plus, Send, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const quickChips = [
-  { label: "Generate Smoke", icon: Zap },
-  { label: "Add 3 Negatives", icon: Plus },
-  { label: "Run in Cloud", icon: Play },
-  { label: "Download Run Pack", icon: Download },
+  { label: 'Generate Smoke', icon: Zap },
+  { label: 'Add 3 Negatives', icon: Plus },
+  { label: 'Run in Cloud', icon: Play },
+  { label: 'Download Run Pack', icon: Download },
 ];
 
 const slashCommands = [
-  "/generate",
-  "/negatives", 
-  "/perf",
-  "/import openapi",
-  "/curl",
-  "/run local",
-  "/run cloud",
-  "/download run-pack",
-  "/explain",
-  "/pr preview"
+  '/generate',
+  '/negatives',
+  '/perf',
+  '/import openapi',
+  '/curl',
+  '/run local',
+  '/run cloud',
+  '/download run-pack',
+  '/explain',
+  '/pr preview',
 ];
 
 interface ChatComposerProps {
@@ -30,8 +30,12 @@ interface ChatComposerProps {
   onMessageSend?: (message: string) => void;
 }
 
-export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: ChatComposerProps) => {
-  const [message, setMessage] = useState("");
+export const ChatComposer = ({
+  onCommandSelect,
+  onMenuOpen,
+  onMessageSend,
+}: ChatComposerProps) => {
+  const [message, setMessage] = useState('');
   const [showSlashMenu, setShowSlashMenu] = useState(false);
 
   // Handle Cmd+K to open command palette
@@ -57,17 +61,17 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
         onMessageSend?.(message);
       }
 
-      setMessage("");
+      setMessage('');
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
-    
-    if (message.startsWith("/")) {
+
+    if (message.startsWith('/')) {
       setShowSlashMenu(true);
     } else {
       setShowSlashMenu(false);
@@ -81,11 +85,16 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
 
   const getCommandFromChip = (chipLabel: string) => {
     switch (chipLabel.toLowerCase()) {
-      case 'generate smoke': return '/generate smoke';
-      case 'add 3 negatives': return '/negatives 3';
-      case 'run in cloud': return '/run cloud';
-      case 'download run pack': return '/download run-pack';
-      default: return chipLabel.toLowerCase();
+      case 'generate smoke':
+        return '/generate smoke';
+      case 'add 3 negatives':
+        return '/negatives 3';
+      case 'run in cloud':
+        return '/run cloud';
+      case 'download run pack':
+        return '/download run-pack';
+      default:
+        return chipLabel.toLowerCase();
     }
   };
 
@@ -93,9 +102,11 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
     <div className="border-t border-border bg-card p-3 sm:p-4">
       {/* Header with Functions Menu */}
       <div className="flex items-center justify-between mb-2 sm:mb-3">
-        <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Quick Actions</h4>
-        <Button 
-          variant="ghost" 
+        <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">
+          Quick Actions
+        </h4>
+        <Button
+          variant="ghost"
           size="sm"
           onClick={onMenuOpen}
           className="hidden sm:flex items-center gap-2 text-xs"
@@ -120,14 +131,12 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
             >
               <Icon className="w-3 h-3 mr-1" />
               <span className="hidden sm:inline">{chip.label}</span>
-              <span className="sm:hidden">
-                {chip.label.split(' ')[0]}
-              </span>
+              <span className="sm:hidden">{chip.label.split(' ')[0]}</span>
             </Badge>
           );
         })}
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
           onClick={onMenuOpen}
           className="sm:hidden text-xs h-6 px-2"
@@ -139,7 +148,9 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
       {/* Slash Commands Menu */}
       {showSlashMenu && (
         <div className="mb-2 sm:mb-3 p-2 sm:p-3 border border-border rounded-lg bg-muted/50">
-          <div className="text-xs text-muted-foreground mb-2">Slash commands</div>
+          <div className="text-xs text-muted-foreground mb-2">
+            Slash commands
+          </div>
           <div className="flex flex-wrap gap-1">
             {slashCommands
               .filter(cmd => cmd.startsWith(message))
@@ -150,7 +161,7 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
                   className={`cursor-pointer hover:bg-accent/10 text-xs ${
                     index >= 4 ? 'hidden sm:flex' : ''
                   }`}
-                  onClick={() => setMessage(cmd + " ")}
+                  onClick={() => setMessage(cmd + ' ')}
                 >
                   {cmd}
                 </Badge>
@@ -164,7 +175,7 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
         <div className="relative">
           <Textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={e => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe what you want to test, or use / for commands..."
             className="min-h-[50px] sm:min-h-[60px] resize-none pr-10 sm:pr-12 text-sm"
@@ -178,16 +189,22 @@ export const ChatComposer = ({ onCommandSelect, onMenuOpen, onMessageSend }: Cha
             <Send className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         </div>
-        
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div>
-              Press <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd> to send, 
-              <kbd className="px-1 py-0.5 bg-muted rounded text-xs ml-1">Shift+Enter</kbd> for new line
-            </div>
-            <div>
-              <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Cmd+K</kbd> for all functions
-            </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div>
+            Press{' '}
+            <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd> to
+            send,
+            <kbd className="px-1 py-0.5 bg-muted rounded text-xs ml-1">
+              Shift+Enter
+            </kbd>{' '}
+            for new line
           </div>
+          <div>
+            <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Cmd+K</kbd>{' '}
+            for all functions
+          </div>
+        </div>
       </form>
     </div>
   );

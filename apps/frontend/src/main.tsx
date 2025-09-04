@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import './styles/responsive.css';
 import { AuthProvider } from './lib/auth/AuthContext';
+import './styles/responsive.css';
 
 // Initialize theme - default to dark mode
 if (!document.documentElement.classList.contains('dark')) {
