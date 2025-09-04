@@ -7,10 +7,10 @@ import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import LoginPage from './app/auth/login';
 import EnvironmentsPage from './app/environments/page';
 import ProjectEndpointsPage from './app/projects/[id]/endpoints/page';
+import ProjectOpenApiPage from './app/projects/[id]/openapi/page';
 import ProjectOverviewPage from './app/projects/[id]/page';
 import ProjectSettingsPage from './app/projects/[id]/settings/page';
 import ProjectsPage from './app/projects/page';
-import ProjectOpenApiPage from './app/projects/[id]/openapi/page';
 import RunDetailPage from './app/runs/[runId]/page';
 import RunsPage from './app/runs/page';
 import { isEnabled, pageview } from './lib/ga';
@@ -36,7 +36,10 @@ const App = () => (
             path="/app/projects/:id/endpoints"
             element={<ProjectEndpointsPage />}
           />
-          <Route path="/app/projects/:id/openapi" element={<ProjectOpenApiPage />} />
+          <Route
+            path="/app/projects/:id/openapi"
+            element={<ProjectOpenApiPage />}
+          />
           <Route
             path="/app/projects/:id/settings"
             element={<ProjectSettingsPage />}
