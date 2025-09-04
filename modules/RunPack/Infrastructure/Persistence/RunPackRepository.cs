@@ -13,5 +13,4 @@ public class RunPackRepository : RunPack.Domain.IRunPackRepository
     public async Task<RunPack.Domain.RunPack> AddAsync(RunPack.Domain.RunPack entity, CancellationToken ct) { await _set.AddAsync(entity, ct); await _db.SaveChangesAsync(ct); return entity; }
     public async Task<RunPack.Domain.RunPack> UpdateAsync(RunPack.Domain.RunPack entity, CancellationToken ct) { _set.Update(entity); await _db.SaveChangesAsync(ct); return entity; }
     public async Task DeleteAsync(Guid id, CancellationToken ct) { var entity = await _set.FindAsync(new object?[] { id }, ct).AsTask(); if (entity is null) return; _set.Remove(entity); await _db.SaveChangesAsync(ct); }
-    public async Task<int> GetLatestVersionAsync(Guid projectId, Guid suiteId, CancellationToken ct) => await _set.Where(p => p.ProjectId == projectId && p.SuiteId == suiteId).Select(p => p.Version).DefaultIfEmpty(0).MaxAsync(ct);
 }
