@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { apiSpecsApi } from '@/lib/api/apispecs';
-import { AuthService } from '@/lib/api/auth-service';
-import { toast } from '@/hooks/use-toast';
 import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
+import { AuthService } from '@/lib/api/auth-service';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface EndpointBrief {
   id: string;
@@ -26,9 +25,14 @@ export default function ProjectEndpointsPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    AuthService.authenticatedFetch<EndpointBrief[]>(`/api/projects/${id}/endpoints`, { method: 'GET' })
+    AuthService.authenticatedFetch<EndpointBrief[]>(
+      `/api/projects/${id}/endpoints`,
+      { method: 'GET' }
+    )
       .then(list => setEndpoints(list))
-      .catch(err => toast({ title: 'Failed', description: err?.message ?? String(err) }))
+      .catch(err =>
+        toast({ title: 'Failed', description: err?.message ?? String(err) })
+      )
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -38,8 +42,12 @@ export default function ProjectEndpointsPage() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">API Endpoints</h1>
           <div className="flex gap-2">
-            <Button onClick={() => navigate(`/app/projects/${id}/openapi`)}>View Specs</Button>
-            <Button onClick={() => navigate(`/app/projects/${id}`)}>Back</Button>
+            <Button onClick={() => navigate(`/app/projects/${id}/openapi`)}>
+              View Specs
+            </Button>
+            <Button onClick={() => navigate(`/app/projects/${id}`)}>
+              Back
+            </Button>
           </div>
         </div>
 
@@ -53,14 +61,18 @@ export default function ProjectEndpointsPage() {
               <Card key={ep.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span className="font-mono text-sm">{ep.method.toUpperCase()}</span>
+                    <span className="font-mono text-sm">
+                      {ep.method.toUpperCase()}
+                    </span>
                     <span className="text-sm">{ep.path}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">{ep.summary}</p>
                   {ep.tags && ep.tags.length > 0 && (
-                    <div className="mt-2 text-xs text-muted-foreground">Tags: {ep.tags.join(', ')}</div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Tags: {ep.tags.join(', ')}
+                    </div>
                   )}
                 </CardContent>
               </Card>

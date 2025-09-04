@@ -10,6 +10,7 @@ import AppPage from "./pages/App";
 import ProjectsPage from "./app/projects/page";
 import ProjectOverviewPage from "./app/projects/[id]/page";
 import ProjectSettingsPage from "./app/projects/[id]/settings/page";
+import ProjectEndpointsPage from "./app/projects/[id]/endpoints/page";
 import LoginPage from "./app/auth/login";
 import RunsPage from "./app/runs/page";
 import RunDetailPage from "./app/runs/[runId]/page";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/app" element={<AppPage />} />
           <Route path="/app/projects" element={<ProjectsPage />} />
           <Route path="/app/projects/:id" element={<ProjectOverviewPage />} />
+          <Route path="/app/projects/:id/endpoints" element={<ProjectEndpointsPage />} />
           <Route path="/app/projects/:id/settings" element={<ProjectSettingsPage />} />
           <Route path="/app/runs" element={<RunsPage />} />
           <Route path="/app/runs/:runId" element={<RunDetailPage />} />

@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Settings, FileDown, Import, ExternalLink, Play } from 'lucide-react';
+import { Layout } from '@/components/Layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +11,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { AuthService } from '@/lib/api/auth-service';
 import { apiSpecsApi } from '@/lib/api/apispecs';
+import { AuthService } from '@/lib/api/auth-service';
+import { ExternalLink, FileDown, Import, Play, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
 
 interface ProjectOverviewPageProps {
   params: { id: string };
@@ -81,8 +81,9 @@ export default function ProjectOverviewPage() {
   // Load latest ApiSpec for this project
   useEffect(() => {
     if (!id) return;
-    apiSpecsApi.listByProject(id)
-      .then((list) => {
+    apiSpecsApi
+      .listByProject(id)
+      .then(list => {
         if (Array.isArray(list) && list.length > 0) {
           // pick most recent by createdAt if available
           const sorted = list.slice().sort((a, b) => {
@@ -101,10 +102,10 @@ export default function ProjectOverviewPage() {
   }, [id]);
 
   const handleImportOpenAPI = () => {
-  // open the dialog to prompt user input
-  // prefill with existing spec URL when updating
-  setImportUrl(latestSpec?.sourceUrl ?? '');
-  setImportDialogOpen(true);
+    // open the dialog to prompt user input
+    // prefill with existing spec URL when updating
+    setImportUrl(latestSpec?.sourceUrl ?? '');
+    setImportDialogOpen(true);
   };
 
   const handleDownloadRunPack = () => {
@@ -125,31 +126,47 @@ export default function ProjectOverviewPage() {
 
   const confirmImport = () => {
     if (!id) {
-      toast({ title: 'Project id missing', description: 'Cannot import without project id' });
+      toast({
+        title: 'Project id missing',
+        description: 'Cannot import without project id',
+      });
       return;
     }
     if (!importUrl) {
-      toast({ title: 'No URL', description: 'Please enter an OpenAPI spec URL.' });
+      toast({
+        title: 'No URL',
+        description: 'Please enter an OpenAPI spec URL.',
+      });
       return;
     }
 
-    toast({ title: 'OpenAPI import started', description: 'Importing specification...' });
+    toast({
+      title: 'OpenAPI import started',
+      description: 'Importing specification...',
+    });
 
-    apiSpecsApi.importOpenApi(id, { url: importUrl })
-      .then((spec) => {
-        toast({ title: 'Import queued', description: 'OpenAPI spec import started successfully.' });
+    apiSpecsApi
+      .importOpenApi(id, { url: importUrl })
+      .then(spec => {
+        toast({
+          title: 'Import queued',
+          description: 'OpenAPI spec import started successfully.',
+        });
         setLatestSpec({
           id: spec.id,
           projectId: spec.projectId,
           sourceUrl: spec.sourceUrl,
           version: spec.version,
-          createdAt: spec.createdAt
+          createdAt: spec.createdAt,
         });
         setImportDialogOpen(false);
         setImportUrl('');
       })
       .catch(err => {
-        toast({ title: 'Import failed', description: err?.message ?? String(err) });
+        toast({
+          title: 'Import failed',
+          description: err?.message ?? String(err),
+        });
       });
   };
 
@@ -161,7 +178,9 @@ export default function ProjectOverviewPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold">
-                {loading ? 'Loading...' : displayedProject?.name ?? 'Untitled project'}
+                {loading
+                  ? 'Loading...'
+                  : displayedProject?.name ?? 'Untitled project'}
               </h1>
               <Badge variant="outline">{displayedProject?.region ?? '—'}</Badge>
             </div>
@@ -218,7 +237,7 @@ export default function ProjectOverviewPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate(`/app/projects/${id}/endpoints`) }
+                onClick={() => navigate(`/app/projects/${id}/endpoints`)}
                 className="w-full justify-start"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -317,16 +336,22 @@ export default function ProjectOverviewPage() {
         <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{latestSpec ? 'Update OpenAPI Spec' : 'Import OpenAPI Spec'}</DialogTitle>
+              <DialogTitle>
+                {latestSpec ? 'Update OpenAPI Spec' : 'Import OpenAPI Spec'}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Provide the URL to an OpenAPI (Swagger) JSON or YAML specification and we'll import the endpoints.
+                Provide the URL to an OpenAPI (Swagger) JSON or YAML
+                specification and we'll import the endpoints.
               </p>
 
               {latestSpec?.createdAt ? (
-                <p className="text-sm text-muted-foreground">Last imported: {new Date(latestSpec.createdAt).toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">
+                  Last imported:{' '}
+                  {new Date(latestSpec.createdAt).toLocaleString()}
+                </p>
               ) : null}
 
               <div className="space-y-2">
@@ -340,12 +365,16 @@ export default function ProjectOverviewPage() {
               </div>
 
               <div className="flex gap-2 pt-4 justify-end">
-                <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportUrl(''); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImportDialogOpen(false);
+                    setImportUrl('');
+                  }}
+                >
                   Cancel
                 </Button>
-                <Button onClick={confirmImport}>
-                  Import
-                </Button>
+                <Button onClick={confirmImport}>Import</Button>
               </div>
             </div>
           </DialogContent>

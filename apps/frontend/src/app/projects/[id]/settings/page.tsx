@@ -186,7 +186,7 @@ export function ProjectSettingsPageInner() {
   );
 }
 
-export default function ProjectSettingsPage(props: ProjectSettingsPageProps) {
+export default function ProjectSettingsPage(props?: ProjectSettingsPageProps) {
   const { id } = useParams();
   return (
     <EnvProvider projectId={id}>
