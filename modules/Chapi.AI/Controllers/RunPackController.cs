@@ -26,7 +26,7 @@ namespace Chapi.AI.Controllers
             _logger = logger;
         }
 
-        public record GenerateRequest(Guid ProjectId, ChapiCard Card, string UserQuery, string Env = "local");
+        public record GenerateRequest(Guid ProjectId, ChapiCard Card, string UserQuery, string Env = "local", Guid? ConversationId = null);
         public record UpdateFileRequest(string FilePath, string Content);
 
         [HttpPost("generate")]
@@ -39,7 +39,8 @@ namespace Chapi.AI.Controllers
                     ProjectId = body.ProjectId,
                     Card = body.Card,
                     UserQuery = body.UserQuery,
-                    Environment = body.Env
+                    Environment = body.Env,
+                    ConversationId = body.ConversationId
                 };
 
                 var result = await _generationService.GenerateRunPackAsync(request);

@@ -18,12 +18,27 @@ public class RunPackAppService : IRunPackAppService
         await _repo.AddAsync(pack, ct);
         return pack.ToDto();
     }
+
+    public async Task<RunPackDto> BuildFromConversationAsync(BuildRunPackFromConversationRequest request, CancellationToken ct)
+    {
+        var pack = Domain.RunPack.CreateFromConversation(request.ProjectId, request.ConversationId, request.Mode ?? "hybrid");
+        pack.SetGeneratorVersion("1.0.0");
+        await _repo.AddAsync(pack, ct);
+        return pack.ToDto();
+    }
     
     public async Task<RunPackDto?> GetAsync(Guid id, CancellationToken ct) => (await _repo.GetByIdAsync(id, ct))?.ToDto();
     
     public async Task<IEnumerable<RunPackDto>> ListAsync(Guid projectId, CancellationToken ct) => 
         await _repo.Query()
             .Where(p => p.ProjectId == projectId)
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => p.ToDto())
+            .ToListAsync(ct);
+
+    public async Task<IEnumerable<RunPackDto>> ListByConversationAsync(Guid conversationId, CancellationToken ct) => 
+        await _repo.Query()
+            .Where(p => p.ConversationId == conversationId)
             .OrderByDescending(p => p.CreatedAt)
             .Select(p => p.ToDto())
             .ToListAsync(ct);

@@ -5,6 +5,7 @@ namespace RunPack.Domain;
 public class RunPack : Entity<Guid>
 {
     public Guid ProjectId { get; private set; }
+    public Guid? ConversationId { get; private set; } // Link to the chat conversation that generated this pack
     public Guid? RunId { get; private set; } // Link to Runs table if executed
     public string Mode { get; private set; } = "hybrid";
     public int FilesCount { get; private set; }
@@ -34,6 +35,13 @@ public class RunPack : Entity<Guid>
     public static RunPack Create(Guid projectId, string mode = "hybrid")
         => new(Guid.NewGuid(), projectId, mode);
 
+    public static RunPack CreateFromConversation(Guid projectId, Guid conversationId, string mode = "hybrid")
+    {
+        var runPack = new RunPack(Guid.NewGuid(), projectId, mode);
+        runPack.ConversationId = conversationId;
+        return runPack;
+    }
+
     public void AddFile(string path, string content, string role = "GENERATED")
     {
         var file = RunPackFile.Create(Id, path, content, role);
@@ -61,6 +69,11 @@ public class RunPack : Entity<Guid>
     public void LinkToRun(Guid runId)
     {
         RunId = runId;
+    }
+
+    public void LinkToConversation(Guid conversationId)
+    {
+        ConversationId = conversationId;
     }
 
     public void SetHashes(string cardHash, string inputsHash)

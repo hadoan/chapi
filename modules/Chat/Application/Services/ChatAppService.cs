@@ -13,9 +13,18 @@ public class ChatAppService : IChatAppService
     private readonly IDbContext _db;
     private readonly ISpecGenerator _specGenerator; // TODO implement
     private readonly IOpenApiDiff _openApiDiff; // TODO implement
-    public ChatAppService(IConversationRepository repo, IDbContext db, ISpecGenerator specGenerator, IOpenApiDiff openApiDiff)
-    { _repo = repo; _db = db; _specGenerator = specGenerator; _openApiDiff = openApiDiff; }
 
+    public ChatAppService(
+        IConversationRepository repo,
+        IDbContext db,
+        ISpecGenerator specGenerator,
+        IOpenApiDiff openApiDiff)
+    {
+        _repo = repo;
+        _db = db;
+        _specGenerator = specGenerator;
+        _openApiDiff = openApiDiff;
+    }
     public async Task<ConversationDto> CreateAsync(CreateConversationRequest request, CancellationToken ct)
     {
         var conv = Conversation.Create(request.Title, request.ProjectId);

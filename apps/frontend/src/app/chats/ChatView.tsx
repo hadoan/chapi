@@ -532,7 +532,8 @@ All smoke tests are passing. Ready to merge!`,
         card: lm.llmCard,
         userQuery: messageModel.content,
         env: selectedEnv ?? 'local',
-      });
+        conversationId: currentConversationId || undefined,
+      } as any);
 
       // Store runId in the message for future reference
       if (idx >= 0 && result.runId) {

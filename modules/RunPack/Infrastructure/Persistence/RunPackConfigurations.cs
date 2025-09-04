@@ -12,6 +12,7 @@ public class RunPackConfig : IEntityTypeConfiguration<RunPack.Domain.RunPack>
 
     // Properties
     b.Property(r => r.ProjectId).IsRequired();
+    b.Property(r => r.ConversationId);
     b.Property(r => r.RunId);
     b.Property(r => r.Mode).HasMaxLength(50).IsRequired().HasDefaultValue("hybrid");
     b.Property(r => r.FilesCount).IsRequired().HasDefaultValue(0);
@@ -36,6 +37,7 @@ public class RunPackConfig : IEntityTypeConfiguration<RunPack.Domain.RunPack>
 
     // Indexes
     b.HasIndex(r => r.ProjectId);
+    b.HasIndex(r => r.ConversationId);
     b.HasIndex(r => r.RunId);
     b.HasIndex(r => r.Status);
     b.HasIndex(r => r.CreatedAt);
