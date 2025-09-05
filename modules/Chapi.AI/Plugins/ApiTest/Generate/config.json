@@ -67,8 +67,7 @@
       "name": "max_files",
       "description": "Maximum number of test files to propose (1–3).",
       "required": false
-    }
-    ,
+    },
     {
       "name": "openApiJson",
       "description": "The OpenAPI document JSON for the target API (full text).",
