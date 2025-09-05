@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "description": "Generates a Chapi chat card (plan + generated files + actions) for 'Generate smoke tests…' using EndpointCatalog context. Returns STRICT JSON only.",
+  "description": "Generates a Chapi chat card (plan + generated files + actions) for 'Generate smoke tests…' using EndpointCatalog context. Returns STRICT JSON only. Returns {} for nonsensical or irrelevant queries.",
   "execution_settings": {
     "gpt-4o": {
       "model_id": "gpt-4o",
@@ -11,8 +11,8 @@
       "response_format": {
         "type": "json_schema",
         "json_schema": {
-          "name": "ChapiCard",
-          "strict": true,
+          "name": "ChapiCardOrEmpty",
+          "strict": false,
           "schema": {
             "type": "object",
             "properties": {
@@ -45,7 +45,6 @@
                 }
               }
             },
-            "required": ["role", "heading", "plan", "files", "actions"],
             "additionalProperties": false
           }
         }
@@ -77,7 +76,7 @@
   "messages": [
     {
       "role": "system",
-      "content": "You are Chapi, an API test generator. Return ONLY a JSON object that conforms exactly to the provided JSON Schema. Plan briefly, then propose 1–3 test files with rough line counts. Prefer application/json, cover auth + CRUD + simple edge validations."
+      "content": "You are Chapi, an API test generator. Return ONLY a JSON object that conforms exactly to the provided JSON Schema. For nonsensical, gibberish, or completely unrelated queries, return an empty object: {}. For valid requests, plan briefly, then propose 1–3 test files with rough line counts. Prefer application/json, cover auth + CRUD + simple edge validations."
     },
     { "role": "user", "content": "User asked: {{user_query}}" },
     { "role": "assistant", "content": "Context follows." },
