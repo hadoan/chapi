@@ -173,6 +173,31 @@ export default function ChatView() {
 
         const card = await llmsApi.generate(req);
 
+        // Detect an effectively-empty card from the backend and show a helpful message
+        const isEmptyCard =
+          (!card.heading || card.heading.trim() === '') &&
+          (!card.plan || card.plan.length === 0) &&
+          (!card.files || card.files.length === 0) &&
+          (!card.actions || card.actions.length === 0);
+
+        if (isEmptyCard) {
+          // Let the user know there were no endpoints or actionable items
+          toast({
+            title: 'No endpoints found',
+            description:
+              'No matching endpoints were found for the input. Try importing an OpenAPI spec or broadening your request.',
+            variant: 'destructive',
+          });
+
+          return {
+            role: 'assistant',
+            content:
+              'No matching endpoints were found for your input. Try importing your OpenAPI specification or broaden the request so we can find relevant endpoints.',
+            cards: [],
+            buttons: [],
+          };
+        }
+
         // Build a simple assistant response from the returned ChapiCard
         const assistantContent =
           card.heading ??
@@ -774,6 +799,46 @@ All smoke tests are passing. Ready to merge!`,
                       try {
                         const card = await llmsApi.generate(req);
                         console.log('LLM generate response:', card);
+
+                        const isEmptyCard =
+                          (!card.heading || card.heading.trim() === '') &&
+                          (!card.plan || card.plan.length === 0) &&
+                          (!card.files || card.files.length === 0) &&
+                          (!card.actions || card.actions.length === 0);
+
+                        if (isEmptyCard) {
+                          toast({
+                            title: 'No endpoints found',
+                            description:
+                              'No matching endpoints were found for the input. Try importing an OpenAPI spec or broadening your request.',
+                            variant: 'destructive',
+                          });
+
+                          const assistantMessage: MessageModel = {
+                            role: 'assistant',
+                            content:
+                              'No matching endpoints were found for your input. Try importing your OpenAPI specification or broaden the request so we can find relevant endpoints.',
+                            cards: [],
+                            buttons: [],
+                          };
+
+                          // Replace loading message with the helpful assistant message
+                          setMessages(prev => {
+                            const copy = [...prev];
+                            if (
+                              loadingIndex >= 0 &&
+                              loadingIndex < copy.length
+                            ) {
+                              copy[loadingIndex] = assistantMessage;
+                            } else {
+                              copy.push(assistantMessage);
+                            }
+                            return copy;
+                          });
+
+                          // Skip saving and other flows
+                          return;
+                        }
 
                         const assistantMessage: MessageModel = {
                           role: 'assistant',

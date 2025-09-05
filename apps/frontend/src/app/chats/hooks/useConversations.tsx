@@ -243,6 +243,31 @@ export function useConversations(
           }
         }
 
+        // If there's no blob to download, update the chat and avoid errors
+        if (!result || !result.blob) {
+          console.warn('Generate returned no blob; skipping download', result);
+          if (idx >= 0) {
+            setMessages(prev => {
+              const copy = [...prev];
+              const m = { ...copy[idx] } as LlmMessage & {
+                content?: string;
+              };
+              const existing = m.content || '';
+              const note =
+                '\n\nNote: Run pack was generated but no downloadable ZIP was returned by the server.';
+              m.content = existing + note;
+              copy[idx] = m;
+              return copy;
+            });
+          }
+          toast({
+            title: 'Run pack generated',
+            description:
+              'Run pack created but no downloadable artifact was returned. You may still browse files if a RunPack was linked to this conversation.',
+          });
+          return;
+        }
+
         const url = URL.createObjectURL(result.blob);
         const a = document.createElement('a');
         a.href = url;
@@ -252,7 +277,9 @@ export function useConversations(
         a.remove();
         URL.revokeObjectURL(url);
         toast({
-          title: `Run pack downloaded (ID: ${result.runId.substring(0, 8)}...)`,
+          title: `Run pack downloaded${
+            result.runId ? ` (ID: ${result.runId.substring(0, 8)}...)` : ''
+          }`,
         });
       } catch (err) {
         console.error('Download failed', err);

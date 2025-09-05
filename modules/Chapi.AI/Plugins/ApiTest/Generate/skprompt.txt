@@ -16,6 +16,30 @@ DEFINITIONS
 • CRUD coverage: treat "users" or similar resources as Create, Read (by id), Update (patch/put), Delete, plus List if present.
 • Auth check: ensure at least one unauthorized/forbidden variant is included when auth is required.
 
+STRICT RELEVANCE & NONSENSE DETECTION
+- First, check if USER REQUEST contains only meaningless input: 
+  • Single characters repeated (e.g., "aaaaa", "bbbbb")
+  • Random gibberish or keyboard mashing (e.g., "asdfgh", "qwerty")
+  • Non-alphabetic nonsense or special characters only
+  • Completely unrelated content to API testing (e.g., "food", "weather", "music")
+  • Empty, very short (<3 chars), or purely numeric input
+- If USER REQUEST is nonsensical or completely unrelated to API testing, respond with {} and STOP.
+- Tokenize USER REQUEST into lowercase alphanumeric tokens ≥3 chars.
+- Build candidate labels from the catalog: service/auth names (Auth, Chat, Contact, Dashboard, Email, Environments, Home), path segments (e.g., "contact", "chat", "dashboard"), and summary keywords.
+- An endpoint is RELEVANT if any request token is a substring match of a candidate label.
+- If NO endpoints are RELEVANT after tokenization, respond with {} and STOP.
+
+SCOPING (optional override)
+- If USER REQUEST contains "scope:<label>", only consider endpoints whose service/auth name OR path segment matches <label> by the same matching rules as STRICT RELEVANCE.
+- If scope is provided but matches zero endpoints, respond with {}.
+
+SELECTION RULES
+- Prefer business endpoints; ignore utility roots: never prioritize path == "/" or "/api".
+- Within the RELEVANT set:
+  • If a clear resource with CRUD exists (e.g., Contact), emphasize CRUD smoke coverage.
+  • Include at least one auth flow if relevant to the request (e.g., Auth register/status).
+  • For read-only domains (e.g., Dashboard GETs), include minimal status + key-field assertions.
+
 RULES FOR heading
 1) One short sentence acknowledging the user’s request, e.g., “I’ll generate comprehensive smoke tests for your user service API.”
 2) No emojis, no markdown.
@@ -39,9 +63,11 @@ RULES FOR actions
 2) Include "ADD_NEGATIVES" if there is at least one write endpoint (POST/PUT/PATCH/DELETE) or any auth-protected endpoint.
 
 CONFIDENCE & SAFETY
+• If the USER REQUEST is nonsensical, gibberish, or completely unrelated to API testing (e.g., random characters, single words like "aaaaa", unrelated topics), respond with an empty JSON object: {}.
 • If the endpoint catalog is empty or clearly unrelated to the user's request, respond with an empty JSON object: {}.
+• If no meaningful tokens can be extracted from the USER REQUEST that relate to API testing, respond with: {}.
 • Otherwise, produce the JSON object as specified below.
-• Always try to generate useful tests even with minimal user input - interpret "generate", "test", or similar words as requests for smoke tests.
+• Always try to generate useful tests when the user input contains legitimate API testing intent - interpret "generate", "test", or similar words as requests for smoke tests.
 
 CRITICAL OUTPUT REQUIREMENTS
 • You MUST respond with ONLY valid JSON and absolutely nothing else.
