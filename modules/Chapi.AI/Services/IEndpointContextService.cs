@@ -10,6 +10,6 @@ namespace Chapi.AI.Services
         /// </summary>
         /// <param name="projectId">Project id to fetch endpoints for.</param>
         /// <param name="maxItems">Maximum endpoints to include.</param>
-        Task<string> BuildContextAsync(Guid projectId, int maxItems = 25);
+        Task<string> BuildContextAsync(Guid projectId);
     }
 }
