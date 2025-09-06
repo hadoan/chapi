@@ -17,6 +17,7 @@ HARD RULES
 - Prefer operations with auth != "none" when present in HINTS.
 - For AUTH tests: ONLY pick endpoints that require authentication (auth != "none").
 - Minimum 2-5 picks required, focusing on core business endpoints like /api/*.
+- If ALLOWED_OPS includes an authentication token creation endpoint, ALWAYS include it as the FIRST pick. Typical patterns: POST /connect/token, POST /oauth2/token, POST /api/auth/token, POST /auth/token. Use auth:"bearer". If request/response details are unknown, set req:"-" and success:"-".
 
 JSON Schema
 {
@@ -33,8 +34,8 @@ JSON Schema
         "success":{"type":"string"}
       },
       "required":["method","path","auth","req","success"]
-    }}},
-  "required":["serviceSlug","picks"],
+    }}}
+  ,"required":["serviceSlug","picks"],
   "additionalProperties":false
 }
 
