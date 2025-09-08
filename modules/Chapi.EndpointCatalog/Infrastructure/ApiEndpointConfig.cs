@@ -25,6 +25,12 @@ public sealed class ApiEndpointConfig : IEntityTypeConfiguration<ApiEndpoint>
         builder.Property(x => x.Request).HasColumnType("jsonb");
         builder.Property(x => x.Responses).HasColumnType("jsonb");
 
+        // Derived flags (plain boolean columns)
+        builder.Property(x => x.RequiresAuth).IsRequired();
+        builder.Property(x => x.HasRequestBody).IsRequired();
+        builder.Property(x => x.ConsumesJson).IsRequired();
+        builder.Property(x => x.ProducesJson).IsRequired();
+
         builder.Property(x => x.Source).HasMaxLength(64).IsRequired();
         builder.Property(x => x.Deprecated).IsRequired();
         

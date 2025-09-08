@@ -6,6 +6,7 @@ import {
   MessageSquare,
   Play,
   Settings,
+  Shield,
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ const navigationItems = [
   { title: 'Chat', url: '/app', icon: MessageSquare },
   { title: 'Projects', url: '/app/projects', icon: FolderOpen },
   { title: 'Runs', url: '/app/runs', icon: Play },
+  { title: 'Auth Pilot', url: '/app/auth-pilot', icon: Shield },
 ];
 
 const managementItems = [
