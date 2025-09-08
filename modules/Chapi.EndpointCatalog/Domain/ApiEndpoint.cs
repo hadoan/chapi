@@ -67,7 +67,7 @@ public class ApiEndpoint : Entity<Guid>
     private static JsonDocument ToJsonDoc<T>(T value)
         => JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(value, JsonOpts));
 
-    public void ComputeDerivedFlags(EndpointDto dto)
+    public void     ComputeDerivedFlags(EndpointDto dto)
     {
         RequiresAuth = (dto.Security?.Count ?? 0) > 0;
         HasRequestBody = dto.Request is not null;

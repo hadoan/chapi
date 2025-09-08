@@ -6399,6 +6399,10 @@ export interface components {
             projectId?: string;
             url?: string | null;
         };
+        "Chapi.EndpointCatalog.Application.BodyMediaDto": {
+            schema?: components["schemas"]["Chapi.EndpointCatalog.Application.SchemaDto"];
+            example?: unknown;
+        };
         "Chapi.EndpointCatalog.Application.EndpointBriefDto": {
             /** Format: uuid */
             id?: string;
@@ -6408,21 +6412,68 @@ export interface components {
             tags?: string[] | null;
         };
         "Chapi.EndpointCatalog.Application.EndpointDto": {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            specId?: string;
             method?: string | null;
             path?: string | null;
             operationId?: string | null;
             summary?: string | null;
             description?: string | null;
             tags?: string[] | null;
-            servers?: unknown;
-            security?: unknown;
-            parameters?: unknown;
-            request?: unknown;
-            responses?: unknown;
+            servers?: string[] | null;
+            security?: {
+                [key: string]: string[];
+            }[] | null;
+            parameters?: components["schemas"]["Chapi.EndpointCatalog.Application.ParameterDto"][] | null;
+            request?: components["schemas"]["Chapi.EndpointCatalog.Application.RequestBodyDto"];
+            responses?: {
+                [key: string]: components["schemas"]["Chapi.EndpointCatalog.Application.ResponseDto"];
+            } | null;
+        };
+        "Chapi.EndpointCatalog.Application.ParameterDto": {
+            name?: string | null;
+            in?: string | null;
+            required?: boolean;
+            deprecated?: boolean;
+            description?: string | null;
+            schema?: components["schemas"]["Chapi.EndpointCatalog.Application.SchemaDto"];
+            example?: unknown;
+            examples?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        "Chapi.EndpointCatalog.Application.RequestBodyDto": {
+            required?: boolean;
+            content?: {
+                [key: string]: components["schemas"]["Chapi.EndpointCatalog.Application.BodyMediaDto"];
+            } | null;
+        };
+        "Chapi.EndpointCatalog.Application.ResponseDto": {
+            description?: string | null;
+            content?: {
+                [key: string]: components["schemas"]["Chapi.EndpointCatalog.Application.BodyMediaDto"];
+            } | null;
+            headers?: {
+                [key: string]: components["schemas"]["Chapi.EndpointCatalog.Application.ParameterDto"];
+            } | null;
+        };
+        "Chapi.EndpointCatalog.Application.SchemaDto": {
+            ref?: string | null;
+            type?: string | null;
+            format?: string | null;
+            nullable?: boolean | null;
+            description?: string | null;
+            enum?: string[] | null;
+            items?: components["schemas"]["Chapi.EndpointCatalog.Application.SchemaDto"];
+            properties?: {
+                [key: string]: components["schemas"]["Chapi.EndpointCatalog.Application.SchemaDto"];
+            } | null;
+            required?: string[] | null;
+            pattern?: string | null;
+            /** Format: double */
+            minimum?: number | null;
+            /** Format: double */
+            maximum?: number | null;
+            default?: unknown;
+            example?: unknown;
         };
         "Chat.Application.Dtos.ConversationDto": {
             /** Format: uuid */

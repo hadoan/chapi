@@ -46,7 +46,7 @@ namespace Chapi.EndpointCatalog.Application
             return list.Count > 0 ? list : null;
         }
 
-        public static List<ParameterDto>? NormalizeParameters(OpenApiPathItem pathItem, OpenApiOperation op)
+        public static List<ParameterDto>? NormalizeParameters(OpenApiPathItem pathItem, OpenApiOperation op, string? pathTemplate = null)
         {
             var all = new List<OpenApiParameter>();
             if (pathItem?.Parameters != null) all.AddRange(pathItem.Parameters);
@@ -59,9 +59,38 @@ namespace Chapi.EndpointCatalog.Application
                 map[(p.Name, loc)] = p;
             }
 
+            // Auto-detect missing path parameters from the path template
+            if (!string.IsNullOrEmpty(pathTemplate))
+            {
+                var pathParams = System.Text.RegularExpressions.Regex.Matches(pathTemplate, @"\{([^}]+)\}")
+                    .Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => m.Groups[1].Value)
+                    .ToList();
+
+                foreach (var paramName in pathParams)
+                {
+                    if (!map.ContainsKey((paramName, ParameterLocation.Path)))
+                    {
+                        // Add missing path parameter
+                        var pathParam = new OpenApiParameter
+                        {
+                            Name = paramName,
+                            In = ParameterLocation.Path,
+                            Required = true,
+                            Schema = new Microsoft.OpenApi.Models.OpenApiSchema { Type = "string" },
+                            Description = $"Path parameter: {paramName}"
+                        };
+                        map[(paramName, ParameterLocation.Path)] = pathParam;
+                    }
+                }
+            }
+
             var result = new List<ParameterDto>();
             foreach (var p in map.Values)
             {
+                // Skip parameters with null names (invalid parameters)
+                if (string.IsNullOrEmpty(p.Name)) continue;
+
                 result.Add(new ParameterDto
                 {
                     Name = p.Name,
@@ -71,7 +100,7 @@ namespace Chapi.EndpointCatalog.Application
                     Description = p.Description,
                     Schema = NormalizeSchema(p.Schema),
                     Example = p.Example,
-                    Examples = p.Examples?.ToDictionary(k => k.Key, v => (object?)v.Value?.Value ?? v.Value?.Value?.ToString())
+                    Examples = p.Examples?.ToDictionary(k => k.Key, v => (object?)v.Value?.Value ?? v.Value?.Value?.ToString() ?? string.Empty)
                 });
             }
             return result.Count > 0 ? result : null;
