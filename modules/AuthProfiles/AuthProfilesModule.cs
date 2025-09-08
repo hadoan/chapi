@@ -14,6 +14,9 @@ namespace AuthProfiles
         {
             services.AddControllers().AddApplicationPart(typeof(AuthProfilesModule).Assembly);
 
+            // Provide an in-memory distributed cache if no external cache is configured
+            services.AddDistributedMemoryCache();
+
             services.AddScoped<Domain.IAuthProfileRepository, Infrastructure.Data.AuthProfileRepository>();
             services.AddTransient<Application.Services.IAuthProfileService, Application.Services.AuthProfileService>();
             services.AddTransient<Application.Services.IAuthProfileReadService, Application.Services.AuthProfileService>();
