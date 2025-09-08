@@ -329,7 +329,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"][];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"][];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"][];
+                    };
                 };
             };
         };
@@ -354,7 +358,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                    };
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -394,7 +402,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                    };
                 };
                 /** @description Not Found - Resource does not exist */
                 404: {
@@ -427,7 +439,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                    };
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -577,7 +593,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthDetectionCandidateDto"][];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthDetectionCandidateDto"][];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthDetectionCandidateDto"][];
+                    };
                 };
                 /** @description Bad Request - Invalid input data */
                 400: {
@@ -6244,6 +6264,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "AuthProfiles.Application.Dtos.AuthDetectionCandidateDto": {
+            type?: components["schemas"]["AuthProfiles.Domain.AuthType"];
+            tokenUrl?: string | null;
+            audience?: string | null;
+            scopesCsv?: string | null;
+            injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
+            injectionName?: string | null;
+            injectionFormat?: string | null;
+            source?: string | null;
+            /** Format: double */
+            confidence?: number;
+        };
+        "AuthProfiles.Application.Dtos.AuthProfileDto": {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: uuid */
+            serviceId?: string;
+            environmentKey?: string | null;
+            type?: components["schemas"]["AuthProfiles.Domain.AuthType"];
+            tokenUrl?: string | null;
+            audience?: string | null;
+            scopesCsv?: string | null;
+            injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
+            injectionName?: string | null;
+            injectionFormat?: string | null;
+            detectSource?: string | null;
+            /** Format: double */
+            detectConfidence?: number;
+            enabled?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            secretRefs?: {
+                [key: string]: string;
+            } | null;
+        };
         "AuthProfiles.Application.Requests.CreateAuthProfileRequest": {
             /** Format: uuid */
             id?: string;

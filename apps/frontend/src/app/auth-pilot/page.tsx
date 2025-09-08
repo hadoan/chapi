@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAuthProfiles } from '@/hooks/use-auth-profiles';
 import { toast } from '@/hooks/use-toast';
 import { HelpCircle, RotateCcw, Save, TestTube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -30,7 +31,6 @@ import {
   formatTimestamp,
   getErrorMessage,
   initialProfile,
-  mockCandidates,
   mockDetection,
   mockEnvironments,
   simulateTokenRequest,
@@ -52,6 +52,21 @@ export default function AuthPilotPage() {
   const [tokenResult, setTokenResult] = useState<TokenResult>();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [candidates, setCandidates] = useState<AuthCandidate[]>([]);
+
+  // Use the auth profiles hook
+  const {
+    profiles,
+    loading: profilesLoading,
+    error: profilesError,
+    createProfile,
+    updateProfile,
+    deleteProfile,
+    detectCandidates,
+  } = useAuthProfiles({
+    environmentId: environment.toLowerCase(),
+    autoLoad: true,
+  });
 
   // Load demo state from localStorage
   useEffect(() => {
@@ -141,6 +156,48 @@ export default function AuthPilotPage() {
     });
   };
 
+  // Load candidates from backend
+  const handleDetectCandidates = useCallback(async () => {
+    if (profile.token_url) {
+      try {
+        const detectedCandidates = await detectCandidates(profile.token_url);
+        setCandidates(detectedCandidates);
+
+        addLog({
+          type: 'detect',
+          status: 'success',
+          message: `Found ${detectedCandidates.length} authentication candidates`,
+        });
+      } catch (error) {
+        addLog({
+          type: 'detect',
+          status: 'error',
+          message: 'Failed to detect authentication methods',
+        });
+      }
+    }
+  }, [profile.token_url, detectCandidates, addLog]);
+
+  // Save profile to backend
+  const handleSaveProfile = useCallback(async () => {
+    try {
+      const savedProfile = await createProfile(profile);
+      if (savedProfile) {
+        addLog({
+          type: 'save',
+          status: 'success',
+          message: 'Profile saved successfully',
+        });
+      }
+    } catch (error) {
+      addLog({
+        type: 'save',
+        status: 'error',
+        message: 'Failed to save profile',
+      });
+    }
+  }, [profile, createProfile, addLog]);
+
   const handleTestConnection = useCallback(async () => {
     const validation = validateProfile(profile);
 
@@ -197,21 +254,6 @@ export default function AuthPilotPage() {
       setIsTestingConnection(false);
     }
   }, [profile, addLog]);
-
-  const handleSaveProfile = useCallback(() => {
-    saveDemoState(profile);
-
-    toast({
-      title: 'Profile saved',
-      description: `Auth profile saved for ${environment} environment`,
-    });
-
-    addLog({
-      type: 'save',
-      message: `Profile saved for ${environment}`,
-      status: 'success',
-    });
-  }, [profile, environment, addLog, saveDemoState]);
 
   const handleResetDemo = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -330,8 +372,30 @@ export default function AuthPilotPage() {
                 onUseEndpoint={handleUseDetectedEndpoint}
               />
 
+              {/* Detection Button */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium">Auth Detection</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Analyze endpoint for authentication methods
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleDetectCandidates}
+                      disabled={!profile.token_url || profilesLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {profilesLoading ? 'Detecting...' : 'Detect Auth'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <CandidateList
-                candidates={mockCandidates}
+                candidates={candidates}
                 selectedType={profile.type}
                 onSelectCandidate={handleCandidateSelect}
               />

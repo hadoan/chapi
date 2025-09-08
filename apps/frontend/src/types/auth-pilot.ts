@@ -58,7 +58,7 @@ export interface Detection {
 
 export interface LogEntry {
   timestamp: string;
-  type: 'test' | 'save' | 'reset';
+  type: 'test' | 'save' | 'reset' | 'detect';
   message: string;
   status?: 'success' | 'error';
 }

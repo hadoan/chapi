@@ -1,9 +1,17 @@
+using AuthProfiles;
+using Chapi.Api.Data;
+using Chat;
+using Contacts;
+using Environments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Projects;
+using RunPack;
+using Runs;
 using ShipMvp.Api;
 using ShipMvp.Api.Auth;
 using ShipMvp.Application;
@@ -12,15 +20,8 @@ using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Modules;
 using ShipMvp.Domain.Shared.Constants;
 using ShipMvp.Integration.SemanticKernel;
-using System.Text.RegularExpressions;
 using System.Reflection;
-using Chapi.Api.Data;
-using Projects;
-using Environments;
-using Chat;
-using Contacts;
-using RunPack;
-using Runs;
+using System.Text.RegularExpressions;
 namespace Chapi.Api;
 
 
@@ -37,6 +38,7 @@ namespace Chapi.Api;
 [DependsOn<Chapi.ApiSpecs.ApiSpecsModule>]
 [DependsOn<Chapi.EndpointCatalog.EndpointCatalogModule>]
 [DependsOn<Chapi.AI.ChapiAIModule>]
+[DependsOn<AuthProfilesModule>]
 public class ChapiHostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
