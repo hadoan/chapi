@@ -22,7 +22,8 @@ namespace AuthProfiles
             services.AddTransient<Application.Services.IInjectionComposer, Infrastructure.Services.InjectionComposer>();
             services.AddTransient<Application.Services.ITokenCache, Infrastructure.Services.TokenCache>();
 
-            // Note: ISecretStore should be provided by Secrets/Environments modules; if not, user must register one.
+            // Note: ISecretStore should be provided by Secrets/Environments modules; if not, register a null fallback
+            services.AddSingleton<Application.Services.ISecretStore, Infrastructure.Services.NullSecretStore>();
         }
 
         public void Configure(IApplicationBuilder app, Microsoft.Extensions.Hosting.IHostEnvironment env)
