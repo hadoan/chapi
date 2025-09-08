@@ -10,6 +10,7 @@ using Chapi.EndpointCatalog.Infrastructure;
 using Contacts.Infrastructure;
 using Runs.Infrastructure;
 using RunPack.Infrastructure;
+using AuthProfiles.Infrastructure;
 
 namespace Chapi.Api.Data;
 
@@ -31,6 +32,7 @@ public sealed class ChapiDbContext : AppDbContext
         modelBuilder.ConfigureContactsEntities();
         modelBuilder.ConfigureRunsEntities();
         modelBuilder.ConfigureRunPacksEntities();
+        modelBuilder.ConfigureAuthProfilessEntities();
     }
 
 }

@@ -300,6 +300,300 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/authprofiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Enabled?: boolean;
+                    ProjectId?: string;
+                    ServiceId?: string;
+                    Env?: string;
+                    Search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthProfiles.Application.Requests.CreateAuthProfileRequest"];
+                    "text/json": components["schemas"]["AuthProfiles.Application.Requests.CreateAuthProfileRequest"];
+                    "application/*+json": components["schemas"]["AuthProfiles.Application.Requests.CreateAuthProfileRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/authprofiles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthProfiles.Application.Requests.UpdateAuthProfileRequest"];
+                    "text/json": components["schemas"]["AuthProfiles.Application.Requests.UpdateAuthProfileRequest"];
+                    "application/*+json": components["schemas"]["AuthProfiles.Application.Requests.UpdateAuthProfileRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/authprofiles/{id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/authprofiles/{id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/authprofiles/detect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.DetectRequest"];
+                    "text/json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.DetectRequest"];
+                    "application/*+json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.DetectRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chat": {
         parameters: {
             query?: never;
@@ -5950,6 +6244,52 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "AuthProfiles.Application.Requests.CreateAuthProfileRequest": {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: uuid */
+            serviceId?: string;
+            environmentKey?: string | null;
+            type?: components["schemas"]["AuthProfiles.Domain.AuthType"];
+            tokenUrl?: string | null;
+            audience?: string | null;
+            scopesCsv?: string | null;
+            injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
+            injectionName?: string | null;
+            injectionFormat?: string | null;
+            secretRefs?: {
+                [key: string]: string;
+            } | null;
+        };
+        "AuthProfiles.Application.Requests.UpdateAuthProfileRequest": {
+            tokenUrl?: string | null;
+            audience?: string | null;
+            scopesCsv?: string | null;
+            injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
+            injectionName?: string | null;
+            injectionFormat?: string | null;
+            secretRefs?: {
+                [key: string]: string;
+            } | null;
+        };
+        "AuthProfiles.Controllers.AuthProfilesController.DetectRequest": {
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: uuid */
+            serviceId?: string;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "AuthProfiles.Domain.AuthType": 0 | 1 | 2 | 3;
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "AuthProfiles.Domain.InjectionMode": 0 | 1 | 2;
         "Chapi.AI.Controllers.RunPackController.UpdateFileRequest": {
             filePath?: string | null;
             content?: string | null;
