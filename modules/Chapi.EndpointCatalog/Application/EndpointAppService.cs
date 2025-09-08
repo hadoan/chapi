@@ -19,6 +19,28 @@ public class EndpointAppService : IEndpointAppService
     {
         var e = await _repo.FindAsync(endpointId);
         if (e == null) throw new KeyNotFoundException();
-        return new EndpointDto(e.Id, e.SpecId, e.Method, e.Path, e.OperationId, e.Summary, e.Description, e.Tags, e.Servers.RootElement.ToString(), e.Security.RootElement.ToString(), e.Parameters.RootElement.ToString(), e.Request?.RootElement.ToString(), e.Responses.RootElement.ToString());
+
+        var dto = new EndpointDto
+        {
+            Method = e.Method,
+            Path = e.Path,
+            OperationId = e.OperationId,
+            Summary = e.Summary,
+            Description = e.Description,
+            Tags = e.Tags?.ToList()
+        };
+
+        if (e.Servers != null)
+            dto.Servers = JsonSerializer.Deserialize<List<string>>(e.Servers.RootElement.GetRawText(), OpenApiNormalization.JsonOpts);
+        if (e.Security != null)
+            dto.Security = JsonSerializer.Deserialize<List<Dictionary<string, List<string>>>>(e.Security.RootElement.GetRawText(), OpenApiNormalization.JsonOpts);
+        if (e.Parameters != null)
+            dto.Parameters = JsonSerializer.Deserialize<List<ParameterDto>>(e.Parameters.RootElement.GetRawText(), OpenApiNormalization.JsonOpts);
+        if (e.Request != null)
+            dto.Request = JsonSerializer.Deserialize<RequestBodyDto>(e.Request.RootElement.GetRawText(), OpenApiNormalization.JsonOpts);
+        if (e.Responses != null)
+            dto.Responses = JsonSerializer.Deserialize<Dictionary<string, ResponseDto>>(e.Responses.RootElement.GetRawText(), OpenApiNormalization.JsonOpts);
+
+        return dto;
     }
 }

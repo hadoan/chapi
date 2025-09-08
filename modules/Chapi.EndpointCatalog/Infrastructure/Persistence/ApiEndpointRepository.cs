@@ -3,6 +3,7 @@ using Chapi.EndpointCatalog.Domain;
 using Chapi.EndpointCatalog.Application;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Persistence;
+using System.Text.Json;
 
 namespace Chapi.EndpointCatalog.Infrastructure.EntityFrameworkCore;
 
@@ -27,7 +28,18 @@ public class ApiEndpointRepository : IApiEndpointRepository
         }
         else
         {
-            var updated = ApiEndpoint.Create(existing.Id, projectId, specId, dto);
+            //var updated = ApiEndpoint.Create(existing.Id, projectId, specId, dto);
+            var updated = existing;
+            updated.UpdatedAt = DateTime.UtcNow;
+            updated.OperationId = dto.OperationId;
+            updated.Summary = dto.Summary;
+            updated.Description = dto.Description;
+            updated.Tags = dto.Tags?.ToArray();
+            updated.Servers = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Servers));
+            updated.Security = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Security));
+            updated.Parameters = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Parameters));
+            updated.Request = dto.Request != null ? JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Request)) : null;
+            updated.Responses = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Responses));
             _dbSet.Update(updated);
         }
         await _context.SaveChangesAsync();
