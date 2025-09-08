@@ -1,34 +1,44 @@
-"use client";
-import React, {useState} from 'react';
-import { EnvProvider, useEnvStore } from '@/lib/state/envStore';
-import type { EnvName } from '@/lib/state/types';
+'use client';
 import EnvEditDrawer from '@/components/env/EnvEditDrawer';
 import { Layout } from '@/components/Layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings, Lock, Globe, Clock, RefreshCw, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { EnvProvider, useEnvStore } from '@/lib/state/envStore';
+import { Clock, Globe, Lock, Plus, Settings, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function Inner(){
-  const {envs, loading, updateEnv, createEnv} = useEnvStore();
+function Inner() {
+  const { envs, loading, updateEnv, createEnv } = useEnvStore();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newEnvironment, setNewEnvironment] = useState({
     name: '',
     baseUrl: '',
     timeoutMs: 30000,
-    followRedirects: true
+    followRedirects: true,
   });
 
-  const env = envs.find(e=> e.id === editing) ?? null;
+  const env = envs.find(e => e.id === editing) ?? null;
 
   const handleCreateEnvironment = async () => {
     if (!newEnvironment.name.trim() || !newEnvironment.baseUrl.trim()) {
-      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      toast({
+        title: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -40,14 +50,14 @@ function Inner(){
         followRedirects: newEnvironment.followRedirects,
         headers: {},
         secrets: {},
-        locked: false
+        locked: false,
       });
-      
+
       setNewEnvironment({
         name: '',
         baseUrl: '',
         timeoutMs: 30000,
-        followRedirects: true
+        followRedirects: true,
       });
       setShowCreateDialog(false);
       toast({ title: 'Environment created successfully' });
@@ -58,12 +68,16 @@ function Inner(){
   };
 
   const getEnvBadgeVariant = (name: string) => {
-    switch(name.toLowerCase()) {
-      case 'local': return 'secondary';
-      case 'staging': return 'outline';  
+    switch (name.toLowerCase()) {
+      case 'local':
+        return 'secondary';
+      case 'staging':
+        return 'outline';
       case 'prod':
-      case 'production': return 'default';
-      default: return 'outline';
+      case 'production':
+        return 'default';
+      default:
+        return 'outline';
     }
   };
 
@@ -74,7 +88,10 @@ function Inner(){
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Environments</h1>
-              <p className="text-muted-foreground">Configure base URLs, headers & secrets for different environments</p>
+              <p className="text-muted-foreground">
+                Configure base URLs, headers & secrets for different
+                environments
+              </p>
             </div>
             <Button disabled>
               <Plus className="w-4 h-4 mr-2" />
@@ -82,7 +99,7 @@ function Inner(){
             </Button>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
                   <div className="h-4 bg-muted rounded w-3/4"></div>
@@ -108,9 +125,11 @@ function Inner(){
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Environments</h1>
-            <p className="text-muted-foreground">Configure base URLs, headers & secrets for different environments</p>
+            <p className="text-muted-foreground">
+              Configure base URLs, headers & secrets for different environments
+            </p>
           </div>
-          
+
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button>
@@ -128,7 +147,12 @@ function Inner(){
                   <Input
                     id="env-name"
                     value={newEnvironment.name}
-                    onChange={(e) => setNewEnvironment({...newEnvironment, name: e.target.value})}
+                    onChange={e =>
+                      setNewEnvironment({
+                        ...newEnvironment,
+                        name: e.target.value,
+                      })
+                    }
                     placeholder="e.g., Development, Staging, Production"
                   />
                 </div>
@@ -137,7 +161,12 @@ function Inner(){
                   <Input
                     id="env-baseurl"
                     value={newEnvironment.baseUrl}
-                    onChange={(e) => setNewEnvironment({...newEnvironment, baseUrl: e.target.value})}
+                    onChange={e =>
+                      setNewEnvironment({
+                        ...newEnvironment,
+                        baseUrl: e.target.value,
+                      })
+                    }
                     placeholder="https://api.example.com"
                   />
                 </div>
@@ -147,7 +176,12 @@ function Inner(){
                     id="env-timeout"
                     type="number"
                     value={newEnvironment.timeoutMs}
-                    onChange={(e) => setNewEnvironment({...newEnvironment, timeoutMs: parseInt(e.target.value) || 30000})}
+                    onChange={e =>
+                      setNewEnvironment({
+                        ...newEnvironment,
+                        timeoutMs: parseInt(e.target.value) || 30000,
+                      })
+                    }
                     placeholder="30000"
                   />
                 </div>
@@ -156,14 +190,27 @@ function Inner(){
                     id="env-redirects"
                     type="checkbox"
                     checked={newEnvironment.followRedirects}
-                    onChange={(e) => setNewEnvironment({...newEnvironment, followRedirects: e.target.checked})}
+                    onChange={e =>
+                      setNewEnvironment({
+                        ...newEnvironment,
+                        followRedirects: e.target.checked,
+                      })
+                    }
                     className="rounded"
                   />
                   <Label htmlFor="env-redirects">Follow redirects</Label>
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={handleCreateEnvironment} className="flex-1">Create</Button>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1">Cancel</Button>
+                  <Button onClick={handleCreateEnvironment} className="flex-1">
+                    Create
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             </DialogContent>
@@ -171,14 +218,16 @@ function Inner(){
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {envs.map((environment) => (
+          {envs.map(environment => (
             <Card key={environment.id} className="animate-fade-in hover-scale">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-lg flex items-center gap-2">
                       {environment.name}
-                      {environment.locked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                      {environment.locked && (
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant={getEnvBadgeVariant(environment.name)}>
@@ -186,13 +235,15 @@ function Inner(){
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         <Globe className="w-3 h-3 mr-1" />
-                        {environment.followRedirects ? 'Redirects' : 'No redirects'}
+                        {environment.followRedirects
+                          ? 'Redirects'
+                          : 'No redirects'}
                       </Badge>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => setEditing(environment.id)}
                       disabled={environment.locked}
@@ -205,41 +256,62 @@ function Inner(){
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Base URL</span>
-                    <span className="text-xs font-mono">{environment.baseUrl}</span>
+                    <span className="text-sm text-muted-foreground">
+                      Base URL
+                    </span>
+                    <span className="text-xs font-mono">
+                      {environment.baseUrl}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Timeout</span>
+                    <span className="text-sm text-muted-foreground">
+                      Timeout
+                    </span>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3 text-muted-foreground" />
                       <span className="text-xs">{environment.timeoutMs}ms</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Headers</span>
+                    <span className="text-sm text-muted-foreground">
+                      Headers
+                    </span>
                     <Badge variant="outline" className="text-xs">
                       {Object.keys(environment.headers).length} configured
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Secrets</span>
+                    <span className="text-sm text-muted-foreground">
+                      Secrets
+                    </span>
                     <Badge variant="outline" className="text-xs">
                       {Object.keys(environment.secrets).length} configured
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Created</span>
-                  <span>{new Date(environment.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {new Date(environment.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
+                    onClick={() => navigate('/app/auth-pilot')}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Auth
+                  </Button>
+                  <Button
                     onClick={() => setEditing(environment.id)}
                     disabled={environment.locked}
                     className="flex-1"
-                    variant={environment.locked ? "outline" : "default"}
+                    variant={environment.locked ? 'outline' : 'default'}
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     {environment.locked ? 'Locked' : 'Configure'}
@@ -250,20 +322,20 @@ function Inner(){
           ))}
         </div>
 
-        <EnvEditDrawer 
-          env={editing ? envs.find(e => e.id === editing) || null : null} 
-          open={!!editing} 
-          onClose={() => setEditing(null)} 
-          onSave={(patch) => { 
-            if (editing) updateEnv(editing, patch); 
-          }} 
+        <EnvEditDrawer
+          env={editing ? envs.find(e => e.id === editing) || null : null}
+          open={!!editing}
+          onClose={() => setEditing(null)}
+          onSave={patch => {
+            if (editing) updateEnv(editing, patch);
+          }}
         />
       </div>
     </Layout>
   );
 }
 
-export default function Page(){
+export default function Page() {
   return (
     <EnvProvider>
       <Inner />

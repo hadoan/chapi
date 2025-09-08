@@ -59,7 +59,7 @@ const Index = () => {
             </a>
             <Button asChild variant="outline" size="sm">
               <a
-                href="https://github.com/chapi-dev/chapi"
+                href="https://github.com/hadoan/chapi"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -241,6 +241,18 @@ const Index = () => {
             <Button variant="outline" size="lg" className="text-lg h-12 px-8">
               <FileText className="w-5 h-5 mr-2" />
               Read Docs
+            </Button>
+          </div>
+
+          {/* Demo Link */}
+          <div className="mt-6 text-center">
+            <Button variant="ghost" size="sm" asChild>
+              <a
+                href="/app/auth-pilot"
+                className="text-indigo-600 hover:text-indigo-700"
+              >
+                ✨ Try AuthPilot Demo — Token & Auth Profile Wizard
+              </a>
             </Button>
           </div>
         </div>
