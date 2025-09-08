@@ -40,6 +40,7 @@ public class ApiEndpointRepository : IApiEndpointRepository
             updated.Parameters = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Parameters));
             updated.Request = dto.Request != null ? JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Request)) : null;
             updated.Responses = JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(dto.Responses));
+            updated.ComputeDerivedFlags(dto);
             _dbSet.Update(updated);
         }
         await _context.SaveChangesAsync();
