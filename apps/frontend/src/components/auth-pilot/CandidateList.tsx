@@ -13,12 +13,14 @@ import React from 'react';
 interface CandidateListProps {
   candidates: AuthCandidate[];
   selectedType: AuthType;
+  selectedTokenUrl?: string;
   onSelectCandidate: (candidate: AuthCandidate) => void;
 }
 
 export function CandidateList({
   candidates,
   selectedType,
+  selectedTokenUrl,
   onSelectCandidate,
 }: CandidateListProps) {
   return (
@@ -27,14 +29,20 @@ export function CandidateList({
         Authentication Candidates
       </h3>
       <div className="space-y-2">
-        {candidates.map(candidate => (
-          <CandidateCard
-            key={candidate.type}
-            candidate={candidate}
-            isSelected={candidate.type === selectedType}
-            onSelect={() => onSelectCandidate(candidate)}
-          />
-        ))}
+        {candidates.map(candidate => {
+          const key = `${candidate.type}|${
+            candidate.token_url ?? candidate.header_name ?? ''
+          }`;
+          const selectedKey = `${selectedType}|${selectedTokenUrl ?? ''}`;
+          return (
+            <CandidateCard
+              key={key}
+              candidate={candidate}
+              isSelected={key === selectedKey}
+              onSelect={() => onSelectCandidate(candidate)}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -102,7 +110,17 @@ function CandidateCard({
               <div>
                 <div className="font-medium text-foreground">
                   {getAuthTypeDisplayName(candidate.type)}
+                  {candidate.rawType && (
+                    <span className="ml-2 text-xs text-muted-foreground font-mono">
+                      {candidate.rawType}
+                    </span>
+                  )}
                 </div>
+                {candidate.form?.grantType && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Grant: {candidate.form.grantType}
+                  </div>
+                )}
                 {candidate.token_url && (
                   <div className="text-xs text-muted-foreground font-mono mt-1">
                     {candidate.token_url}

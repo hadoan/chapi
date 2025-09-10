@@ -120,6 +120,188 @@ export function ProfileForm({ profile, onChange, errors }: ProfileFormProps) {
           </div>
         )}
 
+        {(profile.type === 'password' || profile.type === 'basic') && (
+          <div className="space-y-4 border-t pt-4">
+            <h4 className="font-medium text-foreground">
+              {profile.type === 'password'
+                ? 'OAuth2 Resource Owner Password (ROPC)'
+                : 'HTTP Basic Auth'}
+            </h4>
+            <div className="space-y-4">
+              {profile.type === 'password' && (
+                <div className="space-y-2">
+                  <Label htmlFor="client_id">Client ID (optional)</Label>
+                  <Input
+                    id="client_id"
+                    value={profile.client_id || ''}
+                    onChange={e => updateProfile({ client_id: e.target.value })}
+                    placeholder="your-client-id"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username_ref">Username (secret ref)</Label>
+                  <Input
+                    id="username_ref"
+                    value={profile.username_ref || ''}
+                    onChange={e =>
+                      updateProfile({ username_ref: e.target.value })
+                    }
+                    placeholder="ENV_SECRET_USERNAME"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the secret key or env variable name that holds the
+                    username.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password_ref">Password (secret ref)</Label>
+                  <div className="relative">
+                    <Input
+                      id="password_ref"
+                      type={showSecrets.password_ref ? 'text' : 'password'}
+                      value={profile.password_ref || ''}
+                      onChange={e =>
+                        updateProfile({ password_ref: e.target.value })
+                      }
+                      placeholder="ENV_SECRET_PASSWORD"
+                      className={`pr-10`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => toggleSecret('password_ref')}
+                    >
+                      {showSecrets.password_ref ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enter the secret key or env variable name that holds the
+                    password.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {profile.type === 'custom_login' && (
+          <div className="space-y-4 border-t pt-4">
+            <h4 className="font-medium text-foreground">Custom Login</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login_body_type">Body Type</Label>
+                <Input
+                  id="login_body_type"
+                  value={profile.login_body_type || 'json'}
+                  onChange={e =>
+                    updateProfile({
+                      login_body_type: (e.target.value === 'form'
+                        ? 'form'
+                        : 'json') as 'json' | 'form',
+                    })
+                  }
+                  placeholder="json | form"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use 'json' for application/json or 'form' for
+                  application/x-www-form-urlencoded.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login_user_key">Username field key</Label>
+                  <Input
+                    id="login_user_key"
+                    value={profile.login_user_key || 'username'}
+                    onChange={e =>
+                      updateProfile({ login_user_key: e.target.value })
+                    }
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login_pass_key">Password field key</Label>
+                  <Input
+                    id="login_pass_key"
+                    value={profile.login_pass_key || 'password'}
+                    onChange={e =>
+                      updateProfile({ login_pass_key: e.target.value })
+                    }
+                    placeholder="password"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username_ref">Username (secret ref)</Label>
+                  <Input
+                    id="username_ref"
+                    value={profile.username_ref || ''}
+                    onChange={e =>
+                      updateProfile({ username_ref: e.target.value })
+                    }
+                    placeholder="ENV_SECRET_USERNAME"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password_ref">Password (secret ref)</Label>
+                  <div className="relative">
+                    <Input
+                      id="password_ref"
+                      type={showSecrets.password_ref ? 'text' : 'password'}
+                      value={profile.password_ref || ''}
+                      onChange={e =>
+                        updateProfile({ password_ref: e.target.value })
+                      }
+                      placeholder="ENV_SECRET_PASSWORD"
+                      className={`pr-10`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => toggleSecret('password_ref')}
+                    >
+                      {showSecrets.password_ref ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="token_json_path">Token JSON Path</Label>
+                <Input
+                  id="token_json_path"
+                  value={profile.token_json_path || '$.access_token'}
+                  onChange={e =>
+                    updateProfile({ token_json_path: e.target.value })
+                  }
+                  placeholder="$.access_token"
+                />
+                <p className="text-xs text-muted-foreground">
+                  JSON path to extract the token from the login response.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {profile.type === 'api_key_header' && (
           <div className="space-y-4 border-t pt-4">
             <h4 className="font-medium text-foreground">API Key Header</h4>

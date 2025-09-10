@@ -19,7 +19,7 @@ type InjectionMode = components['schemas']['AuthProfiles.Domain.InjectionMode'];
 
 // Convert backend AuthType (numeric enum) to frontend AuthType
 const mapBackendAuthType = (
-  backendType: AuthType
+  backendType: unknown
 ): import('@/types/auth-pilot').AuthType => {
   // Backend uses numeric enum: 0 | 1 | 2 | 3
   const typeMap: Record<number, import('@/types/auth-pilot').AuthType> = {
@@ -31,7 +31,11 @@ const mapBackendAuthType = (
     5: 'basic',
     6: 'custom_login',
   };
-  return typeMap[backendType as number] || 'oauth2_client_credentials';
+  const n =
+    typeof backendType === 'number'
+      ? backendType
+      : parseInt(String(backendType || ''), 10);
+  return typeMap[n] || 'oauth2_client_credentials';
 };
 
 // Convert frontend AuthType to backend AuthType (numeric enum)
@@ -438,14 +442,57 @@ export function useAuthProfiles({
         }
 
         // Convert backend candidates to frontend format
-        const mapped = result.map((candidate: AuthDetectionCandidateDto) => ({
-          type: mapBackendAuthType(candidate.type!),
-          confidence: candidate.confidence || 0,
-          token_url: candidate.tokenUrl,
-          header_name: candidate.injectionName,
-          disabled: false,
-          disabledReason: undefined,
-        }));
+        const mapped = result.map((candidate: AuthDetectionCandidateDto) => {
+          // candidate.type may be a numeric backend enum or a raw string; handle both
+          let frontendType: import('@/types/auth-pilot').AuthType;
+          if (typeof candidate.type === 'number') {
+            frontendType = mapBackendAuthType(candidate.type);
+          } else {
+            // map known string values to frontend AuthType
+            const s = String(candidate.type || '').toLowerCase();
+            frontendType =
+              s === 'oauth2_password' || s === 'password'
+                ? 'password'
+                : s === 'api_key_header' || s === 'api-key-header'
+                ? 'api_key_header'
+                : s === 'bearer_static'
+                ? 'bearer_static'
+                : s === 'session_cookie'
+                ? 'session_cookie'
+                : s === 'basic' || s === 'http_basic'
+                ? 'basic'
+                : s === 'custom_login'
+                ? 'custom_login'
+                : 'oauth2_client_credentials';
+          }
+
+          // Map TokenFormHints from generated schema safely
+          const form = candidate.form
+            ? {
+                grantType: candidate.form.grantType ?? undefined,
+                // fields is Record<string, string | null> in schema; normalize to Record<string,string> | null
+                fields: candidate.form.fields
+                  ? Object.fromEntries(
+                      Object.entries(candidate.form.fields).map(([k, v]) => [
+                        k,
+                        v ?? '',
+                      ])
+                    )
+                  : null,
+              }
+            : null;
+
+          return {
+            type: frontendType,
+            rawType: String(candidate.type ?? ''),
+            confidence: candidate.confidence || 0,
+            token_url: candidate.tokenUrl,
+            header_name: candidate.injectionName,
+            disabled: false,
+            disabledReason: undefined,
+            form,
+          };
+        });
 
         return { candidates: mapped, best };
       } catch (err) {

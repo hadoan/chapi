@@ -34,8 +34,11 @@ namespace AuthProfiles.Application.Dtos
         string InjectionName,
         string InjectionFormat,
         string Source,
-        double Confidence
+        double Confidence,
+        TokenFormHints? Form
     );
+
+    // TokenFormHints, DetectionCandidateDto and InjectionPreview are defined in DetectionDtos.cs
 
     public record TestAuthRequest(Guid AuthProfileId, AuthProfileDto? ProfileInline, Guid? EnvId, IDictionary<string, string>? OverrideSecretValues);
 

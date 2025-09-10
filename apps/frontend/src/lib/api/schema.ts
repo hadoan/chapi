@@ -664,6 +664,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/authprofiles/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.TestRequest"];
+                    "text/json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.TestRequest"];
+                    "application/*+json": components["schemas"]["AuthProfiles.Controllers.AuthProfilesController.TestRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.TestAuthResult"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.TestAuthResult"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.TestAuthResult"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chat": {
         parameters: {
             query?: never;
@@ -5845,6 +5895,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/testgen/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Dto.TestGenRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Dto.TestGenRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Dto.TestGenRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                        "application/json": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                        "text/json": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/connect/token": {
         parameters: {
             query?: never;
@@ -6374,6 +6474,7 @@ export interface components {
             source?: string | null;
             /** Format: double */
             confidence?: number;
+            form?: components["schemas"]["AuthProfiles.Application.Dtos.TokenFormHints"];
         };
         "AuthProfiles.Application.Dtos.AuthProfileDto": {
             /** Format: uuid */
@@ -6384,6 +6485,9 @@ export interface components {
             serviceId?: string;
             environmentKey?: string | null;
             type?: components["schemas"]["AuthProfiles.Domain.AuthType"];
+            params?: {
+                [key: string]: unknown;
+            } | null;
             tokenUrl?: string | null;
             audience?: string | null;
             scopesCsv?: string | null;
@@ -6408,8 +6512,6 @@ export interface components {
             /** Format: uuid */
             serviceId?: string | null;
             baseUrl?: string | null;
-            openApiJson?: string | null;
-            postmanJson?: string | null;
         };
         "AuthProfiles.Application.Dtos.DetectionCandidateDto": {
             type?: string | null;
@@ -6419,6 +6521,7 @@ export interface components {
             source?: string | null;
             /** Format: double */
             confidence?: number;
+            form?: components["schemas"]["AuthProfiles.Application.Dtos.TokenFormHints"];
         };
         "AuthProfiles.Application.Dtos.DetectionResponse": {
             candidates?: components["schemas"]["AuthProfiles.Application.Dtos.DetectionCandidateDto"][] | null;
@@ -6435,6 +6538,26 @@ export interface components {
             /** Format: double */
             confidence?: number;
         };
+        "AuthProfiles.Application.Dtos.TestAuthResult": {
+            ok?: boolean;
+            status?: string | null;
+            message?: string | null;
+            sampleTokenPrefix?: string | null;
+            accessToken?: string | null;
+            tokenType?: string | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            headers?: {
+                [key: string]: string;
+            } | null;
+            cookieHeader?: string | null;
+        };
+        "AuthProfiles.Application.Dtos.TokenFormHints": {
+            grantType?: string | null;
+            fields?: {
+                [key: string]: string | null;
+            } | null;
+        };
         "AuthProfiles.Application.Requests.CreateAuthProfileRequest": {
             /** Format: uuid */
             id?: string;
@@ -6447,6 +6570,9 @@ export interface components {
             tokenUrl?: string | null;
             audience?: string | null;
             scopesCsv?: string | null;
+            params?: {
+                [key: string]: string;
+            } | null;
             injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
             injectionName?: string | null;
             injectionFormat?: string | null;
@@ -6458,6 +6584,9 @@ export interface components {
             tokenUrl?: string | null;
             audience?: string | null;
             scopesCsv?: string | null;
+            params?: {
+                [key: string]: string;
+            } | null;
             injectionMode?: components["schemas"]["AuthProfiles.Domain.InjectionMode"];
             injectionName?: string | null;
             injectionFormat?: string | null;
@@ -6471,11 +6600,21 @@ export interface components {
             /** Format: uuid */
             serviceId?: string;
         };
+        "AuthProfiles.Controllers.AuthProfilesController.TestRequest": {
+            /** Format: uuid */
+            authProfileId?: string | null;
+            profileInline?: components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+            /** Format: uuid */
+            envId?: string | null;
+            overrideSecretValues?: {
+                [key: string]: string;
+            } | null;
+        };
         /**
          * Format: int32
          * @enum {integer}
          */
-        "AuthProfiles.Domain.AuthType": 0 | 1 | 2 | 3;
+        "AuthProfiles.Domain.AuthType": 0 | 1 | 2 | 3 | 4 | 5 | 6;
         /**
          * Format: int32
          * @enum {integer}
@@ -6500,10 +6639,103 @@ export interface components {
             files?: components["schemas"]["Chapi.AI.Dto.FileEntry"][] | null;
             actions?: string[] | null;
         };
+        "Chapi.AI.Dto.ConversationRow": {
+            id?: string | null;
+            project_id?: string | null;
+            title?: string | null;
+            created_at?: string | null;
+            updated_at?: string | null;
+        };
+        "Chapi.AI.Dto.DatabaseOperations": {
+            conversations?: components["schemas"]["Chapi.AI.Dto.ConversationRow"][] | null;
+            messages?: components["schemas"]["Chapi.AI.Dto.MessageRow"][] | null;
+            run_packs?: components["schemas"]["Chapi.AI.Dto.RunPackRow"][] | null;
+            run_pack_files?: components["schemas"]["Chapi.AI.Dto.RunPackFileRow"][] | null;
+            run_pack_inputs?: components["schemas"]["Chapi.AI.Dto.RunPackInputRow"][] | null;
+            run_pack_validations?: components["schemas"]["Chapi.AI.Dto.RunPackValidationRow"][] | null;
+        };
         "Chapi.AI.Dto.FileEntry": {
             path?: string | null;
             /** Format: int32 */
             addedLines?: number;
+        };
+        "Chapi.AI.Dto.MessageRow": {
+            id?: string | null;
+            conversation_id?: string | null;
+            role?: string | null;
+            content?: string | null;
+            card_type?: string | null;
+            card_payload?: unknown;
+            created_at?: string | null;
+        };
+        "Chapi.AI.Dto.RunPackFileRow": {
+            id?: string | null;
+            runpack_id?: string | null;
+            path?: string | null;
+            content?: string | null;
+            /** Format: int32 */
+            size_bytes?: number;
+            role?: string | null;
+            created_at?: string | null;
+        };
+        "Chapi.AI.Dto.RunPackInputRow": {
+            id?: string | null;
+            runpack_id?: string | null;
+            file_roles_json?: {
+                [key: string]: string;
+            } | null;
+            role_contexts_json?: {
+                [key: string]: unknown;
+            } | null;
+            endpoints_context?: string | null;
+            allowed_ops?: string | null;
+            env?: string | null;
+            selector_output_json?: {
+                [key: string]: unknown;
+            } | null;
+            notes?: string | null;
+            created_at?: string | null;
+        };
+        "Chapi.AI.Dto.RunPackRow": {
+            id?: string | null;
+            project_id?: string | null;
+            conversation_id?: string | null;
+            message_id?: string | null;
+            mode?: string | null;
+            /** Format: int32 */
+            files_count?: number;
+            status?: string | null;
+            generator_version?: string | null;
+            card_hash?: string | null;
+            inputs_hash?: string | null;
+            created_at?: string | null;
+        };
+        "Chapi.AI.Dto.RunPackValidationRow": {
+            id?: string | null;
+            runpack_id?: string | null;
+            file_path?: string | null;
+            rule?: string | null;
+            passed?: boolean;
+            details?: unknown;
+            created_at?: string | null;
+        };
+        "Chapi.AI.Dto.TestGenFile": {
+            path?: string | null;
+            content?: string | null;
+        };
+        "Chapi.AI.Dto.TestGenRequest": {
+            user_query?: string | null;
+            /** Format: uuid */
+            projectId?: string;
+            /** Format: int32 */
+            max_files?: number | null;
+            openApiJson?: string | null;
+        };
+        "Chapi.AI.Dto.TestGenResponse": {
+            role?: string | null;
+            card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
+            files?: components["schemas"]["Chapi.AI.Dto.TestGenFile"][] | null;
+            db_ops?: components["schemas"]["Chapi.AI.Dto.DatabaseOperations"];
         };
         "Chapi.AI.Services.GenerateRunPackRequest": {
             /** Format: uuid */

@@ -127,6 +127,7 @@ function AuthPilotContent() {
   const handleCandidateSelect = (candidate: AuthCandidate) => {
     if (candidate.disabled) return;
 
+    // Start with defaults and then apply form/type hints
     const newProfile: AuthProfile = {
       type: candidate.type,
       token_url: candidate.token_url || profile.token_url,
@@ -140,7 +141,38 @@ function AuthPilotContent() {
       api_key: '',
       bearer_token: '',
       cookie_value: '',
+      // map optional prefill secret refs from detection
+      username_ref: (candidate.username_ref ?? '') as string,
+      password_ref: (candidate.password_ref ?? '') as string,
+      login_body_type: 'form',
+      login_user_key: 'username',
+      login_pass_key: 'password',
+      token_json_path: '$.access_token',
     };
+
+    // If detection provided a form hint, adapt profile accordingly
+    if (candidate.form?.grantType) {
+      const grant = candidate.form.grantType.toLowerCase();
+      if (grant === 'password') {
+        newProfile.type = 'password';
+        // keep username/password refs if provided
+        if (candidate.form.fields?.username)
+          newProfile.username_ref = candidate.form.fields.username;
+        if (candidate.form.fields?.password)
+          newProfile.password_ref = candidate.form.fields.password;
+      } else if (
+        grant === 'client_credentials' ||
+        grant === 'client_credentials'
+      ) {
+        newProfile.type = 'oauth2_client_credentials';
+      }
+    }
+
+    // If candidate indicates api key, ensure header shown
+    if (candidate.type === 'api_key_header') {
+      newProfile.type = 'api_key_header';
+      newProfile.header_name = candidate.header_name || newProfile.header_name;
+    }
 
     setProfile(newProfile);
     setTokenResult(undefined); // Clear previous test results
@@ -403,6 +435,7 @@ function AuthPilotContent() {
             <CandidateList
               candidates={candidates}
               selectedType={profile.type}
+              selectedTokenUrl={profile.token_url}
               onSelectCandidate={handleCandidateSelect}
             />
           </div>

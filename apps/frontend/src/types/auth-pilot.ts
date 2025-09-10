@@ -14,8 +14,13 @@ export interface AuthCandidate {
   confidence: number;
   token_url?: string;
   header_name?: string;
+  rawType?: string;
+  form?: { grantType?: string; fields?: Record<string, string> | null } | null;
   disabled?: boolean;
   disabledReason?: string;
+  // Optional prefill secret refs suggested by detection (frontend will use if provided)
+  username_ref?: string;
+  password_ref?: string;
 }
 
 export interface AuthProfile {
