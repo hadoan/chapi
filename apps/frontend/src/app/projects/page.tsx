@@ -1,19 +1,31 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { projectsApi, ProjectDto } from "@/lib/api/projects";
-import { Plus, Settings, Trash2, ExternalLink, Play } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { clearCache } from "@/lib/api/cache";
-import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout";
+import { Layout } from '@/components/Layout';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
+import { clearCache } from '@/lib/api/cache';
+import { ProjectDto, projectsApi } from '@/lib/api/projects';
+import { ExternalLink, Play, Plus, Settings, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type Project = {
   id: string;
@@ -32,41 +44,67 @@ export default function ProjectsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
-    region: 'EU' as 'EU' | 'US'
+    region: 'EU' as 'EU' | 'US',
   });
 
   const handleCreateProject = () => {
     if (!newProject.name.trim()) return;
     const payload = { name: newProject.name, description: '' };
-    projectsApi.create(payload)
+    projectsApi
+      .create(payload)
       .then((created: ProjectDto) => {
-        const mapped: Project = { id: created.id ?? '', name: created.name ?? '', region: 'EU' };
+        const mapped: Project = {
+          id: created.id ?? '',
+          name: created.name ?? '',
+          region: 'EU',
+        };
         setProjects(prev => [mapped, ...prev]);
         // invalidate projects cache so other selectors refresh
-        try { clearCache('projects'); } catch (e) { /* ignore */ }
+        try {
+          clearCache('projects');
+        } catch (e) {
+          /* ignore */
+        }
         setNewProject({ name: '', region: 'EU' });
         setShowCreateDialog(false);
-        toast({ title: "Project created" });
+        toast({ title: 'Project created' });
       })
       .catch(() => toast({ title: 'Failed to create project' }));
   };
 
   const handleDeleteProject = (id: string) => {
-    projectsApi.delete(id)
+    projectsApi
+      .delete(id)
       .then(() => {
         setProjects(prev => prev.filter(p => p.id !== id));
-        try { clearCache('projects'); } catch (e) { /* ignore */ }
-        toast({ title: "Project deleted" });
+        try {
+          clearCache('projects');
+        } catch (e) {
+          /* ignore */
+        }
+        toast({ title: 'Project deleted' });
       })
       .catch(() => toast({ title: 'Failed to delete project' }));
   };
 
   useEffect(() => {
     let mounted = true;
-    projectsApi.getAll()
-      .then((list: ProjectDto[]) => { if (mounted) setProjects(list.map(l => ({ id: l.id ?? '', name: l.name ?? '', region: 'EU' }))); })
+    projectsApi
+      .getAll()
+      .then((list: ProjectDto[]) => {
+        if (mounted)
+          setProjects(
+            list.map(l => ({
+              id: l.id ?? '',
+              name: l.name ?? '',
+              region: 'EU',
+            }))
+          );
+      })
       .catch(() => toast({ title: 'Failed to load projects' }));
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
@@ -75,9 +113,11 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Projects</h1>
-            <p className="text-muted-foreground">Manage your API testing projects</p>
+            <p className="text-muted-foreground">
+              Manage your API testing projects
+            </p>
           </div>
-          
+
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button>
@@ -95,13 +135,20 @@ export default function ProjectsPage() {
                   <Input
                     id="name"
                     value={newProject.name}
-                    onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+                    onChange={e =>
+                      setNewProject({ ...newProject, name: e.target.value })
+                    }
                     placeholder="Enter project name"
                   />
                 </div>
                 <div>
                   <Label>Region</Label>
-                  <Select value={newProject.region} onValueChange={(value: 'EU' | 'US') => setNewProject({...newProject, region: value})}>
+                  <Select
+                    value={newProject.region}
+                    onValueChange={(value: 'EU' | 'US') =>
+                      setNewProject({ ...newProject, region: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -112,8 +159,16 @@ export default function ProjectsPage() {
                   </Select>
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={handleCreateProject} className="flex-1">Create</Button>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1">Cancel</Button>
+                  <Button onClick={handleCreateProject} className="flex-1">
+                    Create
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             </DialogContent>
@@ -121,7 +176,7 @@ export default function ProjectsPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
+          {projects.map(project => (
             <Card key={project.id} className="animate-fade-in hover-scale">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -137,15 +192,17 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => navigate(`/app/projects/${project.id}/settings`)}
+                      onClick={() =>
+                        navigate(`/app/projects/${project.id}/settings`)
+                      }
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteProject(project.id)}
                     >
@@ -157,9 +214,17 @@ export default function ProjectsPage() {
               <CardContent className="space-y-4">
                 {project.lastRun && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Last run</span>
+                    <span className="text-sm text-muted-foreground">
+                      Last run
+                    </span>
                     <div className="flex items-center gap-2">
-                      <Badge variant={project.lastRun.status === 'pass' ? 'default' : 'destructive'}>
+                      <Badge
+                        variant={
+                          project.lastRun.status === 'pass'
+                            ? 'default'
+                            : 'destructive'
+                        }
+                      >
                         {project.lastRun.status}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
@@ -168,19 +233,16 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     onClick={() => navigate(`/app/projects/${project.id}`)}
                     className="flex-1"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Open
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => navigate("/app")}
-                  >
+                  <Button variant="outline" onClick={() => navigate('/app')}>
                     <Play className="w-4 h-4 mr-2" />
                     Chat
                   </Button>
