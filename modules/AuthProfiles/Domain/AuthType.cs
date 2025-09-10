@@ -8,8 +8,11 @@ namespace AuthProfiles.Domain
     public enum AuthType
     {
         OAuth2ClientCredentials,
+        OAuth2Password,
+        Basic,
         BearerStatic,
         ApiKeyHeader,
-        SessionCookie
+        SessionCookie,
+        CustomLogin
     }
 }

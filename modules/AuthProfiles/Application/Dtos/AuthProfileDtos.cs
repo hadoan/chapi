@@ -9,10 +9,11 @@ namespace AuthProfiles.Application.Dtos
         Guid ProjectId,
         Guid ServiceId,
         string EnvironmentKey,
-        AuthType Type,
-        string? TokenUrl,
-        string? Audience,
-        string? ScopesCsv,
+    AuthType Type,
+    IDictionary<string, object>? Params,
+    string? TokenUrl,
+    string? Audience,
+    string? ScopesCsv,
         InjectionMode InjectionMode,
         string InjectionName,
         string InjectionFormat,
@@ -36,9 +37,10 @@ namespace AuthProfiles.Application.Dtos
         double Confidence
     );
 
-    public record TestAuthRequest(Guid AuthProfileId, IDictionary<string, string>? OverrideSecretValues);
+    public record TestAuthRequest(Guid AuthProfileId, AuthProfileDto? ProfileInline, Guid? EnvId, IDictionary<string, string>? OverrideSecretValues);
 
-    public record TestAuthResult(bool Ok, string Status, string? Message, string? AccessToken, string? TokenType, DateTimeOffset? ExpiresAt, IDictionary<string, string>? Headers, string? CookieHeader);
+    // SampleTokenPrefix: first N chars of token for display; AccessToken may be returned by internal services but Test endpoint should mask
+    public record TestAuthResult(bool Ok, string Status, string? Message, string? SampleTokenPrefix, string? AccessToken, string? TokenType, DateTimeOffset? ExpiresAt, IDictionary<string, string>? Headers, string? CookieHeader);
 
     public record ExportInjectionResult(IDictionary<string, string> Headers, string? CookieHeader);
 }

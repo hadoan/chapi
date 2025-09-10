@@ -23,17 +23,17 @@ namespace AuthProfiles.Infrastructure.Services
         public async Task<TestAuthResult> AcquireAsync(AuthProfile profile, IReadOnlyDictionary<string, string> resolvedSecrets, CancellationToken ct)
         {
             if (profile.Type != AuthType.OAuth2ClientCredentials)
-                return new TestAuthResult(false, "unsupported_grant_type", "Only client_credentials supported by this implementation", null, null, null, null, null);
+                return new TestAuthResult(false, "unsupported_grant_type", "Only client_credentials supported by this implementation", null, null, null, null, null, null);
 
             if (string.IsNullOrWhiteSpace(profile.TokenUrl))
-                return new TestAuthResult(false, "invalid_config", "TokenUrl missing", null, null, null, null, null);
+                return new TestAuthResult(false, "invalid_config", "TokenUrl missing", null, null, null, null, null, null);
 
             // Resolve required secrets (CLIENT_ID, CLIENT_SECRET) from resolvedSecrets
             if (!resolvedSecrets.TryGetValue("CLIENT_ID", out var clientId) || string.IsNullOrWhiteSpace(clientId))
-                return new TestAuthResult(false, "missing_secret", "CLIENT_ID is required", null, null, null, null, null);
+                return new TestAuthResult(false, "missing_secret", "CLIENT_ID is required", null, null, null, null, null, null);
 
             if (!resolvedSecrets.TryGetValue("CLIENT_SECRET", out var clientSecret) || string.IsNullOrWhiteSpace(clientSecret))
-                return new TestAuthResult(false, "missing_secret", "CLIENT_SECRET is required", null, null, null, null, null);
+                return new TestAuthResult(false, "missing_secret", "CLIENT_SECRET is required", null, null, null, null, null, null);
 
             var form = new Dictionary<string, string>
             {
@@ -54,7 +54,7 @@ namespace AuthProfiles.Infrastructure.Services
                 var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
                 var payload = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                 if (!res.IsSuccessStatusCode)
-                    return new TestAuthResult(false, "invalid_client", "Token endpoint returned error: " + res.StatusCode, null, null, null, null, null);
+                    return new TestAuthResult(false, "invalid_client", "Token endpoint returned error: " + res.StatusCode, null, null, null, null, null, null);
 
                 using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
@@ -68,11 +68,11 @@ namespace AuthProfiles.Infrastructure.Services
                     ["Authorization"] = $"{tokenType} {accessToken}"
                 };
 
-                return new TestAuthResult(true, "ok", null, accessToken, tokenType, exp, headers, null);
+                return new TestAuthResult(true, "ok", null, accessToken, accessToken, tokenType, exp, headers, null);
             }
             catch (HttpRequestException ex)
             {
-                return new TestAuthResult(false, "network_error", ex.Message, null, null, null, null, null);
+                return new TestAuthResult(false, "network_error", ex.Message, null, null, null, null, null, null);
             }
         }
     }

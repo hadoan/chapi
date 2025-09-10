@@ -24,6 +24,7 @@ namespace AuthProfiles
             services.AddHttpClient<Application.Services.IAuthTokenService, Infrastructure.Services.AuthTokenService>();
             services.AddTransient<Application.Services.IInjectionComposer, Infrastructure.Services.InjectionComposer>();
             services.AddTransient<Application.Services.ITokenCache, Infrastructure.Services.TokenCache>();
+            services.AddTransient<Application.Services.IAuthProfileTester, Infrastructure.Services.AuthProfileTester>();
 
             // Note: ISecretStore should be provided by Secrets/Environments modules; if not, register a null fallback
             services.AddSingleton<Application.Services.ISecretStore, Infrastructure.Services.NullSecretStore>();

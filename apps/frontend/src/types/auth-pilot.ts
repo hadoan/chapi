@@ -4,6 +4,8 @@ export type AuthType =
   | 'bearer_static'
   | 'session_cookie'
   | 'password'
+  | 'basic'
+  | 'custom_login'
   | 'device_code'
   | 'auth_code';
 
@@ -32,6 +34,14 @@ export interface AuthProfile {
   bearer_token?: string;
   // Session Cookie
   cookie_value?: string;
+  // Username/password secret refs (for password/basic/custom login)
+  username_ref?: string;
+  password_ref?: string;
+  // Custom login options
+  login_body_type?: 'json' | 'form';
+  login_user_key?: string;
+  login_pass_key?: string;
+  token_json_path?: string;
 }
 
 export interface TokenResult {

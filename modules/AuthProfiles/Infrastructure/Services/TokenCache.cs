@@ -30,7 +30,7 @@ namespace AuthProfiles.Infrastructure.Services
                     var cached = JsonSerializer.Deserialize<CachedToken>(raw);
                     if (cached != null && cached.ExpiresAt > DateTimeOffset.UtcNow.AddSeconds(60))
                     {
-                        return new TestAuthResult(true, "ok", null, cached.AccessToken, cached.TokenType, cached.ExpiresAt, new Dictionary<string, string> { { "Authorization", $"{cached.TokenType} {cached.AccessToken}" } }, null);
+                        return new TestAuthResult(true, "ok", null, cached.AccessToken, cached.AccessToken, cached.TokenType, cached.ExpiresAt, new Dictionary<string, string> { { "Authorization", $"{cached.TokenType} {cached.AccessToken}" } }, null);
                     }
                 }
                 catch

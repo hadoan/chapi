@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShipMvp.Core.Entities;
+using System.Text.Json.Serialization;
 
 namespace AuthProfiles.Domain
 {
@@ -11,6 +12,28 @@ namespace AuthProfiles.Domain
     public class AuthProfile : Entity<Guid>
     {
         private readonly List<AuthProfileSecretRef> _secretRefs = new();
+
+        // Params is a flexible JSON-backed bag for scheme-specific settings
+        public class Params
+        {
+            public string? TokenUrl { get; set; }
+            public string? AuthorizationUrl { get; set; }
+            public string? Audience { get; set; }
+            public string? Scopes { get; set; }
+            public string? ClientId { get; set; }
+            public string? ClientSecretRef { get; set; }
+
+            public string? UsernameRef { get; set; }
+            public string? PasswordRef { get; set; }
+
+            public string? CustomLoginUrl { get; set; }
+            public string? CustomBodyType { get; set; }
+            public string? CustomUserKey { get; set; }
+            public string? CustomPassKey { get; set; }
+            public string? TokenJsonPath { get; set; }
+        }
+
+        public Params? Parameters { get; private set; }
 
 
         private AuthProfile()
@@ -32,6 +55,7 @@ namespace AuthProfiles.Domain
             DetectSource = "manual";
             DetectConfidence = 1.0;
             Enabled = true;
+            Parameters = new Params();
             // CreatedAt set by base ctor
             UpdatedAt = DateTime.UtcNow;
         }
@@ -54,6 +78,13 @@ namespace AuthProfiles.Domain
         public string? Audience { get; private set; }
 
         public string? ScopesCsv { get; private set; }
+
+        // Backwards-compat: helper accessors to Parameters
+        [JsonIgnore]
+        public string? ParamsTokenUrl => Parameters?.TokenUrl ?? TokenUrl;
+
+        [JsonIgnore]
+        public string? ParamsTokenJsonPath => Parameters?.TokenJsonPath;
 
         public InjectionMode InjectionMode { get; private set; }
 
@@ -107,6 +138,20 @@ namespace AuthProfiles.Domain
             TokenUrl = tokenUrl;
             Audience = audience;
             ScopesCsv = scopesCsv;
+            if (Parameters == null) Parameters = new Params();
+            Parameters.TokenUrl = tokenUrl;
+            Parameters.Audience = audience;
+            Parameters.Scopes = scopesCsv;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void UpdateParameters(Params p)
+        {
+            Parameters = p ?? new Params();
+            // keep some top-level for compatibility
+            TokenUrl = Parameters.TokenUrl;
+            Audience = Parameters.Audience;
+            ScopesCsv = Parameters.Scopes;
             UpdatedAt = DateTime.UtcNow;
         }
 

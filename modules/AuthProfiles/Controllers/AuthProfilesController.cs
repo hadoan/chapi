@@ -86,6 +86,32 @@ namespace AuthProfiles.Controllers
             return candidates;
         }
 
+        [HttpPost("test")]
+        public async Task<TestAuthResult> Test([FromBody] TestRequest r, CancellationToken ct)
+        {
+            // resolve and run test via service - implementation added in application layer
+            var tester = HttpContext.RequestServices.GetService(typeof(Application.Services.IAuthProfileTester)) as Application.Services.IAuthProfileTester;
+            if (tester == null) return new TestAuthResult(false, "error", "Tester not available", null, null, null, null, null, null);
+
+            var dto = new Application.Dtos.TestAuthRequest(
+                r.AuthProfileId.GetValueOrDefault(),
+                r.ProfileInline,
+                r.EnvId,
+                r.OverrideSecretValues
+            );
+
+            var res = await tester.TestAsync(dto, ct).ConfigureAwait(false);
+            return res;
+        }
+
+        public class TestRequest
+        {
+            public Guid? AuthProfileId { get; set; }
+            public AuthProfiles.Application.Dtos.AuthProfileDto? ProfileInline { get; set; }
+            public Guid? EnvId { get; set; }
+            public IDictionary<string, string>? OverrideSecretValues { get; set; }
+        }
+
         public class DetectRequest
         {
             public Guid ProjectId { get; set; }

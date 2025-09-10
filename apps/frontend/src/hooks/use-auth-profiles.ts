@@ -27,6 +27,9 @@ const mapBackendAuthType = (
     1: 'api_key_header',
     2: 'bearer_static',
     3: 'session_cookie',
+    4: 'password',
+    5: 'basic',
+    6: 'custom_login',
   };
   return typeMap[backendType as number] || 'oauth2_client_credentials';
 };
@@ -35,16 +38,19 @@ const mapBackendAuthType = (
 const mapFrontendAuthType = (
   frontendType: import('@/types/auth-pilot').AuthType
 ): AuthType => {
-  const typeMap: Record<import('@/types/auth-pilot').AuthType, AuthType> = {
+  const typeMap: Record<import('@/types/auth-pilot').AuthType, number> = {
     oauth2_client_credentials: 0,
     api_key_header: 1,
     bearer_static: 2,
     session_cookie: 3,
-    password: 0, // Map unsupported types to oauth2
+    password: 4,
+    basic: 5,
+    custom_login: 6,
     device_code: 0,
     auth_code: 0,
   };
-  return typeMap[frontendType];
+  // Cast numeric to AuthType (backend numeric enum type)
+  return typeMap[frontendType] as unknown as AuthType;
 };
 
 // Convert backend profile to frontend profile
@@ -71,46 +77,127 @@ const mapToCreateRequest = (
   frontendProfile: import('@/types/auth-pilot').AuthProfile,
   environmentId: string
 ): CreateAuthProfileRequest => {
+  const params: Record<string, string> = {};
+  const secretRefs: Record<string, string> = {};
+
+  if (frontendProfile.type === 'password') {
+    params['token_url'] = frontendProfile.token_url || '';
+    params['scopes'] = frontendProfile.scopes || '';
+    params['audience'] = frontendProfile.audience || '';
+    // client id may be stored as non-secret or secret ref; send both places
+    if (frontendProfile.client_id)
+      params['client_id'] = frontendProfile.client_id;
+    if (frontendProfile.client_secret)
+      secretRefs['client_secret'] = frontendProfile.client_secret;
+    if (frontendProfile.client_id)
+      secretRefs['client_id'] = frontendProfile.client_id;
+    // username/password refs
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  if (frontendProfile.type === 'basic') {
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  if (frontendProfile.type === 'custom_login') {
+    params['custom_login_url'] = frontendProfile.token_url || '';
+    params['custom_body_type'] = frontendProfile.login_body_type || 'json';
+    params['custom_user_key'] = frontendProfile.login_user_key || 'username';
+    params['custom_pass_key'] = frontendProfile.login_pass_key || 'password';
+    params['token_json_path'] =
+      frontendProfile.token_json_path || '$.access_token';
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  // default generic secret refs
+  if (frontendProfile.api_key) secretRefs['api_key'] = frontendProfile.api_key;
+  if (frontendProfile.bearer_token)
+    secretRefs['bearer_token'] = frontendProfile.bearer_token;
+  if (frontendProfile.cookie_value)
+    secretRefs['cookie_value'] = frontendProfile.cookie_value;
+
   return {
-    projectId: undefined, // Will be set by backend or provided separately
-    serviceId: undefined, // Will be set by backend or provided separately
+    projectId: undefined,
+    serviceId: undefined,
     environmentKey: environmentId,
     type: mapFrontendAuthType(frontendProfile.type),
     tokenUrl: frontendProfile.token_url,
     scopesCsv: frontendProfile.scopes,
     audience: frontendProfile.audience,
-    injectionMode: 1, // Default to header injection mode
+    injectionMode: 1,
     injectionName: frontendProfile.header_name,
     injectionFormat: undefined,
-    secretRefs: {
-      client_id: frontendProfile.client_id || '',
-      client_secret: frontendProfile.client_secret || '',
-      api_key: frontendProfile.api_key || '',
-      bearer_token: frontendProfile.bearer_token || '',
-      cookie_value: frontendProfile.cookie_value || '',
-    },
-  };
+    Params: params,
+    SecretRefs: secretRefs,
+  } as unknown as CreateAuthProfileRequest;
 };
 
 // Convert frontend profile to backend update request
 const mapToUpdateRequest = (
   frontendProfile: import('@/types/auth-pilot').AuthProfile
 ): UpdateAuthProfileRequest => {
+  const params: Record<string, string> = {};
+  const secretRefs: Record<string, string> = {};
+
+  if (frontendProfile.type === 'password') {
+    params['token_url'] = frontendProfile.token_url || '';
+    params['scopes'] = frontendProfile.scopes || '';
+    params['audience'] = frontendProfile.audience || '';
+    if (frontendProfile.client_id)
+      params['client_id'] = frontendProfile.client_id;
+    if (frontendProfile.client_secret)
+      secretRefs['client_secret'] = frontendProfile.client_secret;
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  if (frontendProfile.type === 'basic') {
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  if (frontendProfile.type === 'custom_login') {
+    params['custom_login_url'] = frontendProfile.token_url || '';
+    params['custom_body_type'] = frontendProfile.login_body_type || 'json';
+    params['custom_user_key'] = frontendProfile.login_user_key || 'username';
+    params['custom_pass_key'] = frontendProfile.login_pass_key || 'password';
+    params['token_json_path'] =
+      frontendProfile.token_json_path || '$.access_token';
+    if (frontendProfile.username_ref)
+      secretRefs['username'] = frontendProfile.username_ref;
+    if (frontendProfile.password_ref)
+      secretRefs['password'] = frontendProfile.password_ref;
+  }
+
+  if (frontendProfile.api_key) secretRefs['api_key'] = frontendProfile.api_key;
+  if (frontendProfile.bearer_token)
+    secretRefs['bearer_token'] = frontendProfile.bearer_token;
+  if (frontendProfile.cookie_value)
+    secretRefs['cookie_value'] = frontendProfile.cookie_value;
+
   return {
     tokenUrl: frontendProfile.token_url,
     scopesCsv: frontendProfile.scopes,
     audience: frontendProfile.audience,
-    injectionMode: 1, // Default to header injection mode
+    injectionMode: 1,
     injectionName: frontendProfile.header_name,
     injectionFormat: undefined,
-    secretRefs: {
-      client_id: frontendProfile.client_id || '',
-      client_secret: frontendProfile.client_secret || '',
-      api_key: frontendProfile.api_key || '',
-      bearer_token: frontendProfile.bearer_token || '',
-      cookie_value: frontendProfile.cookie_value || '',
-    },
-  };
+    Params: params,
+    SecretRefs: secretRefs,
+  } as unknown as UpdateAuthProfileRequest;
 };
 
 export interface UseAuthProfilesOptions {
@@ -320,7 +407,7 @@ export function useAuthProfiles({
         setLoading(true);
         setError(null);
         // The backend detect endpoint now fetches specs server-side by projectId
-        const detectRequest: DetectRequest = {
+        const detectRequest = {
           projectId: projectId,
           serviceId: undefined,
           baseUrl: url,

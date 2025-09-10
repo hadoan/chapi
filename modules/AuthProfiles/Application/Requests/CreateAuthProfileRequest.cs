@@ -16,6 +16,9 @@ namespace AuthProfiles.Application.Requests
         public string? Audience { get; init; }
         public string? ScopesCsv { get; init; }
 
+        // Flexible params stored as JSON in DB
+        public IDictionary<string, string>? Params { get; init; }
+
         public InjectionMode InjectionMode { get; init; } = InjectionMode.Header;
         public string InjectionName { get; init; } = "Authorization";
         public string InjectionFormat { get; init; } = "Bearer {{access_token}}";

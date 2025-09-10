@@ -20,6 +20,15 @@ namespace AuthProfiles.Infrastructure
 
             builder.Property(x => x.RowVersion).IsRowVersion();
 
+            // map flexible parameters as jsonb
+            builder.OwnsOne(x => x.Parameters, b =>
+            {
+                b.ToJson(); // uses EF Core Npgsql mapping extension if available
+                b.Property(p => p.TokenUrl).HasColumnName("TokenUrl");
+                // store raw JSON in Params column for compatibility with other modules
+                b.Ignore(p => p.TokenUrl); // keep column-level JSON storage handled by EF provider
+            });
+
             builder.HasIndex(x => new { x.ProjectId, x.ServiceId, x.EnvironmentKey }).IsUnique();
             builder.HasIndex(x => new { x.ServiceId, x.EnvironmentKey, x.Enabled });
 
