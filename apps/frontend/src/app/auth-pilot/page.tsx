@@ -435,7 +435,12 @@ function AuthPilotContent() {
             <CandidateList
               candidates={candidates}
               selectedType={profile.type}
-              selectedTokenUrl={profile.token_url}
+              // Use header_name as the selected token identifier for API key header profiles
+              selectedTokenUrl={
+                profile.type === 'api_key_header'
+                  ? profile.header_name
+                  : profile.token_url
+              }
               onSelectCandidate={handleCandidateSelect}
             />
           </div>
