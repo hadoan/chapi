@@ -31,6 +31,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ApiSpecsManagerProps {
   projectId: string;
@@ -46,6 +47,8 @@ export function ApiSpecsManager({
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [editingSpec, setEditingSpec] = useState<ApiSpecDto | null>(null);
+  const [deletingSpec, setDeletingSpec] = useState<ApiSpecDto | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const loadSpecs = async () => {
     setLoading(true);
@@ -66,6 +69,8 @@ export function ApiSpecsManager({
   useEffect(() => {
     loadSpecs();
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const navigate = useNavigate();
 
   const handleImportSpec = () => {
     setEditingSpec(null);
@@ -98,7 +103,9 @@ export function ApiSpecsManager({
 
       // Note: The current backend doesn't support updating existing specs,
       // so this will create a new spec even when "editing"
-      await apiSpecsApi.importOpenApi(projectId, { url: importUrl });
+      const created = await apiSpecsApi.importOpenApi(projectId, {
+        url: importUrl,
+      });
 
       toast({
         title: `${actionText} successful`,
@@ -109,6 +116,10 @@ export function ApiSpecsManager({
       setImportUrl('');
       setEditingSpec(null);
       await loadSpecs();
+      // Redirect to endpoints view with the newly imported spec selected
+      if (created?.id) {
+        navigate(`/app/projects/${projectId}/endpoints?specId=${created.id}`);
+      }
     } catch (error) {
       toast({
         title: 'Import failed',
@@ -218,7 +229,16 @@ export function ApiSpecsManager({
                             <FileText className="w-4 h-4 text-muted-foreground" />
                             <div className="max-w-sm">
                               <div className="truncate">
-                                {spec.sourceUrl || 'Unknown source'}
+                                <button
+                                  className="text-left w-full"
+                                  onClick={() =>
+                                    navigate(
+                                      `/app/projects/${projectId}/endpoints?specId=${spec.id}`
+                                    )
+                                  }
+                                >
+                                  {spec.sourceUrl || 'Unknown source'}
+                                </button>
                               </div>
                               {spec.sourceUrl && (
                                 <div className="text-xs text-muted-foreground">
@@ -289,12 +309,9 @@ export function ApiSpecsManager({
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                // TODO: Implement spec deletion when backend supports it
-                                toast({
-                                  title: 'Delete coming soon',
-                                  description:
-                                    'Spec deletion functionality will be available soon.',
-                                });
+                                // Open confirmation dialog before deletion
+                                setDeletingSpec(spec);
+                                setConfirmDeleteOpen(true);
                               }}
                               title="Delete spec"
                               className="text-destructive hover:text-destructive"
@@ -367,6 +384,66 @@ export function ApiSpecsManager({
               </Button>
               <Button onClick={confirmImport}>
                 {editingSpec ? 'Update' : 'Import'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete API Specification</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Deleting this specification will permanently remove the spec and
+              all API endpoints that were created from it in the endpoint
+              catalog. This action cannot be undone.
+            </p>
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="text-sm font-medium">Spec to delete</div>
+              <div className="text-xs text-muted-foreground">
+                {deletingSpec?.sourceUrl || deletingSpec?.id}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setConfirmDeleteOpen(false);
+                  setDeletingSpec(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="text-destructive"
+                onClick={async () => {
+                  if (!deletingSpec?.id) return;
+                  try {
+                    await apiSpecsApi.delete(deletingSpec.id);
+                    toast({
+                      title: 'Deleted',
+                      description:
+                        'Specification and related endpoints removed.',
+                    });
+                    setConfirmDeleteOpen(false);
+                    setDeletingSpec(null);
+                    await loadSpecs();
+                    // Redirect back to project endpoints without spec filter
+                    navigate(`/app/projects/${projectId}/endpoints`);
+                  } catch (err) {
+                    toast({
+                      title: 'Delete failed',
+                      description: err?.message ?? String(err),
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+              >
+                Delete
               </Button>
             </div>
           </div>

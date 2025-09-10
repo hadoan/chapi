@@ -12,7 +12,7 @@ public class EndpointAppService : IEndpointAppService
     public async Task<List<EndpointBriefDto>> ListAsync(Guid projectId, string? tag = null, string? search = null)
     {
         var items = await _repo.ListByProjectAsync(projectId, tag, search);
-        return items.Select(x => new EndpointBriefDto(x.Id, x.Method, x.Path, x.Summary, x.Tags)).ToList();
+        return items.Select(x => new EndpointBriefDto(x.Id, x.Method, x.Path, x.Summary, x.Tags, x.SpecId)).ToList();
     }
 
     public async Task<EndpointDto> GetAsync(Guid endpointId)

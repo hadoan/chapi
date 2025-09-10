@@ -297,14 +297,14 @@ export default function AuthPilotPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-bold text-foreground">
-                  AuthPilot — Token & Auth Profile Wizard
+                  Token & Auth Profile Wizard
                 </h1>
-                <Badge
+                {/* <Badge
                   variant="secondary"
                   className="bg-primary/10 text-primary"
                 >
                   Demo Mode
-                </Badge>
+                </Badge> */}
               </div>
 
               <div className="flex items-center gap-3">
@@ -333,6 +333,7 @@ export default function AuthPilotPage() {
                 </div>
 
                 {/* Actions */}
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -340,7 +341,17 @@ export default function AuthPilotPage() {
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset Demo
+                  Detect Auth
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetDemo}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Detect Auth by Prompt
                 </Button>
 
                 <Tooltip>

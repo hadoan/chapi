@@ -4,6 +4,7 @@ using Chapi.EndpointCatalog.Application;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Persistence;
 using System.Text.Json;
+using Chapi.ApiSpecs.Domain;
 
 namespace Chapi.EndpointCatalog.Infrastructure.EntityFrameworkCore;
 
@@ -12,6 +13,7 @@ public class ApiEndpointRepository : IApiEndpointRepository
 {
     private readonly IDbContext _context;
     private readonly DbSet<ApiEndpoint> _dbSet;
+
 
     public ApiEndpointRepository(IDbContext context)
     {
@@ -90,6 +92,20 @@ public class ApiEndpointRepository : IApiEndpointRepository
             _dbSet.Remove(entity);
             await _context.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    public async Task DeleteBySpecIdAsync(Guid specId)
+    {
+        // Use server-side delete to remove all endpoints for the spec without loading entities
+        await _dbSet.Where(x => x.SpecId == specId).ExecuteDeleteAsync();
+        var specDbSet = _context.Set<ApiSpec>();
+        var entity = await specDbSet.FirstOrDefaultAsync(x => x.Id == specId);
+        if (entity != null)
+        {
+            specDbSet.Remove(entity);
+
+        }
+        await _context.SaveChangesAsync();
     }
 
     public Task<ApiEndpoint?> FindAsync(Guid id) => GetByIdAsync(id);

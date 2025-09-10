@@ -300,6 +300,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/authprofiles/detect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AuthProfiles.Application.Dtos.DetectTokenRequest"];
+                    "text/json": components["schemas"]["AuthProfiles.Application.Dtos.DetectTokenRequest"];
+                    "application/*+json": components["schemas"]["AuthProfiles.Application.Dtos.DetectTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.DetectionResponse"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.DetectionResponse"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.DetectionResponse"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/authprofiles": {
         parameters: {
             query?: never;
@@ -564,7 +614,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/authprofiles/detect": {
+    "/api/authprofiles/detect/legacy": {
         parameters: {
             query?: never;
             header?: never;
@@ -6303,6 +6353,39 @@ export interface components {
                 [key: string]: string;
             } | null;
         };
+        "AuthProfiles.Application.Dtos.DetectTokenRequest": {
+            /** Format: uuid */
+            projectId?: string | null;
+            /** Format: uuid */
+            serviceId?: string | null;
+            baseUrl?: string | null;
+            openApiJson?: string | null;
+            postmanJson?: string | null;
+        };
+        "AuthProfiles.Application.Dtos.DetectionCandidateDto": {
+            type?: string | null;
+            endpoint?: string | null;
+            tokenUrl?: string | null;
+            injection?: components["schemas"]["AuthProfiles.Application.Dtos.InjectionPreview"];
+            source?: string | null;
+            /** Format: double */
+            confidence?: number;
+        };
+        "AuthProfiles.Application.Dtos.DetectionResponse": {
+            candidates?: components["schemas"]["AuthProfiles.Application.Dtos.DetectionCandidateDto"][] | null;
+            best?: components["schemas"]["AuthProfiles.Application.Dtos.SimpleDetection"];
+        };
+        "AuthProfiles.Application.Dtos.InjectionPreview": {
+            mode?: string | null;
+            name?: string | null;
+            format?: string | null;
+        };
+        "AuthProfiles.Application.Dtos.SimpleDetection": {
+            endpoint?: string | null;
+            source?: string | null;
+            /** Format: double */
+            confidence?: number;
+        };
         "AuthProfiles.Application.Requests.CreateAuthProfileRequest": {
             /** Format: uuid */
             id?: string;
@@ -6410,6 +6493,8 @@ export interface components {
             path?: string | null;
             summary?: string | null;
             tags?: string[] | null;
+            /** Format: uuid */
+            specId?: string;
         };
         "Chapi.EndpointCatalog.Application.EndpointDto": {
             method?: string | null;

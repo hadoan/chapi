@@ -51,4 +51,6 @@ public class ApiSpecAppService : IApiSpecAppService
                     .OrderByDescending(s => s.CreatedAt)
                     .Select(s => new ApiSpecDto(s.Id, s.ProjectId, s.SourceUrl, s.Version, s.CreatedAt));
     }
+
+    // Note: Deletion of specs and related endpoints is orchestrated by the main API project
 }

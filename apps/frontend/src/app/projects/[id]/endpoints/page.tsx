@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { apiSpecsApi, type ApiSpecDto } from '@/lib/api/apispecs';
 import { endpointsApi, type EndpointDto } from '@/lib/api/endpoints';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -28,6 +29,7 @@ interface EndpointBrief {
   path: string;
   summary?: string | null;
   tags?: string[] | null;
+  specId: string;
 }
 
 export default function ProjectEndpointsPage() {
@@ -36,7 +38,9 @@ export default function ProjectEndpointsPage() {
   const [endpoints, setEndpoints] = useState<EndpointBrief[]>([]);
   const [loading, setLoading] = useState(false);
   const [methodFilter, setMethodFilter] = useState<string>('ALL');
+  const [specFilter, setSpecFilter] = useState<string>('ALL');
   const [textFilter, setTextFilter] = useState<string>('');
+  const [specs, setSpecs] = useState<ApiSpecDto[]>([]);
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointDto | null>(
     null
   );
@@ -73,6 +77,7 @@ export default function ProjectEndpointsPage() {
             path: x.path ?? '',
             summary: x.summary ?? null,
             tags: x.tags ?? [],
+            specId: x.specId ?? '',
           }))
         )
       )
@@ -80,6 +85,20 @@ export default function ProjectEndpointsPage() {
         toast({ title: 'Failed', description: err?.message ?? String(err) })
       )
       .finally(() => setLoading(false));
+  }, [id]);
+
+  // Load specs for filtering
+  useEffect(() => {
+    if (!id) return;
+    apiSpecsApi
+      .listByProject(id)
+      .then(setSpecs)
+      .catch(err =>
+        toast({
+          title: 'Failed to load specs',
+          description: err?.message ?? String(err),
+        })
+      );
   }, [id]);
 
   // Helper type guards
@@ -171,6 +190,26 @@ export default function ProjectEndpointsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div style={{ width: 200 }}>
+              <Select onValueChange={v => setSpecFilter(v)} defaultValue="ALL">
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by spec">
+                    {specFilter === 'ALL'
+                      ? 'All Specs'
+                      : specs.find(s => s.id === specFilter)?.sourceUrl ||
+                        'Select Spec'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Specs</SelectItem>
+                  {specs.map(spec => (
+                    <SelectItem key={spec.id} value={spec.id || ''}>
+                      {spec.sourceUrl || `Spec ${spec.id?.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Input
               placeholder="Search path, summary or tags"
               value={textFilter}
@@ -188,6 +227,12 @@ export default function ProjectEndpointsPage() {
                   methodFilter &&
                   methodFilter !== 'ALL' &&
                   ep.method.toUpperCase() !== methodFilter
+                )
+                  return false;
+                if (
+                  specFilter &&
+                  specFilter !== 'ALL' &&
+                  ep.specId !== specFilter
                 )
                   return false;
                 if (!textFilter) return true;
