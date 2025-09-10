@@ -79,8 +79,8 @@ namespace AuthProfiles.Controllers
             Response.StatusCode = StatusCodes.Status204NoContent;
         }
 
-        [HttpPost("detect")]
-        public async Task<IReadOnlyList<AuthDetectionCandidateDto>> Detect([FromBody] DetectRequest r, CancellationToken ct)
+        [HttpPost("detect/legacy")]
+        public async Task<IReadOnlyList<AuthDetectionCandidateDto>> DetectLegacy([FromBody] DetectRequest r, CancellationToken ct)
         {
             var candidates = await _detection.DetectAsync(r.ProjectId, r.ServiceId, ct).ConfigureAwait(false);
             return candidates;

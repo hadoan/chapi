@@ -135,13 +135,22 @@ export const authProfilesApi = {
     );
   },
 
-  async detect(request: DetectRequest): Promise<AuthDetectionResult> {
-    return await AuthService.authenticatedFetch<AuthDetectionResult>(
-      '/api/authprofiles/detect',
-      {
-        method: 'POST',
-        data: request,
-      }
-    );
+  async detect(request: {
+    projectId?: string;
+    serviceId?: string;
+    baseUrl?: string;
+    openApiJson?: string;
+    postmanJson?: string;
+  }): Promise<{
+    candidates: AuthDetectionCandidate[];
+    best?: { endpoint: string; source: string; confidence: number };
+  }> {
+    return await AuthService.authenticatedFetch<{
+      candidates: AuthDetectionCandidate[];
+      best?: { endpoint: string; source: string; confidence: number };
+    }>('/api/authprofiles/detect', {
+      method: 'POST',
+      data: request,
+    });
   },
 };
