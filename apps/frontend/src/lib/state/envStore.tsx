@@ -1,6 +1,6 @@
 'use client';
 import { toast } from '@/hooks/use-toast';
-import { getOrFetch } from '@/lib/api/cache';
+import { getOrFetch, clearCache } from '@/lib/api/cache';
 import { environmentsApi, type EnvironmentDto } from '@/lib/api/environments';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { EnvModel } from './types';
@@ -105,6 +105,7 @@ export function EnvProvider({
 
       setEnvs(prev => prev.map(e => (e.id === id ? model : e)));
       toast({ title: 'Environment updated successfully' });
+  try { clearCache(`envs-${projectId ?? 'all'}`); } catch (e) { /* ignore */ }
     } catch (error) {
       console.error('Failed to update environment:', error);
       toast({ title: 'Failed to update environment', variant: 'destructive' });
@@ -137,6 +138,7 @@ export function EnvProvider({
 
       setEnvs(prev => [model, ...prev]);
       toast({ title: 'Environment created successfully' });
+  try { clearCache(`envs-${projectId ?? 'all'}`); } catch (e) { /* ignore */ }
     } catch (error) {
       console.error('Failed to create environment:', error);
       toast({ title: 'Failed to create environment', variant: 'destructive' });
@@ -148,6 +150,7 @@ export function EnvProvider({
       await environmentsApi.delete(id);
       setEnvs(prev => prev.filter(e => e.id !== id));
       toast({ title: 'Environment deleted successfully' });
+  try { clearCache(`envs-${projectId ?? 'all'}`); } catch (e) { /* ignore */ }
     } catch (error) {
       console.error('Failed to delete environment:', error);
       toast({ title: 'Failed to delete environment', variant: 'destructive' });

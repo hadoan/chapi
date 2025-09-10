@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { clearCache } from "@/lib/api/cache";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 
@@ -41,6 +42,8 @@ export default function ProjectsPage() {
       .then((created: ProjectDto) => {
         const mapped: Project = { id: created.id ?? '', name: created.name ?? '', region: 'EU' };
         setProjects(prev => [mapped, ...prev]);
+        // invalidate projects cache so other selectors refresh
+        try { clearCache('projects'); } catch (e) { /* ignore */ }
         setNewProject({ name: '', region: 'EU' });
         setShowCreateDialog(false);
         toast({ title: "Project created" });
@@ -52,6 +55,7 @@ export default function ProjectsPage() {
     projectsApi.delete(id)
       .then(() => {
         setProjects(prev => prev.filter(p => p.id !== id));
+        try { clearCache('projects'); } catch (e) { /* ignore */ }
         toast({ title: "Project deleted" });
       })
       .catch(() => toast({ title: 'Failed to delete project' }));
