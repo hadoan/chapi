@@ -1,5 +1,6 @@
 'use client';
 
+import { ApiSpecsManager } from '@/components/ApiSpecsManager';
 import { Layout } from '@/components/Layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { apiSpecsApi } from '@/lib/api/apispecs';
 import { AuthService } from '@/lib/api/auth-service';
-import { ExternalLink, FileDown, Import, Play, Settings } from 'lucide-react';
+import { ExternalLink, FileDown, Play, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -55,9 +55,6 @@ export default function ProjectOverviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showRunPackModal, setShowRunPackModal] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [importUrl, setImportUrl] = useState('');
-  const [latestSpec, setLatestSpec] = useState<ApiSpec | null>(null);
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,36 +75,6 @@ export default function ProjectOverviewPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Load latest ApiSpec for this project
-  useEffect(() => {
-    if (!id) return;
-    apiSpecsApi
-      .listByProject(id)
-      .then(list => {
-        if (Array.isArray(list) && list.length > 0) {
-          // pick most recent by createdAt if available
-          const sorted = list.slice().sort((a, b) => {
-            const da = a.createdAt ? Date.parse(a.createdAt) : 0;
-            const db = b.createdAt ? Date.parse(b.createdAt) : 0;
-            return db - da;
-          });
-          setLatestSpec(sorted[0] as ApiSpec);
-        } else {
-          setLatestSpec(null);
-        }
-      })
-      .catch(() => {
-        // ignore errors here; optional telemetry could be added
-      });
-  }, [id]);
-
-  const handleImportOpenAPI = () => {
-    // open the dialog to prompt user input
-    // prefill with existing spec URL when updating
-    setImportUrl(latestSpec?.sourceUrl ?? '');
-    setImportDialogOpen(true);
-  };
-
   const handleDownloadRunPack = () => {
     setShowRunPackModal(true);
   };
@@ -123,52 +90,6 @@ export default function ProjectOverviewPage() {
   const files = ['tests.json', 'run.sh', 'run.ps1', '.env.example'];
 
   const displayedProject = project;
-
-  const confirmImport = () => {
-    if (!id) {
-      toast({
-        title: 'Project id missing',
-        description: 'Cannot import without project id',
-      });
-      return;
-    }
-    if (!importUrl) {
-      toast({
-        title: 'No URL',
-        description: 'Please enter an OpenAPI spec URL.',
-      });
-      return;
-    }
-
-    toast({
-      title: 'OpenAPI import started',
-      description: 'Importing specification...',
-    });
-
-    apiSpecsApi
-      .importOpenApi(id, { url: importUrl })
-      .then(spec => {
-        toast({
-          title: 'Import queued',
-          description: 'OpenAPI spec import started successfully.',
-        });
-        setLatestSpec({
-          id: spec.id,
-          projectId: spec.projectId,
-          sourceUrl: spec.sourceUrl,
-          version: spec.version,
-          createdAt: spec.createdAt,
-        });
-        setImportDialogOpen(false);
-        setImportUrl('');
-      })
-      .catch(err => {
-        toast({
-          title: 'Import failed',
-          description: err?.message ?? String(err),
-        });
-      });
-  };
 
   return (
     <Layout>
@@ -204,6 +125,11 @@ export default function ProjectOverviewPage() {
           </div>
         </div>
 
+        {/* API Specifications Management */}
+        {id && displayedProject && (
+          <ApiSpecsManager projectId={id} projectName={displayedProject.name} />
+        )}
+
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Quick Links */}
           <Card>
@@ -211,14 +137,6 @@ export default function ProjectOverviewPage() {
               <CardTitle>Quick Links</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button
-                variant="outline"
-                onClick={handleImportOpenAPI}
-                className="w-full justify-start"
-              >
-                <Import className="w-4 h-4 mr-2" />
-                {latestSpec ? 'Update OpenAPI Spec' : 'Import OpenAPI Spec'}
-              </Button>
               <Button
                 variant="outline"
                 onClick={handleDownloadRunPack}
@@ -327,54 +245,6 @@ export default function ProjectOverviewPage() {
                 >
                   Copy .env example
                 </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Import OpenAPI Dialog */}
-        <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {latestSpec ? 'Update OpenAPI Spec' : 'Import OpenAPI Spec'}
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Provide the URL to an OpenAPI (Swagger) JSON or YAML
-                specification and we'll import the endpoints.
-              </p>
-
-              {latestSpec?.createdAt ? (
-                <p className="text-sm text-muted-foreground">
-                  Last imported:{' '}
-                  {new Date(latestSpec.createdAt).toLocaleString()}
-                </p>
-              ) : null}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Spec URL</label>
-                <input
-                  className="w-full rounded border px-3 py-2 bg-input text-sm"
-                  value={importUrl}
-                  onChange={e => setImportUrl(e.target.value)}
-                  placeholder="https://example.com/openapi.json"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setImportDialogOpen(false);
-                    setImportUrl('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={confirmImport}>Import</Button>
               </div>
             </div>
           </DialogContent>
