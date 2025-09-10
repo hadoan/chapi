@@ -5,9 +5,11 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Threading;
 using AuthProfiles.Application.Dtos;
+using Chapi.ApiSpecs.Domain;
 using AuthProfiles.Application.Services;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
+using Microsoft.Extensions.Logging;
 
 namespace AuthProfiles.Infrastructure.Services;
 
@@ -18,35 +20,39 @@ public sealed class AuthDetectionService : IAuthDetectionService
         @"(?i)(^|/)(connect|oauth|auth)(/|_)?token($|/)|(^|/)token($|/)|(^|/)access_token($|/)",
         RegexOptions.Compiled);
 
-    public Task<IReadOnlyList<DetectionCandidateDto>> DetectAsync(DetectTokenRequest req, CancellationToken ct)
+    private readonly Chapi.ApiSpecs.Domain.IApiSpecRepository _specRepo;
+    private readonly Microsoft.Extensions.Logging.ILogger<AuthDetectionService> _logger;
+
+    public AuthDetectionService(Chapi.ApiSpecs.Domain.IApiSpecRepository specRepo, Microsoft.Extensions.Logging.ILogger<AuthDetectionService> logger)
+    {
+        _specRepo = specRepo;
+        _logger = logger;
+    }
+
+    public async Task<IReadOnlyList<DetectionCandidateDto>> DetectAsync(DetectTokenRequest req, CancellationToken ct)
     {
         var candidates = new List<DetectionCandidateDto>();
 
-        if (!string.IsNullOrWhiteSpace(req.OpenApiJson))
+        // If a ProjectId is provided, fetch stored API specs (raw JSON) and run detectors on them
+        if (req.ProjectId.HasValue)
         {
             try
             {
-                candidates.AddRange(DetectFromOpenApi(req.OpenApiJson!, req.BaseUrl));
+                var raws = await _specRepo.GetRawJsonByProjectAsync(req.ProjectId.Value, ct).ConfigureAwait(false);
+                foreach (var raw in raws)
+                {
+                    try { candidates.AddRange(DetectFromOpenApi(raw, req.BaseUrl)); } catch { }
+                    try { candidates.AddRange(DetectFromPostman(raw)); } catch { }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // swallow parse errors and continue with other sources
+                // Log and continue — detection should not fail the whole request if specs are missing/corrupt
+                _logger?.LogWarning(ex, "Failed to fetch ApiSpecs for project {ProjectId} while running auth detection", req.ProjectId);
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(req.PostmanJson))
-        {
-            try
-            {
-                candidates.AddRange(DetectFromPostman(req.PostmanJson!));
-            }
-            catch
-            {
-                // swallow parse errors
-            }
-        }
-
-        // TODO: If ProjectId/ServiceId provided, you can fetch spec from your ApiSpecs store.
+        // No inline OpenApi/Postman JSONs are expected on the request anymore.
 
         // Deduplicate by (Type, TokenUrl/Endpoint)
         var distinct = candidates
@@ -60,13 +66,13 @@ public sealed class AuthDetectionService : IAuthDetectionService
                 })
                 .OrderByDescending(c => c.Confidence)
                 .ToList();
-        return Task.FromResult((IReadOnlyList<DetectionCandidateDto>)distinct);
+        return distinct;
     }
 
     // Backwards-compatible wrapper for existing consumers that expect AuthDetectionCandidateDto
     public async Task<IReadOnlyList<AuthDetectionCandidateDto>> DetectAsync(Guid projectId, Guid serviceId, CancellationToken ct)
     {
-        var req = new DetectTokenRequest(projectId, serviceId, null, null, null);
+        var req = new DetectTokenRequest(projectId, serviceId, null);
         var res = await DetectAsync(req, ct).ConfigureAwait(false);
 
         var list = res.Select(d => new AuthDetectionCandidateDto(

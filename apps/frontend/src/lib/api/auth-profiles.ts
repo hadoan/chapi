@@ -139,8 +139,6 @@ export const authProfilesApi = {
     projectId?: string;
     serviceId?: string;
     baseUrl?: string;
-    openApiJson?: string;
-    postmanJson?: string;
   }): Promise<{
     candidates: AuthDetectionCandidate[];
     best?: { endpoint: string; source: string; confidence: number };

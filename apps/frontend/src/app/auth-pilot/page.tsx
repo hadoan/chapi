@@ -3,19 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAuthProfiles } from '@/hooks/use-auth-profiles';
 import { toast } from '@/hooks/use-toast';
+import { useProject } from '@/lib/state/projectStore';
 import { HelpCircle, RotateCcw, Save, TestTube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -31,8 +25,6 @@ import {
   formatTimestamp,
   getErrorMessage,
   initialProfile,
-  mockDetection,
-  mockEnvironments,
   simulateTokenRequest,
   validateProfile,
 } from '@/lib/auth-pilot';
@@ -46,13 +38,23 @@ import type {
 
 const STORAGE_KEY = 'chapi-auth-pilot-demo';
 
-export default function AuthPilotPage() {
+function AuthPilotContent() {
   const [environment, setEnvironment] = useState<Environment>('Dev');
   const [profile, setProfile] = useState<AuthProfile>(initialProfile);
+  const { selectedProject, selectedEnv, setSelectedEnv, setSelectedProject } =
+    useProject();
+  const [projectId, setProjectId] = useState<string | undefined>(
+    selectedProject?.id ?? undefined
+  );
   const [tokenResult, setTokenResult] = useState<TokenResult>();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [candidates, setCandidates] = useState<AuthCandidate[]>([]);
+  const [bestDetection, setBestDetection] = useState<{
+    endpoint: string;
+    source: string;
+    confidence: number;
+  } | null>(null);
 
   // Use the auth profiles hook
   const {
@@ -144,15 +146,17 @@ export default function AuthPilotPage() {
     setTokenResult(undefined); // Clear previous test results
   };
 
-  const handleUseDetectedEndpoint = () => {
+  const handleUseDetectedEndpoint = (bestEndpoint?: string) => {
+    if (!bestEndpoint) return;
+
     setProfile(prev => ({
       ...prev,
-      token_url: `https://api.demo.local${mockDetection.endpoint}`,
+      token_url: bestEndpoint,
     }));
 
     toast({
       title: 'Endpoint updated',
-      description: `Token URL set to detected endpoint: ${mockDetection.endpoint}`,
+      description: `Token URL set to detected endpoint: ${bestEndpoint}`,
     });
   };
 
@@ -160,13 +164,17 @@ export default function AuthPilotPage() {
   const handleDetectCandidates = useCallback(async () => {
     if (profile.token_url) {
       try {
-        const detectedCandidates = await detectCandidates(profile.token_url);
-        setCandidates(detectedCandidates);
+        const detected = await detectCandidates(
+          profile.token_url,
+          selectedProject?.id
+        );
+        setCandidates(detected.candidates);
+        setBestDetection(detected.best ?? null);
 
         addLog({
           type: 'detect',
           status: 'success',
-          message: `Found ${detectedCandidates.length} authentication candidates`,
+          message: `Found ${detected.candidates.length} authentication candidates`,
         });
       } catch (error) {
         addLog({
@@ -176,7 +184,13 @@ export default function AuthPilotPage() {
         });
       }
     }
-  }, [profile.token_url, detectCandidates, addLog]);
+  }, [profile.token_url, detectCandidates, addLog, selectedProject]);
+
+  // Project and environment are provided by ProjectContext (top bar)
+  useEffect(() => {
+    setProjectId(selectedProject?.id ?? undefined);
+    if (selectedEnv) setEnvironment(selectedEnv as Environment);
+  }, [selectedProject, selectedEnv]);
 
   // Save profile to backend
   const handleSaveProfile = useCallback(async () => {
@@ -289,205 +303,191 @@ export default function AuthPilotPage() {
   }, [canTest, handleTestConnection, handleSaveProfile]);
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-card border-b border-border sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold text-foreground">
-                  Token & Auth Profile Wizard
-                </h1>
-                {/* <Badge
-                  variant="secondary"
-                  className="bg-primary/10 text-primary"
-                >
-                  Demo Mode
-                </Badge> */}
-              </div>
-
-              <div className="flex items-center gap-3">
-                {/* Environment Selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    Environment:
-                  </span>
-                  <Select
-                    value={environment}
-                    onValueChange={(value: Environment) =>
-                      setEnvironment(value)
-                    }
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockEnvironments.map(env => (
-                        <SelectItem key={env} value={env}>
-                          {env}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Actions */}
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetDemo}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Detect Auth
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetDemo}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Detect Auth by Prompt
-                </Button>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" className="px-2">
-                      <HelpCircle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="max-w-sm space-y-2">
-                      <p className="font-medium">Keyboard Shortcuts:</p>
-                      <p className="text-sm">Ctrl/Cmd+Enter: Test Connection</p>
-                      <p className="text-sm">Ctrl/Cmd+S: Save Profile</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Detection & Candidates */}
-            <div className="space-y-6">
-              <DetectionBanner
-                detection={mockDetection}
-                onUseEndpoint={handleUseDetectedEndpoint}
-              />
-
-              {/* Detection Button */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium">Auth Detection</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Analyze endpoint for authentication methods
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleDetectCandidates}
-                      disabled={!profile.token_url || profilesLoading}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {profilesLoading ? 'Detecting...' : 'Detect Auth'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <CandidateList
-                candidates={candidates}
-                selectedType={profile.type}
-                onSelectCandidate={handleCandidateSelect}
-              />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-card border-b border-border sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-foreground">
+                Token & Auth Profile Wizard
+              </h1>
+              {/* <Badge
+                variant="secondary"
+                className="bg-primary/10 text-primary"
+              >
+                Demo Mode
+              </Badge> */}
             </div>
 
-            {/* Right Column - Profile & Test */}
-            <div className="space-y-6">
-              <ProfileForm
-                profile={profile}
-                onChange={setProfile}
-                errors={validation.errors}
-              />
-
-              <InjectionPreview profile={profile} tokenResult={tokenResult} />
-
-              <TokenCachePreview tokenResult={tokenResult} />
+            <div className="flex items-center gap-3">
+              {/* Project selection is shown in the global top bar; hide duplicate here */}
 
               {/* Actions */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex gap-3 flex-wrap">
-                    <Button
-                      onClick={handleTestConnection}
-                      disabled={!canTest}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                      <TestTube className="h-4 w-4 mr-2" />
-                      {isTestingConnection ? 'Testing...' : 'Test Connection'}
-                    </Button>
 
-                    <Button variant="outline" onClick={handleSaveProfile}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Profile
-                    </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetDemo}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Detect Auth
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetDemo}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Detect Auth by Prompt
+              </Button>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="px-2">
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="max-w-sm space-y-2">
+                    <p className="font-medium">Keyboard Shortcuts:</p>
+                    <p className="text-sm">Ctrl/Cmd+Enter: Test Connection</p>
+                    <p className="text-sm">Ctrl/Cmd+S: Save Profile</p>
                   </div>
-
-                  {!validation.isValid && (
-                    <p className="text-sm text-slate-500 mt-3">
-                      Complete required fields to enable testing
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Status/Log Panel */}
-              {logs.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Activity Log</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {logs.slice(-5).map((log, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <span className="text-slate-500 font-mono text-xs w-16">
-                            {log.timestamp}
-                          </span>
-                          <Badge
-                            variant={
-                              log.status === 'success'
-                                ? 'default'
-                                : 'destructive'
-                            }
-                            className="text-xs"
-                          >
-                            {log.type}
-                          </Badge>
-                          <span className="text-slate-700">{log.message}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Detection & Candidates */}
+          <div className="space-y-6">
+            {bestDetection && (
+              <DetectionBanner
+                detection={bestDetection}
+                onUseEndpoint={() =>
+                  handleUseDetectedEndpoint(bestDetection.endpoint)
+                }
+              />
+            )}
+
+            {/* Detection Button */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">Auth Detection</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Analyze endpoint for authentication methods
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleDetectCandidates}
+                    disabled={!profile.token_url || profilesLoading}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {profilesLoading ? 'Detecting...' : 'Detect Auth'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <CandidateList
+              candidates={candidates}
+              selectedType={profile.type}
+              onSelectCandidate={handleCandidateSelect}
+            />
+          </div>
+
+          {/* Right Column - Profile & Test */}
+          <div className="space-y-6">
+            <ProfileForm
+              profile={profile}
+              onChange={setProfile}
+              errors={validation.errors}
+            />
+
+            <InjectionPreview profile={profile} tokenResult={tokenResult} />
+
+            <TokenCachePreview tokenResult={tokenResult} />
+
+            {/* Actions */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex gap-3 flex-wrap">
+                  <Button
+                    onClick={handleTestConnection}
+                    disabled={!canTest}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    <TestTube className="h-4 w-4 mr-2" />
+                    {isTestingConnection ? 'Testing...' : 'Test Connection'}
+                  </Button>
+
+                  <Button variant="outline" onClick={handleSaveProfile}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Profile
+                  </Button>
+                </div>
+
+                {!validation.isValid && (
+                  <p className="text-sm text-slate-500 mt-3">
+                    Complete required fields to enable testing
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status/Log Panel */}
+            {logs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Activity Log</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {logs.slice(-5).map((log, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <span className="text-slate-500 font-mono text-xs w-16">
+                          {log.timestamp}
+                        </span>
+                        <Badge
+                          variant={
+                            log.status === 'success' ? 'default' : 'destructive'
+                          }
+                          className="text-xs"
+                        >
+                          {log.type}
+                        </Badge>
+                        <span className="text-slate-700">{log.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthPilotPage() {
+  return (
+    <Layout>
+      <AuthPilotContent />
     </Layout>
   );
 }

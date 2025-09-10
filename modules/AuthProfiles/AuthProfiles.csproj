@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\shipmvp\ShipMvp.Core\ShipMvp.Core.csproj" />
     <ProjectReference Include="..\..\shipmvp\ShipMvp.Domain\ShipMvp.Domain.csproj" />
     <ProjectReference Include="..\..\shipmvp\ShipMvp.Application\ShipMvp.Application.csproj" />
+  <ProjectReference Include="..\Chapi.ApiSpecs\Chapi.ApiSpecs.csproj" />
   </ItemGroup>
 
   <ItemGroup>

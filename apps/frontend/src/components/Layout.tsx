@@ -1,18 +1,16 @@
-import { useState } from "react";
-import { AppSidebar } from "@/components/AppSidebar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Settings, User, LogOut, Sun, Moon } from "lucide-react";
-
-const projects = [
-  { id: "proj-1", name: "E-commerce API", env: "staging" },
-  { id: "proj-2", name: "User Service", env: "production" },
-  { id: "proj-3", name: "Payment Gateway", env: "local" }
-];
-
-const environments = ["local", "staging", "production"];
+import { AppSidebar } from '@/components/AppSidebar';
+import ProjectSelectionBar from '@/components/ProjectSelectionBar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import ProjectContext, { ProjectContextType } from '@/lib/state/projectStore';
+import { LogOut, Moon, Settings, Sun, User } from 'lucide-react';
+import { useState } from 'react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,8 +18,9 @@ interface LayoutProps {
 }
 
 export function Layout({ children, showProjectSelector = true }: LayoutProps) {
-  const [selectedProject, setSelectedProject] = useState(projects[1]);
-  const [selectedEnv, setSelectedEnv] = useState("staging");
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectContextType['selectedProject']>(null);
+  const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
@@ -31,7 +30,11 @@ export function Layout({ children, showProjectSelector = true }: LayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className={`h-screen w-full bg-background text-foreground overflow-hidden ${darkMode ? 'dark' : ''}`}>
+      <div
+        className={`h-screen w-full bg-background text-foreground overflow-hidden ${
+          darkMode ? 'dark' : ''
+        }`}
+      >
         <div className="flex h-full w-full">
           {/* Sidebar */}
           <AppSidebar />
@@ -43,67 +46,40 @@ export function Layout({ children, showProjectSelector = true }: LayoutProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <SidebarTrigger />
-                  
-                  {showProjectSelector && (
-                    <>
-                      {/* Project Selector */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="justify-between min-w-[200px]">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-accent"></div>
-                              {selectedProject.name}
-                            </div>
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-[200px] bg-popover z-50">
-                          {projects.map((project) => (
-                            <DropdownMenuItem
-                              key={project.id}
-                              onClick={() => setSelectedProject(project)}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-accent"></div>
-                                {project.name}
-                              </div>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
 
-                      {/* Environment Selector */}
-                      <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                        {environments.map((env) => (
-                          <button
-                            key={env}
-                            onClick={() => setSelectedEnv(env)}
-                            className={`px-3 py-1 rounded text-sm transition-colors ${
-                              selectedEnv === env
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            {env}
-                          </button>
-                        ))}
-                      </div>
-                    </>
+                  {showProjectSelector && (
+                    <ProjectSelectionBar
+                      initialProjectId={selectedProject?.id ?? undefined}
+                      onSelectProject={p => setSelectedProject(p)}
+                      onSelectEnv={e => setSelectedEnv(e)}
+                      onToggleDarkMode={toggleDarkMode}
+                    />
                   )}
                 </div>
 
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 rounded-full"
+                    >
                       <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
                         <User className="w-4 h-4" />
                       </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 bg-popover z-50"
+                  >
                     <DropdownMenuItem onClick={toggleDarkMode}>
-                      {darkMode ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
+                      {darkMode ? (
+                        <Sun className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Moon className="w-4 h-4 mr-2" />
+                      )}
                       {darkMode ? 'Light mode' : 'Dark mode'}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
@@ -121,7 +97,16 @@ export function Layout({ children, showProjectSelector = true }: LayoutProps) {
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto">
-              {children}
+              <ProjectContext.Provider
+                value={{
+                  selectedProject,
+                  setSelectedProject: p => setSelectedProject(p),
+                  selectedEnv,
+                  setSelectedEnv: e => setSelectedEnv(e),
+                }}
+              >
+                {children}
+              </ProjectContext.Provider>
             </div>
           </div>
         </div>

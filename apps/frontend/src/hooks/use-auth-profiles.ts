@@ -310,31 +310,57 @@ export function useAuthProfiles({
   // Detect auth candidates for a URL
   const detectCandidates = useCallback(
     async (
-      url: string
-    ): Promise<import('@/types/auth-pilot').AuthCandidate[]> => {
+      url: string,
+      projectId?: string
+    ): Promise<{
+      candidates: import('@/types/auth-pilot').AuthCandidate[];
+      best?: { endpoint: string; source: string; confidence: number } | null;
+    }> => {
       try {
         setLoading(true);
         setError(null);
-        // Note: The backend detect endpoint expects projectId/serviceId, not url
-        // This might need to be adjusted based on actual backend implementation
+        // The backend detect endpoint now fetches specs server-side by projectId
         const detectRequest: DetectRequest = {
-          projectId: undefined, // You may need to provide actual project/service IDs
+          projectId: projectId,
           serviceId: undefined,
+          baseUrl: url,
         };
-        const result = await authProfilesApi.detect(detectRequest);
+
+        const res = (await authProfilesApi.detect(
+          detectRequest as unknown as DetectRequest
+        )) as {
+          candidates: AuthDetectionCandidateDto[];
+          best?: {
+            endpoint: string;
+            source: string;
+            confidence: number;
+          } | null;
+        };
+
+        const result = res?.candidates ?? [];
+        const best = res?.best ?? null;
+
+        if (result.length === 0) {
+          // Show informational alert to user when no candidates found
+          toast({
+            title: 'No candidates found',
+            description:
+              'No authentication candidates were detected for this project/service.',
+          });
+          return { candidates: [], best };
+        }
 
         // Convert backend candidates to frontend format
-        if (result && Array.isArray(result)) {
-          return result.map((candidate: AuthDetectionCandidateDto) => ({
-            type: mapBackendAuthType(candidate.type!),
-            confidence: candidate.confidence || 0,
-            token_url: candidate.tokenUrl,
-            header_name: candidate.injectionName,
-            disabled: false,
-            disabledReason: undefined,
-          }));
-        }
-        return [];
+        const mapped = result.map((candidate: AuthDetectionCandidateDto) => ({
+          type: mapBackendAuthType(candidate.type!),
+          confidence: candidate.confidence || 0,
+          token_url: candidate.tokenUrl,
+          header_name: candidate.injectionName,
+          disabled: false,
+          disabledReason: undefined,
+        }));
+
+        return { candidates: mapped, best };
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -346,7 +372,7 @@ export function useAuthProfiles({
           description: errorMessage,
           variant: 'destructive',
         });
-        return [];
+        return { candidates: [], best: null };
       } finally {
         setLoading(false);
       }

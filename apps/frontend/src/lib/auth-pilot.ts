@@ -1,57 +1,4 @@
-import type {
-  AuthCandidate,
-  AuthProfile,
-  Detection,
-  Environment,
-  TokenResult,
-} from '@/types/auth-pilot';
-
-export const mockEnvironments: Environment[] = ['Dev', 'Stage', 'Prod'];
-
-export const mockDetection: Detection = {
-  endpoint: '/connect/token',
-  source: 'heuristic',
-  confidence: 0.62,
-};
-
-export const mockCandidates: AuthCandidate[] = [
-  {
-    type: 'oauth2_client_credentials',
-    confidence: 0.62,
-    token_url: '{{BASE_URL}}/connect/token',
-  },
-  {
-    type: 'api_key_header',
-    confidence: 0.41,
-    header_name: 'X-API-Key',
-  },
-  {
-    type: 'bearer_static',
-    confidence: 0.38,
-  },
-  {
-    type: 'session_cookie',
-    confidence: 0.22,
-  },
-  {
-    type: 'password',
-    confidence: 0.15,
-    disabled: true,
-    disabledReason: 'Not supported in demo',
-  },
-  {
-    type: 'device_code',
-    confidence: 0.12,
-    disabled: true,
-    disabledReason: 'Not supported in demo',
-  },
-  {
-    type: 'auth_code',
-    confidence: 0.1,
-    disabled: true,
-    disabledReason: 'Not supported in demo',
-  },
-];
+import type { AuthProfile, TokenResult } from '@/types/auth-pilot';
 
 export const initialProfile: AuthProfile = {
   type: 'oauth2_client_credentials',
@@ -187,9 +134,8 @@ export function validateProfile(profile: AuthProfile): {
 
   switch (profile.type) {
     case 'oauth2_client_credentials':
-      if (!profile.client_id?.trim()) errors.push('Client ID is required');
-      if (!profile.client_secret?.trim())
-        errors.push('Client Secret is required');
+      // In demo UI client credentials are optional — allow empty client_id/client_secret
+      // Server/backend may still require them for real token requests.
       break;
 
     case 'api_key_header':

@@ -5,9 +5,7 @@ namespace AuthProfiles.Application.Dtos;
 public sealed record DetectTokenRequest(
     Guid? ProjectId,
     Guid? ServiceId,
-    string? BaseUrl,
-    string? OpenApiJson,
-    string? PostmanJson
+    string? BaseUrl
 );
 
 public sealed record DetectionCandidateDto(

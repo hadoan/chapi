@@ -80,21 +80,16 @@ export function ProfileForm({ profile, onChange, errors }: ProfileFormProps) {
             </h4>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="client_id">Client ID *</Label>
+                <Label htmlFor="client_id">Client ID</Label>
                 <Input
                   id="client_id"
                   value={profile.client_id || ''}
                   onChange={e => updateProfile({ client_id: e.target.value })}
                   placeholder="your-client-id"
-                  className={
-                    errors.some(e => e.includes('Client ID'))
-                      ? 'border-red-500'
-                      : ''
-                  }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="client_secret">Client Secret *</Label>
+                <Label htmlFor="client_secret">Client Secret</Label>
                 <div className="relative">
                   <Input
                     id="client_secret"
@@ -104,11 +99,7 @@ export function ProfileForm({ profile, onChange, errors }: ProfileFormProps) {
                       updateProfile({ client_secret: e.target.value })
                     }
                     placeholder="your-client-secret"
-                    className={`pr-10 ${
-                      errors.some(e => e.includes('Client Secret'))
-                        ? 'border-red-500'
-                        : ''
-                    }`}
+                    className={`pr-10`}
                   />
                   <Button
                     type="button"

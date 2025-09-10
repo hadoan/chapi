@@ -65,4 +65,17 @@ public class ApiSpecRepository : IApiSpecRepository
         await _context.SaveChangesAsync();
         return spec.Id;
     }
+
+    public async Task<IEnumerable<string>> GetRawJsonByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        // Project stores Raw as JsonDocument; EF Core cannot translate JsonDocument.RootElement access into SQL.
+        // Materialize the matching entities first, then serialize the JsonDocument in-memory.
+        var specs = await _dbSet
+            .Where(x => x.ProjectId == projectId && x.Raw != null)
+            .ToListAsync(cancellationToken);
+
+        return specs
+            .Where(s => s.Raw != null)
+            .Select(s => s.Raw!.RootElement.GetRawText());
+    }
 }

@@ -11,6 +11,7 @@ import {
 } from '@/components/ChatMessage';
 import { CommandPalette } from '@/components/CommandPalette';
 import { HistoryList } from '@/components/HistoryList';
+import ProjectSelectionBar from '@/components/ProjectSelectionBar';
 import { RightDrawer } from '@/components/RightDrawer';
 import { RunPackFileBrowser } from '@/components/RunPackFileBrowser';
 import { Button } from '@/components/ui/button';
@@ -26,23 +27,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
 import { chatApi } from '@/lib/api/chat';
-import { EnvironmentDto, environmentsApi } from '@/lib/api/environments';
+import { EnvironmentDto } from '@/lib/api/environments';
 import { llmsApi } from '@/lib/api/llms';
-import { ProjectDto, projectsApi } from '@/lib/api/projects';
+import { ProjectDto } from '@/lib/api/projects';
 import type { components } from '@/lib/api/schema';
-import {
-  ChevronDown,
-  LogOut,
-  MessageSquare,
-  Moon,
-  Settings,
-  Sun,
-  User,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { LogOut, MessageSquare, Moon, Settings, Sun, User } from 'lucide-react';
+import { useState } from 'react';
 import { useConversations } from './hooks/useConversations';
 
 type Card = MessageCard;
@@ -456,43 +449,7 @@ All smoke tests are passing. Ready to merge!`,
       fileBrowserOpen: true,
     });
   };
-  // Load projects on mount
-  useEffect(() => {
-    let mounted = true;
-    projectsApi
-      .getAll()
-      .then(list => {
-        if (!mounted) return;
-        setProjects(list);
-        if (list.length > 0) {
-          // set first project as selected if none yet
-          setSelectedProject(prev => prev ?? list[0]);
-        }
-      })
-      .catch(() => toast({ title: 'Failed to load projects' }));
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Load environments when selectedProject changes
-  useEffect(() => {
-    if (!selectedProject) return;
-    let mounted = true;
-    environmentsApi
-      .getByProject(selectedProject.id ?? '')
-      .then(list => {
-        if (!mounted) return;
-        setEnvOptions(list);
-        if (list.length > 0) setSelectedEnv(list[0].name ?? null);
-      })
-      .catch(() => toast({ title: 'Failed to load environments' }));
-
-    return () => {
-      mounted = false;
-    };
-  }, [selectedProject]);
+  // ProjectSelectionBar now handles loading projects and environments
 
   // Conversation loading/selection is handled inside useConversations hook
 
@@ -514,80 +471,20 @@ All smoke tests are passing. Ready to merge!`,
             <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur-sm p-2 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-                  <SidebarTrigger />
-
-                  {/* Project Selector */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="justify-between min-w-[120px] sm:min-w-[200px] max-w-[200px] truncate"
-                        size="sm"
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
-                          <span className="truncate">
-                            {selectedProject?.name ?? 'Select project'}
-                          </span>
-                        </div>
-                        <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[200px] bg-popover z-50">
-                      {projects.map(project => (
-                        <DropdownMenuItem
-                          key={project.id}
-                          onClick={() => setSelectedProject(project)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-accent"></div>
-                            {project.name}
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* Environment Selector - Hidden on small screens, shown as dropdown on medium */}
-                  <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
-                    {envOptions.map(env => (
-                      <button
-                        key={env.id}
-                        onClick={() => setSelectedEnv(env.name ?? null)}
-                        className={`px-3 py-1 rounded text-sm transition-colors ${
-                          selectedEnv === (env.name ?? null)
-                            ? 'bg-background text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {env.name}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Mobile Environment Selector */}
-                  {envOptions.length > 0 && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild className="sm:hidden">
-                        <Button variant="outline" size="sm" className="px-2">
-                          <span className="truncate">
-                            {selectedEnv || 'Env'}
-                          </span>
-                          <ChevronDown className="w-3 h-3 ml-1" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-32 bg-popover z-50">
-                        {envOptions.map(env => (
-                          <DropdownMenuItem
-                            key={env.id}
-                            onClick={() => setSelectedEnv(env.name ?? null)}
-                          >
-                            {env.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                  <ProjectSelectionBar
+                    initialProjectId={selectedProject?.id}
+                    onSelectProject={p =>
+                      setSelectedProject(
+                        prev =>
+                          ({
+                            id: p.id ?? prev?.id ?? '',
+                            name: p.name ?? prev?.name ?? '',
+                          } as ProjectDto)
+                      )
+                    }
+                    onSelectEnv={e => setSelectedEnv(e)}
+                    onToggleDarkMode={toggleDarkMode}
+                  />
                 </div>
 
                 {/* User Menu */}
