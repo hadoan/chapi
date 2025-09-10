@@ -19,7 +19,9 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { apiSpecsApi, type ApiSpecDto } from '@/lib/api/apispecs';
+import { authProfilesApi, type AuthProfileDto } from '@/lib/api/auth-profiles';
 import { endpointsApi, type EndpointDto } from '@/lib/api/endpoints';
+import { testGenApi, type GenerateRequest } from '@/lib/api/llms';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -44,7 +46,13 @@ export default function ProjectEndpointsPage() {
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointDto | null>(
     null
   );
+  const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(
+    null
+  );
   const [detailLoading, setDetailLoading] = useState(false);
+  const [authProfiles, setAuthProfiles] = useState<AuthProfileDto[]>([]);
+  const [selectedAuthProfile, setSelectedAuthProfile] = useState<string>('');
+  const [testGenerating, setTestGenerating] = useState(false);
 
   const handleEndpointClick = async (endpointId: string) => {
     if (!id) return;
@@ -54,6 +62,7 @@ export default function ProjectEndpointsPage() {
       const detail = await endpointsApi.get(id, endpointId);
       console.log(detail);
       setSelectedEndpoint(detail);
+      setSelectedEndpointId(endpointId);
     } catch (err) {
       toast({
         title: 'Failed to load endpoint details',
@@ -61,6 +70,117 @@ export default function ProjectEndpointsPage() {
       });
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleGenerateTests = async (mode: 'CARD' | 'FILES' = 'FILES') => {
+    if (!selectedEndpoint || !id) return;
+
+    const selectedProfile = authProfiles.find(
+      p => p.id === selectedAuthProfile
+    );
+    if (!selectedProfile) {
+      toast({
+        title: 'Please select an auth profile',
+        description: 'An auth profile is required to generate tests',
+      });
+      return;
+    }
+
+    setTestGenerating(true);
+    try {
+      // Format auth profile config based on type
+      // AuthType enum: 0=NONE, 1=API_KEY, 2=BEARER, 3=OIDC_CLIENT_CREDENTIALS
+      // InjectionMode enum: 0=Header, 1=Query, 2=None
+      const authConfig: Record<string, string | undefined> = {};
+      const authTypeString =
+        ['NONE', 'API_KEY', 'BEARER', 'OIDC_CLIENT_CREDENTIALS'][
+          selectedProfile.type
+        ] || 'NONE';
+
+      if (selectedProfile.type === 1) {
+        // API_KEY
+        authConfig.headerName =
+          selectedProfile.injectionName || 'Authorization';
+        authConfig.injectAt =
+          selectedProfile.injectionMode === 0 ? 'header' : 'query';
+        if (selectedProfile.injectionMode === 1) {
+          authConfig.queryName = selectedProfile.injectionName || 'api_key';
+        }
+      } else if (selectedProfile.type === 2) {
+        // BEARER
+        authConfig.tokenEnv = 'API_TOKEN';
+      } else if (selectedProfile.type === 3) {
+        // OIDC_CLIENT_CREDENTIALS
+        authConfig.tokenUrl = selectedProfile.tokenUrl;
+        authConfig.clientIdEnv = 'CLIENT_ID';
+        authConfig.clientSecretEnv = 'CLIENT_SECRET';
+        if (selectedProfile.scopesCsv) {
+          authConfig.scope = selectedProfile.scopesCsv;
+        }
+        if (selectedProfile.audience) {
+          authConfig.audience = selectedProfile.audience;
+        }
+      }
+
+      // Create the Chapi-TestGen input format
+      const testGenInput = {
+        mode,
+        project: { id },
+        chat: {
+          conversation_id: null, // Will create new conversation
+          conversation_title: `${selectedEndpoint.method} ${selectedEndpoint.path} — tests`,
+        },
+        selectedEndpoint: {
+          id: selectedEndpointId,
+          method: selectedEndpoint.method || 'GET',
+          path: selectedEndpoint.path || '',
+          summary: selectedEndpoint.summary,
+          requiresAuth: !!(
+            selectedEndpoint.security && selectedEndpoint.security.length > 0
+          ),
+          successCode: 200,
+          requestSchemaHint: selectedEndpoint.request ? 'json' : 'none',
+        },
+        authProfile: {
+          id: selectedProfile.id,
+          name: `${authTypeString} Profile`,
+          type: authTypeString,
+          config: authConfig,
+        },
+        options: {
+          includeForbidden: true,
+          envPlaceholders: ['BASE_URL'],
+          fileBaseDir: 'tests/endpoint',
+          useJq: true,
+          generator_version: 'testgen@2025-09-10',
+        },
+        user_query: `Generate API tests for ${selectedEndpoint.method} ${selectedEndpoint.path}`,
+      };
+
+      const request: GenerateRequest = {
+        user_query: `Generate API tests for ${selectedEndpoint.method} ${selectedEndpoint.path}`,
+        projectId: id,
+        max_files: 10,
+        openApiJson: JSON.stringify(testGenInput),
+      };
+
+      const response = await testGenApi.generate(request);
+      console.log('Generated test response:', response);
+
+      toast({
+        title: 'Tests Generated Successfully',
+        description: `Generated ${response.card.files?.length || 0} test files`,
+      });
+
+      // TODO: Handle the generated card (e.g., navigate to test results page)
+    } catch (err) {
+      toast({
+        title: 'Failed to generate tests',
+        description: err?.message ?? String(err),
+      });
+    } finally {
+      setTestGenerating(false);
     }
   };
 
@@ -96,6 +216,20 @@ export default function ProjectEndpointsPage() {
       .catch(err =>
         toast({
           title: 'Failed to load specs',
+          description: err?.message ?? String(err),
+        })
+      );
+  }, [id]);
+
+  // Load auth profiles
+  useEffect(() => {
+    if (!id) return;
+    authProfilesApi
+      .getAll({ projectId: id, enabled: true })
+      .then(profiles => setAuthProfiles(profiles || []))
+      .catch(err =>
+        toast({
+          title: 'Failed to load auth profiles',
           description: err?.message ?? String(err),
         })
       );
@@ -275,7 +409,11 @@ export default function ProjectEndpointsPage() {
         {/* Endpoint Detail Dialog */}
         <Dialog
           open={!!selectedEndpoint}
-          onOpenChange={() => setSelectedEndpoint(null)}
+          onOpenChange={() => {
+            setSelectedEndpoint(null);
+            setSelectedEndpointId(null);
+            setSelectedAuthProfile('');
+          }}
         >
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
             <DialogHeader>
@@ -530,6 +668,51 @@ export default function ProjectEndpointsPage() {
                       </div>
                     </div>
                   )}
+
+                {/* Test Generation Section */}
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold mb-4">Generate API Tests</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Auth Profile
+                      </label>
+                      <Select
+                        value={selectedAuthProfile}
+                        onValueChange={setSelectedAuthProfile}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an auth profile" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {authProfiles.map(profile => (
+                            <SelectItem key={profile.id} value={profile.id}>
+                              {profile.type} -{' '}
+                              {profile.injectionName || 'Default'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleGenerateTests('FILES')}
+                        disabled={testGenerating || !selectedAuthProfile}
+                        className="flex-1"
+                      >
+                        {testGenerating ? 'Generating...' : 'Generate Tests'}
+                      </Button>
+                    </div>
+
+                    {authProfiles.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No auth profiles found. Create an auth profile in the
+                        project settings to generate tests.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : null}
           </DialogContent>
