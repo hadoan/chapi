@@ -211,21 +211,21 @@ export function ApiSpecsManager({
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
-          <TableRow>
-          <TableHead>Source URL</TableHead>
-          <TableHead>ID</TableHead>
-          <TableHead>Version</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Imported</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
+                  <TableRow>
+                    <TableHead>Source URL</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Version</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Imported</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {specs.map(spec => {
                     const status = getSpecStatus(spec);
                     return (
                       <TableRow key={spec.id}>
-          <TableCell className="font-medium">
+                        <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <FileText className="w-4 h-4 text-muted-foreground" />
                             <div className="max-w-sm">
@@ -241,11 +241,13 @@ export function ApiSpecsManager({
                                   {spec.sourceUrl || 'Unknown source'}
                                 </button>
                               </div>
-            {/* ID column shown in its own table cell */}
+                              {/* ID column shown in its own table cell */}
                             </div>
                           </div>
                         </TableCell>
-          <TableCell className="font-mono text-sm">{spec.id?.slice(0,8)}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {spec.id?.slice(0, 8)}
+                        </TableCell>
                         <TableCell>
                           <code className="text-xs bg-muted px-2 py-1 rounded">
                             {spec.version || 'Unknown'}
