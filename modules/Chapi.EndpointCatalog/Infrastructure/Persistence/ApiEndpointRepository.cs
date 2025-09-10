@@ -98,13 +98,6 @@ public class ApiEndpointRepository : IApiEndpointRepository
     {
         // Use server-side delete to remove all endpoints for the spec without loading entities
         await _dbSet.Where(x => x.SpecId == specId).ExecuteDeleteAsync();
-        var specDbSet = _context.Set<ApiSpec>();
-        var entity = await specDbSet.FirstOrDefaultAsync(x => x.Id == specId);
-        if (entity != null)
-        {
-            specDbSet.Remove(entity);
-
-        }
         await _context.SaveChangesAsync();
     }
 

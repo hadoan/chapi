@@ -211,20 +211,21 @@ export function ApiSpecsManager({
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Source URL</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Imported</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
+          <TableRow>
+          <TableHead>Source URL</TableHead>
+          <TableHead>ID</TableHead>
+          <TableHead>Version</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Imported</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
                 </TableHeader>
                 <TableBody>
                   {specs.map(spec => {
                     const status = getSpecStatus(spec);
                     return (
                       <TableRow key={spec.id}>
-                        <TableCell className="font-medium">
+          <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <FileText className="w-4 h-4 text-muted-foreground" />
                             <div className="max-w-sm">
@@ -240,14 +241,11 @@ export function ApiSpecsManager({
                                   {spec.sourceUrl || 'Unknown source'}
                                 </button>
                               </div>
-                              {spec.sourceUrl && (
-                                <div className="text-xs text-muted-foreground">
-                                  ID: {spec.id?.slice(0, 8)}...
-                                </div>
-                              )}
+            {/* ID column shown in its own table cell */}
                             </div>
                           </div>
                         </TableCell>
+          <TableCell className="font-mono text-sm">{spec.id?.slice(0,8)}</TableCell>
                         <TableCell>
                           <code className="text-xs bg-muted px-2 py-1 rounded">
                             {spec.version || 'Unknown'}
@@ -432,8 +430,6 @@ export function ApiSpecsManager({
                     setConfirmDeleteOpen(false);
                     setDeletingSpec(null);
                     await loadSpecs();
-                    // Redirect back to project endpoints without spec filter
-                    navigate(`/app/projects/${projectId}/endpoints`);
                   } catch (err) {
                     toast({
                       title: 'Delete failed',
