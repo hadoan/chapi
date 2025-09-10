@@ -22,7 +22,7 @@ namespace Chapi.AI.Controllers
         }
 
         [HttpPost("generate")]
-        public async Task<IActionResult> Generate([FromBody] TestGenRequest request)
+        public async Task<ActionResult<TestGenResponse>> Generate([FromBody] TestGenRequest request)
         {
             try
             {
