@@ -28,8 +28,13 @@ public class ChapiAIModule : IModule
         services.AddScoped<RunPackService>();
         services.AddScoped<EndpointSelectorService>();
 
-        // Register TestGen service
+        // Register TestGen service and all its dependencies
         services.AddScoped<ITestGenService, TestGenService>();
+        services.AddScoped<ITestGenCardGenerator, TestGenCardGenerator>();
+        services.AddScoped<ITestGenFileGenerator, TestGenFileGenerator>();
+        services.AddScoped<ITestGenDatabaseService, TestGenDatabaseService>();
+        services.AddScoped<ITestGenValidationService, TestGenValidationService>();
+        services.AddScoped<IChapiIRGenerator, ChapiIRGenerator>();
 
         // Register new refactored services
         services.AddScoped<IEndpointAnalysisService, EndpointAnalysisService>();
