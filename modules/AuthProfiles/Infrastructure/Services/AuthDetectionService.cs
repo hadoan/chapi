@@ -371,8 +371,26 @@ public sealed class AuthDetectionService : IAuthDetectionService
 
     private static string AbsoluteUrl(string urlOrPath, string? baseUrl, string? serverBase)
     {
-        // Already absolute
-        if (Uri.TryCreate(urlOrPath, UriKind.Absolute, out var abs)) return abs.ToString();
+        // Already absolute - but check if it's a file:// URL that should be combined with baseUrl
+        if (Uri.TryCreate(urlOrPath, UriKind.Absolute, out var abs))
+        {
+            // If it's a file:// URL and we have a proper baseUrl, combine them
+            if (abs.Scheme == "file" && !string.IsNullOrWhiteSpace(baseUrl))
+            {
+                // Extract the path from the file:// URL and combine with baseUrl
+                var path = abs.AbsolutePath;
+                var baseRoot = !string.IsNullOrWhiteSpace(serverBase) ? serverBase :
+                               !string.IsNullOrWhiteSpace(baseUrl) ? baseUrl!.TrimEnd('/') : string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(baseRoot))
+                {
+                    if (!path.StartsWith("/")) path = "/" + path;
+                    var combinedUrl = baseRoot + path;
+                    return CollapseRepeatedTokenPath(combinedUrl);
+                }
+            }
+            return abs.ToString();
+        }
 
         var root = !string.IsNullOrWhiteSpace(serverBase) ? serverBase :
                    !string.IsNullOrWhiteSpace(baseUrl) ? baseUrl!.TrimEnd('/') : string.Empty;

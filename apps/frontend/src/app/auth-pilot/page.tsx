@@ -10,6 +10,7 @@ import {
 import { useAuthProfiles } from '@/hooks/use-auth-profiles';
 import { toast } from '@/hooks/use-toast';
 import { authProfilesApi } from '@/lib/api/auth-profiles';
+import { environmentsApi } from '@/lib/api/environments';
 import type { components } from '@/lib/api/schema';
 import { useProject } from '@/lib/state/projectStore';
 import { HelpCircle, RotateCcw, Save, TestTube } from 'lucide-react';
@@ -24,9 +25,9 @@ import { TokenCachePreview } from '@/components/auth-pilot/TokenCachePreview';
 
 // Types and utilities
 import {
+  createInitialProfile,
   formatTimestamp,
   getErrorMessage,
-  initialProfile,
   simulateTokenRequest,
   validateProfile,
 } from '@/lib/auth-pilot';
@@ -42,7 +43,7 @@ const STORAGE_KEY = 'chapi-auth-pilot-demo';
 
 function AuthPilotContent() {
   const [environment, setEnvironment] = useState<Environment>('Dev');
-  const [profile, setProfile] = useState<AuthProfile>(initialProfile);
+  const [profile, setProfile] = useState<AuthProfile>(createInitialProfile());
   const { selectedProject, selectedEnv, setSelectedEnv, setSelectedProject } =
     useProject();
   const [projectId, setProjectId] = useState<string | undefined>(
@@ -225,6 +226,39 @@ function AuthPilotContent() {
     setProjectId(selectedProject?.id ?? undefined);
     if (selectedEnv) setEnvironment(selectedEnv as Environment);
   }, [selectedProject, selectedEnv]);
+
+  // Fetch environment data and update profile token_url when environment changes
+  useEffect(() => {
+    const fetchEnvironmentBaseUrl = async () => {
+      if (!selectedProject?.id || !selectedEnv) return;
+
+      try {
+        const environments = await environmentsApi.getByProject(
+          selectedProject.id
+        );
+        const currentEnv = environments.find(
+          env => env.name.toLowerCase() === selectedEnv.toLowerCase()
+        );
+
+        if (currentEnv?.baseUrl) {
+          // Update profile with environment's BaseUrl
+          setProfile(prev => ({
+            ...prev,
+            token_url: currentEnv.baseUrl,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch environment data:', error);
+        // Fallback to default if environment fetch fails
+        setProfile(prev => ({
+          ...prev,
+          token_url: 'https://api.demo.local/connect/token',
+        }));
+      }
+    };
+
+    fetchEnvironmentBaseUrl();
+  }, [selectedProject?.id, selectedEnv]);
 
   // Save profile to backend
   const handleSaveProfile = useCallback(async () => {
@@ -417,7 +451,7 @@ function AuthPilotContent() {
 
   const handleResetDemo = () => {
     localStorage.removeItem(STORAGE_KEY);
-    setProfile(initialProfile);
+    setProfile(createInitialProfile());
     setTokenResult(undefined);
     setLogs([]);
 

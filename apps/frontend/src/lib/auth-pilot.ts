@@ -1,14 +1,17 @@
 import type { AuthProfile, TokenResult } from '@/types/auth-pilot';
 
-export const initialProfile: AuthProfile = {
+export const createInitialProfile = (baseUrl?: string): AuthProfile => ({
   type: 'oauth2_client_credentials',
-  token_url: 'https://api.demo.local/connect/token',
+  token_url: baseUrl || 'https://api.demo.local/connect/token',
   client_id: '',
   client_secret: '',
   scopes: 'api.read',
   audience: '',
   notes: '',
-};
+});
+
+// Keep the old export for backward compatibility
+export const initialProfile = createInitialProfile();
 
 export function simulateTokenRequest(profile: AuthProfile): TokenResult {
   const now = new Date();
