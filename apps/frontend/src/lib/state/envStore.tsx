@@ -1,14 +1,18 @@
-"use client";
-import React, {createContext, useContext, useEffect, useState} from 'react';
-import type {EnvModel, EnvName} from './types';
-import { environmentsApi, type EnvironmentDto } from '@/lib/api/environments';
+'use client';
 import { toast } from '@/hooks/use-toast';
+import { getOrFetch } from '@/lib/api/cache';
+import { environmentsApi, type EnvironmentDto } from '@/lib/api/environments';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { EnvModel } from './types';
 
-type EnvStore = { 
-  envs: EnvModel[]; 
+type EnvStore = {
+  envs: EnvModel[];
   loading: boolean;
   updateEnv: (id: string, patch: Partial<EnvModel>) => Promise<void>;
-  createEnv: (env: Omit<EnvModel, 'id' | 'createdAt'>, projectId?: string) => Promise<void>;
+  createEnv: (
+    env: Omit<EnvModel, 'id' | 'createdAt'>,
+    projectId?: string
+  ) => Promise<void>;
   deleteEnv: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 };
@@ -18,14 +22,16 @@ const Context = createContext<EnvStore | null>(null);
 // Helper to convert backend DTO to frontend model
 function dtoToModel(dto: EnvironmentDto): EnvModel {
   const headers: Record<string, string> = {};
-  dto.headers.forEach(h => headers[h.key] = h.value);
-  
+  dto.headers.forEach(h => (headers[h.key] = h.value));
+
   const secrets: Record<string, string> = {};
-  dto.secrets.forEach(s => secrets[s.keyPath] = s.maskedPreview);
-  
+  dto.secrets.forEach(s => (secrets[s.keyPath] = s.maskedPreview));
+
   // Check if environment should be locked (production environments)
-  const locked = dto.name.toLowerCase() === 'prod' || dto.name.toLowerCase() === 'production';
-  
+  const locked =
+    dto.name.toLowerCase() === 'prod' ||
+    dto.name.toLowerCase() === 'production';
+
   return {
     id: dto.id,
     name: dto.name,
@@ -35,30 +41,43 @@ function dtoToModel(dto: EnvironmentDto): EnvModel {
     headers,
     secrets,
     createdAt: dto.createdAt,
-    locked
+    locked,
   };
 }
 
 // Helper to convert frontend model to backend update request
 function modelToUpdateRequest(model: EnvModel) {
-  const headers = Object.entries(model.headers).map(([key, value]) => ({ key, value }));
-  
+  const headers = Object.entries(model.headers).map(([key, value]) => ({
+    key,
+    value,
+  }));
+
   return {
     baseUrl: model.baseUrl,
     timeoutMs: model.timeoutMs,
     followRedirects: model.followRedirects,
-    headers
+    headers,
   };
 }
 
-export function EnvProvider({children, projectId}:{children:React.ReactNode, projectId?: string}){
+export function EnvProvider({
+  children,
+  projectId,
+}: {
+  children: React.ReactNode;
+  projectId?: string;
+}) {
   const [envs, setEnvs] = useState<EnvModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEnvs = async () => {
     try {
       setLoading(true);
-  const dtos = projectId ? await environmentsApi.getByProject(projectId) : await environmentsApi.getAll();
+      const dtos = await getOrFetch(`envs-${projectId ?? 'all'}`, async () =>
+        projectId
+          ? await environmentsApi.getByProject(projectId)
+          : await environmentsApi.getAll()
+      );
       const models = dtos.map(dtoToModel);
       setEnvs(models);
     } catch (error) {
@@ -77,14 +96,14 @@ export function EnvProvider({children, projectId}:{children:React.ReactNode, pro
     try {
       const current = envs.find(e => e.id === id);
       if (!current) return;
-      
+
       const updated = { ...current, ...patch };
       const updateRequest = modelToUpdateRequest(updated);
-      
+
       const dto = await environmentsApi.update(id, updateRequest);
       const model = dtoToModel(dto);
-      
-      setEnvs(prev => prev.map(e => e.id === id ? model : e));
+
+      setEnvs(prev => prev.map(e => (e.id === id ? model : e)));
       toast({ title: 'Environment updated successfully' });
     } catch (error) {
       console.error('Failed to update environment:', error);
@@ -92,15 +111,21 @@ export function EnvProvider({children, projectId}:{children:React.ReactNode, pro
     }
   };
 
-  const createEnv = async (env: Omit<EnvModel, 'id' | 'createdAt'>, projectId?: string) => {
+  const createEnv = async (
+    env: Omit<EnvModel, 'id' | 'createdAt'>,
+    projectId?: string
+  ) => {
     try {
-      const headers = Object.entries(env.headers).map(([key, value]) => ({ key, value }));
+      const headers = Object.entries(env.headers).map(([key, value]) => ({
+        key,
+        value,
+      }));
       const createRequest = {
         name: env.name,
         baseUrl: env.baseUrl,
         timeoutMs: env.timeoutMs,
         followRedirects: env.followRedirects,
-        headers
+        headers,
       };
       let dto;
       if (projectId) {
@@ -109,7 +134,7 @@ export function EnvProvider({children, projectId}:{children:React.ReactNode, pro
         dto = await environmentsApi.create(createRequest);
       }
       const model = dtoToModel(dto);
-      
+
       setEnvs(prev => [model, ...prev]);
       toast({ title: 'Environment created successfully' });
     } catch (error) {
@@ -130,14 +155,23 @@ export function EnvProvider({children, projectId}:{children:React.ReactNode, pro
   };
 
   return (
-    <Context.Provider value={{envs, loading, updateEnv, createEnv, deleteEnv, refetch: fetchEnvs}}>
+    <Context.Provider
+      value={{
+        envs,
+        loading,
+        updateEnv,
+        createEnv,
+        deleteEnv,
+        refetch: fetchEnvs,
+      }}
+    >
       {children}
     </Context.Provider>
   );
 }
 
-export function useEnvStore(): EnvStore { 
-  const ctx = useContext(Context); 
-  if(!ctx) throw new Error('useEnvStore must be used within EnvProvider'); 
-  return ctx; 
+export function useEnvStore(): EnvStore {
+  const ctx = useContext(Context);
+  if (!ctx) throw new Error('useEnvStore must be used within EnvProvider');
+  return ctx;
 }

@@ -78,6 +78,22 @@ export default function ChatView() {
     llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
   };
 
+  // Generate a stable local id for client-only messages so React keys stay stable
+  const generateLocalId = () => {
+    const maybeUUID = (
+      globalThis as unknown as {
+        crypto?: { randomUUID?: () => string };
+      }
+    ).crypto?.randomUUID?.();
+    return (
+      maybeUUID ??
+      `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    );
+  };
+
+  const ensureMessageId = (m: MessageModel) =>
+    m.id ? m : { ...m, id: generateLocalId() };
+
   const executeCommand = async (command: string): Promise<MessageModel> => {
     const baseResponse: {
       role: 'assistant';
@@ -339,7 +355,10 @@ All smoke tests are passing. Ready to merge!`,
     // Simulate command execution
     const assistantResponse = await executeCommand(command);
 
-    const userMessage: MessageModel = { role: 'user', content: command };
+    const userMessage: MessageModel = ensureMessageId({
+      role: 'user',
+      content: command,
+    });
 
     try {
       // If no current conversation, create a new one with both messages atomically
@@ -398,16 +417,24 @@ All smoke tests are passing. Ready to merge!`,
         await refreshConversations();
       }
 
-      // Update local state
-      setMessages(prev => [...prev, userMessage, assistantResponse]);
+      // Update local state (ensure messages have stable ids)
+      setMessages(prev => [
+        ...prev,
+        ensureMessageId(userMessage),
+        ensureMessageId(assistantResponse),
+      ]);
     } catch (error) {
       console.error('Failed to save conversation:', error);
       toast({
         title: 'Failed to save conversation. Using local storage only.',
       });
 
-      // Fall back to local state only
-      setMessages(prev => [...prev, userMessage, assistantResponse]);
+      // Fall back to local state only (ensure stable ids)
+      setMessages(prev => [
+        ...prev,
+        ensureMessageId(userMessage),
+        ensureMessageId(assistantResponse),
+      ]);
     }
 
     // Show drawer for certain commands
@@ -575,8 +602,10 @@ All smoke tests are passing. Ready to merge!`,
                         messageType: typeof message,
                       });
 
+                      const key = message.id ?? idx;
+
                       return (
-                        <div key={idx} className="animate-fade-in">
+                        <div key={key} className="animate-fade-in">
                           <ChatMessage
                             role={message.role as 'user' | 'assistant'}
                             content={message.content}
@@ -672,16 +701,16 @@ All smoke tests are passing. Ready to merge!`,
                       };
 
                       // Create messages: user + loading placeholder
-                      const userMessage: MessageModel = {
+                      const userMessage: MessageModel = ensureMessageId({
                         role: 'user',
                         content: msg,
-                      };
-                      const loadingMessage: MessageModel = {
+                      });
+                      const loadingMessage: MessageModel = ensureMessageId({
                         role: 'assistant',
                         content: 'Generating...',
                         cards: [],
                         buttons: [],
-                      };
+                      });
 
                       // Capture current length and append user + loading so we can replace loading later
                       const currentLength = messages.length;
@@ -737,7 +766,7 @@ All smoke tests are passing. Ready to merge!`,
                           return;
                         }
 
-                        const assistantMessage: MessageModel = {
+                        const assistantMessage: MessageModel = ensureMessageId({
                           role: 'assistant',
                           content:
                             card.heading ??
@@ -764,14 +793,19 @@ All smoke tests are passing. Ready to merge!`,
                             { label: 'Add Negatives', variant: 'secondary' },
                           ],
                           llmCard: card,
-                        };
+                        });
 
-                        // Replace the loading message with the real assistant message
+                        // Replace the loading message with the real assistant message but preserve id
                         setMessages(prev => {
                           const copy = [...prev];
-                          // Guard in case messages changed length unexpectedly
                           if (loadingIndex >= 0 && loadingIndex < copy.length) {
-                            copy[loadingIndex] = assistantMessage;
+                            const existing = copy[loadingIndex] as
+                              | MessageModel
+                              | { id?: string };
+                            copy[loadingIndex] = {
+                              ...assistantMessage,
+                              id: existing.id || assistantMessage.id,
+                            };
                           } else {
                             copy.push(assistantMessage);
                           }

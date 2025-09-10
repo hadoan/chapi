@@ -7,6 +7,9 @@ import type { components } from '@/lib/api/schema';
 import mockMessages from '@/lib/mock/messages/chat-1.json';
 import { useCallback, useEffect, useState } from 'react';
 
+const generateLocalId = () =>
+  `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 type LlmMessage = MessageModel & {
   llmCard?: components['schemas']['Chapi.AI.Dto.ChapiCard'];
 };
@@ -352,6 +355,7 @@ export function useConversations(
             : undefined,
         } as MessageModel;
 
+        if (!assistantMessage.id) assistantMessage.id = generateLocalId();
         setMessages(prev => [...prev, assistantMessage]);
         toast({ title: 'Negative tests added' });
       } catch (err) {

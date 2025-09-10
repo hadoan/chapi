@@ -7,10 +7,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
+import { getOrFetch } from '@/lib/api/cache';
 import { environmentsApi } from '@/lib/api/environments';
 import { projectsApi } from '@/lib/api/projects';
 import { ChevronDown, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Project = { id?: string; name?: string };
 type Env = { id?: string; name?: string };
@@ -37,38 +38,64 @@ export default function ProjectSelectionBar({
   const [envOptions, setEnvOptions] = useState<Env[]>([]);
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
 
+  // Simple in-memory caches to prevent repeated API calls across mounts
+  const projectsCacheRef = useRef<Project[] | null>(null);
+  const envCacheRef = useRef<Map<string, Env[]>>(new Map());
+
   useEffect(() => {
     let mounted = true;
-    projectsApi
-      .getAll()
-      .then(list => {
+
+    // Use cache wrapper which dedupes inflight requests
+    getOrFetch('projects', async () => {
+      const list = await projectsApi.getAll();
+      return list.map(p => ({ id: p.id ?? '', name: p.name ?? '' }));
+    })
+      .then(mapped => {
         if (!mounted) return;
-        const mapped = list.map(p => ({ id: p.id ?? '', name: p.name ?? '' }));
+        projectsCacheRef.current = mapped;
         setProjects(mapped);
         const pick =
           mapped.find(p => p.id === initialProjectId) ?? mapped[0] ?? null;
         setSelectedProject(pick);
-        if (pick && onSelectProject) onSelectProject(pick);
+        if (pick && typeof onSelectProject === 'function')
+          onSelectProject(pick);
       })
       .catch(() => toast({ title: 'Failed to load projects' }));
 
     return () => {
       mounted = false;
     };
-  }, [initialProjectId, onSelectProject]);
+  }, [initialProjectId]);
 
   useEffect(() => {
     if (!selectedProject?.id) return;
     let mounted = true;
+
+    // Use cached envs for this project if available
+    const cached = envCacheRef.current.get(selectedProject.id);
+    if (cached) {
+      setEnvOptions(cached);
+      if (cached.length > 0) {
+        setSelectedEnv(cached[0].name ?? null);
+        if (typeof onSelectEnv === 'function')
+          onSelectEnv(cached[0].name ?? null);
+      }
+      return () => {
+        mounted = false;
+      };
+    }
+
     environmentsApi
       .getByProject(selectedProject.id)
       .then(list => {
         if (!mounted) return;
         const mapped = list.map(e => ({ id: e.id ?? '', name: e.name ?? '' }));
+        envCacheRef.current.set(selectedProject.id, mapped);
         setEnvOptions(mapped);
         if (mapped.length > 0) {
           setSelectedEnv(mapped[0].name ?? null);
-          if (onSelectEnv) onSelectEnv(mapped[0].name ?? null);
+          if (typeof onSelectEnv === 'function')
+            onSelectEnv(mapped[0].name ?? null);
         }
       })
       .catch(() => toast({ title: 'Failed to load environments' }));
@@ -76,7 +103,7 @@ export default function ProjectSelectionBar({
     return () => {
       mounted = false;
     };
-  }, [selectedProject, onSelectEnv]);
+  }, [selectedProject?.id]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
