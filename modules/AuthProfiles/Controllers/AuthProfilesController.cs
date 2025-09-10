@@ -18,11 +18,14 @@ namespace AuthProfiles.Controllers
         private readonly IAuthProfileReadService _read;
         private readonly IAuthDetectionService _detection;
 
-        public AuthProfilesController(IAuthProfileService service, IAuthProfileReadService read, IAuthDetectionService detection)
+        private readonly IAuthProfileTester _authProfileTester;
+
+        public AuthProfilesController(IAuthProfileService service, IAuthProfileReadService read, IAuthDetectionService detection, IAuthProfileTester authProfileTester)
         {
             _service = service;
             _read = read;
             _detection = detection;
+            _authProfileTester = authProfileTester;
         }
 
         [HttpPost]
@@ -90,8 +93,7 @@ namespace AuthProfiles.Controllers
         public async Task<TestAuthResult> Test([FromBody] TestRequest r, CancellationToken ct)
         {
             // resolve and run test via service - implementation added in application layer
-            var tester = HttpContext.RequestServices.GetService(typeof(Application.Services.IAuthProfileTester)) as Application.Services.IAuthProfileTester;
-            if (tester == null) return new TestAuthResult(false, "error", "Tester not available", null, null, null, null, null, null);
+            if (_authProfileTester == null) return new TestAuthResult(false, "error", "Tester not available", null, null, null, null, null, null);
 
             var dto = new Application.Dtos.TestAuthRequest(
                 r.AuthProfileId.GetValueOrDefault(),
@@ -100,7 +102,7 @@ namespace AuthProfiles.Controllers
                 r.OverrideSecretValues
             );
 
-            var res = await tester.TestAsync(dto, ct).ConfigureAwait(false);
+            var res = await _authProfileTester.TestAsync(dto, ct).ConfigureAwait(false);
             return res;
         }
 

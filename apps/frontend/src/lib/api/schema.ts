@@ -6478,11 +6478,11 @@ export interface components {
         };
         "AuthProfiles.Application.Dtos.AuthProfileDto": {
             /** Format: uuid */
-            id?: string;
+            id?: string | null;
             /** Format: uuid */
             projectId?: string;
             /** Format: uuid */
-            serviceId?: string;
+            serviceId?: string | null;
             environmentKey?: string | null;
             type?: components["schemas"]["AuthProfiles.Domain.AuthType"];
             params?: {
@@ -6496,12 +6496,12 @@ export interface components {
             injectionFormat?: string | null;
             detectSource?: string | null;
             /** Format: double */
-            detectConfidence?: number;
-            enabled?: boolean;
+            detectConfidence?: number | null;
+            enabled?: boolean | null;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt?: string | null;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt?: string | null;
             secretRefs?: {
                 [key: string]: string;
             } | null;

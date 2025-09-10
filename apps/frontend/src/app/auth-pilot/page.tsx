@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthProfiles } from '@/hooks/use-auth-profiles';
 import { toast } from '@/hooks/use-toast';
+import { authProfilesApi } from '@/lib/api/auth-profiles';
+import type { components } from '@/lib/api/schema';
 import { useProject } from '@/lib/state/projectStore';
 import { HelpCircle, RotateCcw, Save, TestTube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -258,11 +260,122 @@ function AuthPilotContent() {
 
     setIsTestingConnection(true);
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     try {
-      const result = simulateTokenRequest(profile);
+      // For flows that require server-side secret resolution (OAuth2, Basic, Custom login)
+      // call the backend tester which can access secret stores and make outbound requests.
+      let result;
+
+      if (
+        profile.type === 'oauth2_client_credentials' ||
+        profile.type === 'password' ||
+        profile.type === 'basic' ||
+        profile.type === 'custom_login'
+      ) {
+        // Map frontend type to backend AuthType enum (using schema types)
+        const mapType = (
+          t: string
+        ): components['schemas']['AuthProfiles.Domain.AuthType'] => {
+          switch (t) {
+            case 'oauth2_client_credentials':
+              return 0; // OAuth2ClientCredentials
+            case 'password':
+              return 1; // OAuth2Password
+            case 'basic':
+              return 2; // Basic
+            case 'custom_login':
+              return 6; // CustomLogin
+            default:
+              return 0;
+          }
+        };
+
+        // Helper: if a user-entered value looks like a secret ref (contains ':'), pass it through.
+        // Otherwise, place the actual secret into OverrideSecretValues and reference it by an override key.
+        const overrides: Record<string, string> = {};
+        const makeRef = (val: string | undefined, keyPrefix: string) => {
+          if (!val) return null;
+          if (val.includes(':')) return val; // assume it's already a secret ref/key
+          const overrideKey = `__inline_${keyPrefix}`;
+          overrides[overrideKey] = val;
+          return overrideKey;
+        };
+
+        // Build AuthProfileDto using schema type
+        const profileInline: components['schemas']['AuthProfiles.Application.Dtos.AuthProfileDto'] =
+          {
+            id: null,
+            projectId:
+              selectedProject?.id || '00000000-0000-0000-0000-000000000000',
+            serviceId: null,
+            environmentKey: environment.toLowerCase(),
+            type: mapType(profile.type),
+            tokenUrl: profile.token_url,
+            params: {
+              ClientId: profile.client_id ?? null,
+              // If user typed a client secret, send it via overrides so the server can resolve it
+              ClientSecretRef: makeRef(
+                profile.client_secret ?? undefined,
+                'client_secret'
+              ),
+              // username_ref/password_ref may be actual values or secret refs in the demo UI
+              UsernameRef: makeRef(
+                profile.username_ref ?? undefined,
+                'username'
+              ),
+              PasswordRef: makeRef(
+                profile.password_ref ?? undefined,
+                'password'
+              ),
+              CustomLoginUrl: profile.token_url ?? null,
+              CustomUserKey: profile.login_user_key ?? null,
+              CustomPassKey: profile.login_pass_key ?? null,
+              CustomBodyType: profile.login_body_type ?? null,
+            },
+            audience: profile.audience,
+            scopesCsv: profile.scopes,
+            injectionMode: null,
+            injectionName: null,
+            injectionFormat: null,
+            detectSource: null,
+            detectConfidence: null,
+            enabled: null,
+            createdAt: null,
+            updatedAt: null,
+            secretRefs: null,
+          };
+
+        // Call server-side test using proper schema types
+        const resp = await authProfilesApi.test({
+          authProfileId: null,
+          profileInline: profileInline,
+          envId: null,
+          overrideSecretValues: Object.keys(overrides).length
+            ? overrides
+            : null,
+        });
+        // Normalize to TokenResult-like shape for frontend views
+        if (resp.ok) {
+          result = {
+            status: 'ok',
+            access_token:
+              resp.accessToken ?? resp.sampleTokenPrefix ?? undefined,
+            token_type: resp.tokenType ?? undefined,
+            expires_at: resp.expiresAt ?? undefined,
+            message: resp.message ?? undefined,
+          };
+        } else {
+          result = {
+            status: resp.status || 'error',
+            message: resp.message || 'Test failed',
+          };
+        }
+      } else {
+        // For simple client-only flows use the local simulator
+        // keep simulated delay to show UX feedback
+        await new Promise(resolve => setTimeout(resolve, 500));
+        result = simulateTokenRequest(profile);
+      }
+
       setTokenResult(result);
 
       if (result.status === 'ok') {
@@ -291,6 +404,7 @@ function AuthPilotContent() {
         });
       }
     } catch (error) {
+      console.error('Test connection error', error);
       toast({
         title: 'Test failed',
         description: 'Unexpected error occurred',
@@ -299,7 +413,7 @@ function AuthPilotContent() {
     } finally {
       setIsTestingConnection(false);
     }
-  }, [profile, addLog]);
+  }, [profile, addLog, environment, selectedProject?.id]);
 
   const handleResetDemo = () => {
     localStorage.removeItem(STORAGE_KEY);

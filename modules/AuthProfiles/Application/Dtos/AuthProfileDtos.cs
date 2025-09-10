@@ -5,24 +5,24 @@ using AuthProfiles.Domain;
 namespace AuthProfiles.Application.Dtos
 {
     public record AuthProfileDto(
-        Guid Id,
+        Guid? Id,
         Guid ProjectId,
-        Guid ServiceId,
-        string EnvironmentKey,
+        Guid? ServiceId,
+        string? EnvironmentKey,
     AuthType Type,
     IDictionary<string, object>? Params,
     string? TokenUrl,
     string? Audience,
     string? ScopesCsv,
-        InjectionMode InjectionMode,
-        string InjectionName,
-        string InjectionFormat,
-        string DetectSource,
-        double DetectConfidence,
-        bool Enabled,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset UpdatedAt,
-        IReadOnlyDictionary<string, string> SecretRefs
+        InjectionMode? InjectionMode,
+        string? InjectionName,
+        string? InjectionFormat,
+        string? DetectSource,
+        double? DetectConfidence,
+        bool? Enabled,
+        DateTimeOffset? CreatedAt,
+        DateTimeOffset? UpdatedAt,
+        IReadOnlyDictionary<string, string>? SecretRefs
     );
 
     public record AuthDetectionCandidateDto(

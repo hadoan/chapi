@@ -61,6 +61,17 @@ export interface AuthDetectionCandidate {
   injectionFormat?: string;
   confidence: number;
 }
+export interface TestAuthResponse {
+  ok: boolean;
+  status: string;
+  message?: string | null;
+  sampleTokenPrefix?: string | null;
+  accessToken?: string | null;
+  tokenType?: string | null;
+  expiresAt?: string | null;
+  headers?: Record<string, string> | null;
+  cookieHeader?: string | null;
+}
 
 export const authProfilesApi = {
   async getAll(params?: GetAuthProfilesQuery): Promise<AuthProfileDto[]> {
@@ -150,5 +161,17 @@ export const authProfilesApi = {
       method: 'POST',
       data: request,
     });
+  },
+
+  async test(
+    request: components['schemas']['AuthProfiles.Controllers.AuthProfilesController.TestRequest']
+  ): Promise<TestAuthResponse> {
+    return await AuthService.authenticatedFetch<TestAuthResponse>(
+      '/api/authprofiles/test',
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
   },
 };
