@@ -94,5 +94,14 @@ namespace AuthProfiles.Application.Services
             var (items, total) = await _repo.GetPagedAsync(q.Page, q.PageSize, q.Enabled, q.ProjectId, q.ServiceId, q.Env, ct).ConfigureAwait(false);
             return (items.Select(i => i.ToDto()), total);
         }
+
+        public async Task<AuthProfileDto?> GetFirstForProjectEnvironmentAsync(Guid projectId, string environmentKey, CancellationToken ct)
+        {
+            // Query the repository for enabled profiles matching project and environment, take first
+            var (items, _) = await _repo.GetPagedAsync(1, 1, true, projectId, null, environmentKey, ct).ConfigureAwait(false);
+            var first = items.FirstOrDefault();
+            if (first == null) return null;
+            return first.ToDto();
+        }
     }
 }

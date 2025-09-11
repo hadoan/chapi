@@ -58,18 +58,59 @@ namespace AuthProfiles.Application.Mappings
             e.UpdateCore(r.TokenUrl, r.Audience, r.ScopesCsv);
             if (r.Params != null)
             {
+                // normalize keys for lookup (case-insensitive, preserve original value)
+                var normalized = r.Params.ToDictionary(k => k.Key ?? string.Empty, v => v.Value, StringComparer.OrdinalIgnoreCase);
+
+                string? GetParam(params string[] keys)
+                {
+                    foreach (var k in keys)
+                    {
+                        if (normalized.TryGetValue(k, out var val) && !string.IsNullOrEmpty(val)) return val;
+                    }
+                    return null;
+                }
+
                 var p = new AuthProfile.Params();
-                if (r.Params.TryGetValue("TokenUrl", out var tv)) p.TokenUrl = tv;
-                if (r.Params.TryGetValue("ClientId", out var cid)) p.ClientId = cid;
-                if (r.Params.TryGetValue("ClientSecretRef", out var csr)) p.ClientSecretRef = csr;
-                if (r.Params.TryGetValue("UsernameRef", out var ur)) p.UsernameRef = ur;
-                if (r.Params.TryGetValue("PasswordRef", out var pr)) p.PasswordRef = pr;
-                if (r.Params.TryGetValue("CustomLoginUrl", out var cu)) p.CustomLoginUrl = cu;
-                if (r.Params.TryGetValue("CustomBodyType", out var cb)) p.CustomBodyType = cb;
-                if (r.Params.TryGetValue("CustomUserKey", out var cuk)) p.CustomUserKey = cuk;
-                if (r.Params.TryGetValue("CustomPassKey", out var cpk)) p.CustomPassKey = cpk;
-                if (r.Params.TryGetValue("TokenJsonPath", out var tj)) p.TokenJsonPath = tj;
-                e.UpdateParameters(p);
+
+              
+                // ClientId
+                var cid = GetParam("ClientId", "client_id", "clientId");
+                if (!string.IsNullOrEmpty(cid)) p.ClientId = cid;
+
+                // ClientSecretRef (may be provided as client_secret_ref or client_secret)
+                var csr = GetParam("ClientSecretRef", "client_secret_ref", "clientSecretRef", "client_secret", "clientSecret");
+                if (!string.IsNullOrEmpty(csr)) p.ClientSecretRef = csr;
+
+                // UsernameRef
+                var ur = GetParam("UsernameRef", "username_ref", "usernameRef", "username");
+                if (!string.IsNullOrEmpty(ur)) p.UsernameRef = ur;
+
+                // PasswordRef
+                var pr = GetParam("PasswordRef", "password_ref", "passwordRef", "password");
+                if (!string.IsNullOrEmpty(pr)) p.PasswordRef = pr;
+
+                // CustomLoginUrl
+                var cu = GetParam("CustomLoginUrl", "custom_login_url", "customLoginUrl");
+                if (!string.IsNullOrEmpty(cu)) p.CustomLoginUrl = cu;
+
+                // CustomBodyType
+                var cb = GetParam("CustomBodyType", "custom_body_type", "customBodyType");
+                if (!string.IsNullOrEmpty(cb)) p.CustomBodyType = cb;
+
+                // CustomUserKey
+                var cuk = GetParam("CustomUserKey", "custom_user_key", "customUserKey");
+                if (!string.IsNullOrEmpty(cuk)) p.CustomUserKey = cuk;
+
+                // CustomPassKey
+                var cpk = GetParam("CustomPassKey", "custom_pass_key", "customPassKey");
+                if (!string.IsNullOrEmpty(cpk)) p.CustomPassKey = cpk;
+
+                // TokenJsonPath
+                var tj = GetParam("TokenJsonPath", "token_json_path", "tokenJsonPath");
+                if (!string.IsNullOrEmpty(tj)) p.TokenJsonPath = tj;
+
+                e.Parameters = p;
+
             }
             e.SetInjection(r.InjectionMode, r.InjectionName, r.InjectionFormat);
 
@@ -84,10 +125,22 @@ namespace AuthProfiles.Application.Mappings
                         e.RemoveSecretRef(exist.Key);
                 }
 
+                // build lookup of existing refs by key (case-insensitive)
+                var existingLookup = e.SecretRefs.ToDictionary(s => s.Key, StringComparer.OrdinalIgnoreCase);
+
                 foreach (var kv in r.SecretRefs)
                 {
-                    var id = Guid.NewGuid();
-                    e.AddSecretRef(id, kv.Key, kv.Value);
+                    if (existingLookup.TryGetValue(kv.Key, out var existing))
+                    {
+                        // update existing secret ref value
+                        existing.UpdateSecretRef(kv.Value);
+                    }
+                    else
+                    {
+                        var id = Guid.NewGuid();
+                        // kv.Value is expected to be the secret reference or secret value depending on caller
+                        e.AddSecretRef(id, kv.Key, kv.Value);
+                    }
                 }
             }
         }

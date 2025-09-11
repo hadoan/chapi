@@ -33,7 +33,7 @@ namespace AuthProfiles.Domain
             public string? TokenJsonPath { get; set; }
         }
 
-        public Params? Parameters { get; private set; }
+        public Params? Parameters { get; set; }
 
 
         private AuthProfile()
@@ -145,16 +145,7 @@ namespace AuthProfiles.Domain
             UpdatedAt = DateTime.UtcNow;
         }
 
-        public void UpdateParameters(Params p)
-        {
-            Parameters = p ?? new Params();
-            // keep some top-level for compatibility
-            TokenUrl = Parameters.TokenUrl;
-            Audience = Parameters.Audience;
-            ScopesCsv = Parameters.Scopes;
-            UpdatedAt = DateTime.UtcNow;
-        }
-
+     
         public AuthProfileSecretRef AddSecretRef(Guid id, string key, string secretRef, string? notes = null)
         {
             var existing = _secretRefs.FirstOrDefault(s => s.Key == key);

@@ -11,5 +11,6 @@ namespace AuthProfiles.Application.Services
     {
         Task<AuthProfileDto?> GetByIdAsync(Guid id, CancellationToken ct);
         Task<(IEnumerable<AuthProfileDto> Items, int Total)> ListAsync(GetAuthProfilesQuery q, CancellationToken ct);
+        Task<AuthProfileDto?> GetFirstForProjectEnvironmentAsync(Guid projectId, string environmentKey, CancellationToken ct);
     }
 }

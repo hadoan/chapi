@@ -46,6 +46,16 @@ namespace AuthProfiles.Controllers
             return dto;
         }
 
+        // Get first valid (enabled) auth profile for a project and environment
+        [HttpGet("first")]
+        public async Task<ActionResult<AuthProfileDto>> GetFirstForProjectEnvironment([FromQuery] Guid projectId, [FromQuery] string environmentKey, CancellationToken ct)
+        {
+            if (projectId == Guid.Empty || string.IsNullOrWhiteSpace(environmentKey)) return BadRequest("projectId and environmentKey are required");
+            var dto = await _read.GetFirstForProjectEnvironmentAsync(projectId, environmentKey, ct).ConfigureAwait(false);
+            if (dto == null) return NotFound();
+            return Ok(dto);
+        }
+
         [HttpGet]
         public async Task<IEnumerable<AuthProfileDto>> List([FromQuery] GetAuthProfilesQuery q, CancellationToken ct)
         {

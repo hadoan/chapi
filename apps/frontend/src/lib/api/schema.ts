@@ -530,6 +530,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/authprofiles/first": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                    environmentKey?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "application/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                        "text/json": components["schemas"]["AuthProfiles.Application.Dtos.AuthProfileDto"];
+                    };
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/authprofiles/{id}/enable": {
         parameters: {
             query?: never;

@@ -241,8 +241,13 @@ export function useAuthProfiles({
     try {
       setLoading(true);
       setError(null);
-      const result = await authProfilesApi.getAll();
-      setProfiles(result || []);
+      // Use server-side helper to get the first profile for project/environment
+      if (!projectId) {
+        setProfiles([]);
+        return;
+      }
+      const first = await authProfilesApi.getFirst(projectId, environmentId);
+      setProfiles(first ? [first] : []);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to load auth profiles';
@@ -255,7 +260,7 @@ export function useAuthProfiles({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId, environmentId]);
 
   // Create new profile
   const createProfile = useCallback(
@@ -263,6 +268,30 @@ export function useAuthProfiles({
       try {
         setLoading(true);
         setError(null);
+        // Check for existing profile for this project/service/environment
+        const first = projectId
+          ? await authProfilesApi.getFirst(projectId, environmentId)
+          : null;
+
+        if (first) {
+          // If an existing profile exists, update it instead of creating a duplicate
+          const updateRequest = mapToUpdateRequest(frontendProfile);
+          const updatedProfile = await authProfilesApi.update(
+            first.id!,
+            updateRequest
+          );
+          if (updatedProfile) {
+            setProfiles(prev =>
+              prev.map(p => (p.id === first.id ? updatedProfile : p))
+            );
+            toast({
+              title: 'Success',
+              description: 'Auth profile updated successfully',
+            });
+            return updatedProfile;
+          }
+        }
+
         const createRequest = mapToCreateRequest(
           frontendProfile,
           environmentId,

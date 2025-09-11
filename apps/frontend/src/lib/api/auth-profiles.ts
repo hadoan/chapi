@@ -74,6 +74,27 @@ export const authProfilesApi = {
     );
   },
 
+  async getFirst(
+    projectId: string,
+    environmentKey: string
+  ): Promise<AuthProfileDto | null> {
+    const url = `/api/authprofiles/first?projectId=${encodeURIComponent(
+      projectId
+    )}&environmentKey=${encodeURIComponent(environmentKey)}`;
+    try {
+      const res = await AuthService.authenticatedFetch<AuthProfileDto>(url, {
+        method: 'GET',
+      });
+      return res || null;
+    } catch (err) {
+      // If 404, return null; otherwise rethrow
+      // AuthService throws for non-2xx; try to detect 404 by message
+      if (err instanceof Error && err.message && err.message.includes('404'))
+        return null;
+      throw err;
+    }
+  },
+
   async create(profile: CreateAuthProfileRequest): Promise<AuthProfileDto> {
     return await AuthService.authenticatedFetch<AuthProfileDto>(
       '/api/authprofiles',

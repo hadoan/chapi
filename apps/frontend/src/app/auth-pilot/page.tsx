@@ -27,7 +27,6 @@ import { TokenCachePreview } from '@/components/auth-pilot/TokenCachePreview';
 import {
   createInitialProfile,
   formatTimestamp,
-  getAuthTypeDisplayName,
   getErrorMessage,
   simulateTokenRequest,
   validateProfile,
@@ -643,82 +642,6 @@ function AuthPilotContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Detection & Candidates */}
           <div className="space-y-6">
-            {/* Profile Selector */}
-            {backendProfiles.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Saved Profiles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {backendProfiles.map(backendProfile => {
-                      const frontendProfile = {
-                        type: mapBackendAuthType(backendProfile.type!),
-                        token_url: backendProfile.tokenUrl || '',
-                        scopes: backendProfile.scopesCsv || '',
-                        audience: backendProfile.audience || '',
-                        notes: '',
-                        client_id:
-                          backendProfile.secretRefs?.['client_id'] || '',
-                        client_secret:
-                          backendProfile.secretRefs?.['client_secret'] || '',
-                        header_name:
-                          backendProfile.injectionName || 'X-API-Key',
-                        api_key: backendProfile.secretRefs?.['api_key'] || '',
-                        bearer_token:
-                          backendProfile.secretRefs?.['bearer_token'] || '',
-                        cookie_value:
-                          backendProfile.secretRefs?.['cookie_value'] || '',
-                        username_ref:
-                          backendProfile.secretRefs?.['username'] || '',
-                        password_ref:
-                          backendProfile.secretRefs?.['password'] || '',
-                        login_body_type: (backendProfile.secretRefs?.[
-                          'custom_body_type'
-                        ] === 'form'
-                          ? 'form'
-                          : 'json') as 'json' | 'form',
-                        login_user_key:
-                          backendProfile.secretRefs?.['custom_user_key'] ||
-                          'username',
-                        login_pass_key:
-                          backendProfile.secretRefs?.['custom_pass_key'] ||
-                          'password',
-                        token_json_path:
-                          backendProfile.secretRefs?.['token_json_path'] ||
-                          '$.access_token',
-                      };
-                      return (
-                        <Button
-                          key={backendProfile.id}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start text-left"
-                          onClick={() => {
-                            // Load the selected profile into the form
-                            setProfile(frontendProfile);
-                            setTokenResult(undefined); // Clear previous test results
-                            toast({
-                              title: 'Profile loaded',
-                              description: `Loaded profile for ${frontendProfile.token_url}`,
-                            });
-                          }}
-                        >
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">
-                              {getAuthTypeDisplayName(frontendProfile.type)}
-                            </span>
-                            <span className="text-xs text-muted-foreground truncate max-w-48">
-                              {frontendProfile.token_url}
-                            </span>
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}{' '}
             {bestDetection && (
               <DetectionBanner
                 detection={bestDetection}
