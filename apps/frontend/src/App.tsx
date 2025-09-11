@@ -8,6 +8,7 @@ import AuthPilotPage from './app/auth-pilot/page';
 import LoginPage from './app/auth/login';
 import EnvironmentsPage from './app/environments/page';
 import IntegrationsPage from './app/integrations/page';
+import SettingsPage from './app/settings/page';
 import ProjectEndpointsPage from './app/projects/[id]/endpoints/page';
 import ProjectOpenApiPage from './app/projects/[id]/openapi/page';
 import ProjectOverviewPage from './app/projects/[id]/page';
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/app/runs/:runId" element={<RunDetailPage />} />
           <Route path="/app/environments" element={<EnvironmentsPage />} />
           <Route path="/app/integrations" element={<IntegrationsPage />} />
+          <Route path="/app/settings" element={<SettingsPage />} />
           <Route path="/app/auth-pilot" element={<AuthPilotPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
