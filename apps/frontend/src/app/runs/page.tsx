@@ -149,7 +149,7 @@ export default function RunsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/runs/${run.id}`)}
+                        onClick={() => navigate(`/app/runs/${run.id}`)}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
