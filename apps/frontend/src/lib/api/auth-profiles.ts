@@ -12,29 +12,21 @@ export type AuthType = components['schemas']['AuthProfiles.Domain.AuthType'];
 export type InjectionMode =
   components['schemas']['AuthProfiles.Domain.InjectionMode'];
 
-// For response types, we'll need to extract from the API response content
-// Since the backend returns AuthProfileDto but it's not exposed in schema components,
-// we'll infer it from the API responses
-export interface AuthProfileDto {
-  id: string;
-  projectId?: string;
-  serviceId?: string;
-  environmentKey?: string;
-  type: AuthType;
-  tokenUrl?: string;
-  audience?: string;
-  scopesCsv?: string;
-  injectionMode: InjectionMode;
-  injectionName?: string;
-  injectionFormat?: string;
-  detectSource?: string;
-  detectConfidence?: number;
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-  secretRefs: Record<string, string>;
-}
+// For response types, we'll use the generated schema types
+export type AuthProfileDto =
+  components['schemas']['AuthProfiles.Application.Dtos.AuthProfileDto'];
+export type AuthDetectionCandidate =
+  components['schemas']['AuthProfiles.Application.Dtos.AuthDetectionCandidateDto'];
+export type TestAuthResponse =
+  components['schemas']['AuthProfiles.Application.Dtos.TestAuthResult'];
+export type DetectTokenRequest =
+  components['schemas']['AuthProfiles.Application.Dtos.DetectTokenRequest'];
+export type DetectionResponse =
+  components['schemas']['AuthProfiles.Application.Dtos.DetectionResponse'];
+export type SimpleDetection =
+  components['schemas']['AuthProfiles.Application.Dtos.SimpleDetection'];
 
+// Query parameter interface (not in schema)
 export interface GetAuthProfilesQuery {
   page?: number;
   pageSize?: number;
@@ -45,32 +37,11 @@ export interface GetAuthProfilesQuery {
   search?: string;
 }
 
+// Detection result interface (not in schema)
 export interface AuthDetectionResult {
   candidates: AuthDetectionCandidate[];
   source: string;
   confidence: number;
-}
-
-export interface AuthDetectionCandidate {
-  type: AuthType;
-  tokenUrl?: string;
-  audience?: string;
-  scopesCsv?: string;
-  injectionMode: InjectionMode;
-  injectionName?: string;
-  injectionFormat?: string;
-  confidence: number;
-}
-export interface TestAuthResponse {
-  ok: boolean;
-  status: string;
-  message?: string | null;
-  sampleTokenPrefix?: string | null;
-  accessToken?: string | null;
-  tokenType?: string | null;
-  expiresAt?: string | null;
-  headers?: Record<string, string> | null;
-  cookieHeader?: string | null;
 }
 
 export const authProfilesApi = {
@@ -146,21 +117,14 @@ export const authProfilesApi = {
     );
   },
 
-  async detect(request: {
-    projectId?: string;
-    serviceId?: string;
-    baseUrl?: string;
-  }): Promise<{
-    candidates: AuthDetectionCandidate[];
-    best?: { endpoint: string; source: string; confidence: number };
-  }> {
-    return await AuthService.authenticatedFetch<{
-      candidates: AuthDetectionCandidate[];
-      best?: { endpoint: string; source: string; confidence: number };
-    }>('/api/authprofiles/detect', {
-      method: 'POST',
-      data: request,
-    });
+  async detect(request: DetectTokenRequest): Promise<DetectionResponse> {
+    return await AuthService.authenticatedFetch<DetectionResponse>(
+      '/api/authprofiles/detect',
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
   },
 
   async test(

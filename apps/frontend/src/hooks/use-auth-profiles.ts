@@ -73,13 +73,28 @@ const mapToFrontendProfile = (
     api_key: backendProfile.secretRefs?.['api_key'] || '',
     bearer_token: backendProfile.secretRefs?.['bearer_token'] || '',
     cookie_value: backendProfile.secretRefs?.['cookie_value'] || '',
+    // Username/password secret refs (for password/basic/custom login)
+    username_ref: backendProfile.secretRefs?.['username'] || '',
+    password_ref: backendProfile.secretRefs?.['password'] || '',
+    // Custom login options
+    login_body_type: (backendProfile.secretRefs?.['custom_body_type'] === 'form'
+      ? 'form'
+      : 'json') as 'json' | 'form',
+    login_user_key:
+      backendProfile.secretRefs?.['custom_user_key'] || 'username',
+    login_pass_key:
+      backendProfile.secretRefs?.['custom_pass_key'] || 'password',
+    token_json_path:
+      backendProfile.secretRefs?.['token_json_path'] || '$.access_token',
   };
 };
 
 // Convert frontend profile to backend create request
 const mapToCreateRequest = (
   frontendProfile: import('@/types/auth-pilot').AuthProfile,
-  environmentId: string
+  environmentId: string,
+  projectId?: string,
+  serviceId?: string
 ): CreateAuthProfileRequest => {
   const params: Record<string, string> = {};
   const secretRefs: Record<string, string> = {};
@@ -130,8 +145,8 @@ const mapToCreateRequest = (
     secretRefs['cookie_value'] = frontendProfile.cookie_value;
 
   return {
-    projectId: undefined,
-    serviceId: undefined,
+    projectId: projectId || '00000000-0000-0000-0000-000000000001', // Default project ID if not provided
+    serviceId: serviceId || '00000000-0000-0000-0000-000000000002', // Default service ID if not provided
     environmentKey: environmentId,
     type: mapFrontendAuthType(frontendProfile.type),
     tokenUrl: frontendProfile.token_url,
@@ -206,11 +221,15 @@ const mapToUpdateRequest = (
 
 export interface UseAuthProfilesOptions {
   environmentId?: string;
+  projectId?: string;
+  serviceId?: string;
   autoLoad?: boolean;
 }
 
 export function useAuthProfiles({
   environmentId = 'default-env',
+  projectId,
+  serviceId,
   autoLoad = true,
 }: UseAuthProfilesOptions = {}) {
   const [profiles, setProfiles] = useState<AuthProfileDto[]>([]);
@@ -246,7 +265,9 @@ export function useAuthProfiles({
         setError(null);
         const createRequest = mapToCreateRequest(
           frontendProfile,
-          environmentId
+          environmentId,
+          projectId,
+          serviceId
         );
         const newProfile = await authProfilesApi.create(createRequest);
         if (newProfile) {
@@ -271,7 +292,7 @@ export function useAuthProfiles({
       }
       return null;
     },
-    [environmentId]
+    [environmentId, projectId, serviceId]
   );
 
   // Update existing profile

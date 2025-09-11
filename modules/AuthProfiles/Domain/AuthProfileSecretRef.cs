@@ -21,6 +21,7 @@ namespace AuthProfiles.Domain
             Key = key ?? throw new ArgumentNullException(nameof(key));
             SecretRef = secretRef ?? throw new ArgumentNullException(nameof(secretRef));
             Notes = notes;
+            UpdatedAt = DateTime.UtcNow;
         }
 
         public Guid AuthProfileId { get; private set; }

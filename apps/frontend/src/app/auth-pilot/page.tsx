@@ -27,6 +27,7 @@ import { TokenCachePreview } from '@/components/auth-pilot/TokenCachePreview';
 import {
   createInitialProfile,
   formatTimestamp,
+  getAuthTypeDisplayName,
   getErrorMessage,
   simulateTokenRequest,
   validateProfile,
@@ -34,12 +35,32 @@ import {
 import type {
   AuthCandidate,
   AuthProfile,
+  AuthType,
   Environment,
   LogEntry,
   TokenResult,
 } from '@/types/auth-pilot';
 
 const STORAGE_KEY = 'chapi-auth-pilot-demo';
+
+// Local mapping function for backend auth types
+const mapBackendAuthType = (backendType: unknown): AuthType => {
+  // Backend uses numeric enum: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  const typeMap: Record<number, AuthType> = {
+    0: 'oauth2_client_credentials',
+    1: 'api_key_header',
+    2: 'bearer_static',
+    3: 'session_cookie',
+    4: 'password',
+    5: 'basic',
+    6: 'custom_login',
+  };
+  const n =
+    typeof backendType === 'number'
+      ? backendType
+      : parseInt(String(backendType || ''), 10);
+  return typeMap[n] || 'oauth2_client_credentials';
+};
 
 function AuthPilotContent() {
   const [environment, setEnvironment] = useState<Environment>('Dev');
@@ -62,6 +83,7 @@ function AuthPilotContent() {
   // Use the auth profiles hook
   const {
     profiles,
+    backendProfiles,
     loading: profilesLoading,
     error: profilesError,
     createProfile,
@@ -70,6 +92,8 @@ function AuthPilotContent() {
     detectCandidates,
   } = useAuthProfiles({
     environmentId: environment.toLowerCase(),
+    projectId: selectedProject?.id,
+    serviceId: undefined, // TODO: Add service selection
     autoLoad: true,
   });
 
@@ -227,28 +251,98 @@ function AuthPilotContent() {
     if (selectedEnv) setEnvironment(selectedEnv as Environment);
   }, [selectedProject, selectedEnv]);
 
-  // Fetch environment data and update profile token_url when environment changes
+  // Fetch environment data and update profile when environment changes
   useEffect(() => {
-    const fetchEnvironmentBaseUrl = async () => {
-      if (!selectedProject?.id || !selectedEnv) return;
+    const fetchEnvironmentData = async () => {
+      if (!selectedProject?.id || !selectedEnv) {
+        console.log(
+          'Skipping environment fetch: missing projectId or selectedEnv'
+        );
+        return;
+      }
+
+      console.log(
+        `Fetching environment data for project ${selectedProject.id}, environment ${selectedEnv}`
+      );
 
       try {
+        // Use the API endpoint: /api/projects/{projectId}/environments
+        console.log(
+          `Making API call to: /api/projects/${selectedProject.id}/environments`
+        );
         const environments = await environmentsApi.getByProject(
           selectedProject.id
         );
-        const currentEnv = environments.find(
-          env => env.name.toLowerCase() === selectedEnv.toLowerCase()
+        console.log(
+          'API call successful, received environments:',
+          environments
         );
 
-        if (currentEnv?.baseUrl) {
-          // Update profile with environment's BaseUrl
+        if (!environments || environments.length === 0) {
+          console.warn('No environments found for project');
+          // Removed addLog to prevent repeated API calls
+
+          // Fallback to default
           setProfile(prev => ({
             ...prev,
-            token_url: currentEnv.baseUrl,
+            token_url: 'https://api.demo.local/connect/token',
+          }));
+          return;
+        }
+
+        const currentEnv = environments.find(
+          env => env.name?.toLowerCase() === selectedEnv.toLowerCase()
+        );
+
+        if (currentEnv) {
+          console.log('Found matching environment:', currentEnv);
+
+          // Update profile with environment data
+          setProfile(prev => {
+            const updatedProfile = {
+              ...prev,
+              token_url: currentEnv.baseUrl || prev.token_url,
+            };
+
+            // If environment has headers, we could potentially use them
+            // For now, we'll just log them for debugging
+            if (currentEnv.headers && currentEnv.headers.length > 0) {
+              console.log('Environment headers available:', currentEnv.headers);
+              // Removed addLog to prevent repeated API calls
+            }
+
+            // If environment has secrets, we could potentially suggest them
+            if (currentEnv.secrets && currentEnv.secrets.length > 0) {
+              console.log(
+                'Environment secrets available:',
+                currentEnv.secrets.map(s => s.keyPath)
+              );
+              // Removed addLog to prevent repeated API calls
+            }
+
+            return updatedProfile;
+          });
+
+          // Removed addLog to prevent repeated API calls
+          console.log(
+            `Successfully loaded environment "${currentEnv.name}" with base URL: ${currentEnv.baseUrl}`
+          );
+        } else {
+          console.warn(
+            `Environment "${selectedEnv}" not found in project environments`
+          );
+          // Removed addLog to prevent repeated API calls
+
+          // Fallback to default
+          setProfile(prev => ({
+            ...prev,
+            token_url: 'https://api.demo.local/connect/token',
           }));
         }
       } catch (error) {
         console.error('Failed to fetch environment data:', error);
+        // Removed addLog to prevent repeated API calls
+
         // Fallback to default if environment fetch fails
         setProfile(prev => ({
           ...prev,
@@ -257,7 +351,7 @@ function AuthPilotContent() {
       }
     };
 
-    fetchEnvironmentBaseUrl();
+    fetchEnvironmentData();
   }, [selectedProject?.id, selectedEnv]);
 
   // Save profile to backend
@@ -549,6 +643,82 @@ function AuthPilotContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Detection & Candidates */}
           <div className="space-y-6">
+            {/* Profile Selector */}
+            {backendProfiles.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Saved Profiles</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {backendProfiles.map(backendProfile => {
+                      const frontendProfile = {
+                        type: mapBackendAuthType(backendProfile.type!),
+                        token_url: backendProfile.tokenUrl || '',
+                        scopes: backendProfile.scopesCsv || '',
+                        audience: backendProfile.audience || '',
+                        notes: '',
+                        client_id:
+                          backendProfile.secretRefs?.['client_id'] || '',
+                        client_secret:
+                          backendProfile.secretRefs?.['client_secret'] || '',
+                        header_name:
+                          backendProfile.injectionName || 'X-API-Key',
+                        api_key: backendProfile.secretRefs?.['api_key'] || '',
+                        bearer_token:
+                          backendProfile.secretRefs?.['bearer_token'] || '',
+                        cookie_value:
+                          backendProfile.secretRefs?.['cookie_value'] || '',
+                        username_ref:
+                          backendProfile.secretRefs?.['username'] || '',
+                        password_ref:
+                          backendProfile.secretRefs?.['password'] || '',
+                        login_body_type: (backendProfile.secretRefs?.[
+                          'custom_body_type'
+                        ] === 'form'
+                          ? 'form'
+                          : 'json') as 'json' | 'form',
+                        login_user_key:
+                          backendProfile.secretRefs?.['custom_user_key'] ||
+                          'username',
+                        login_pass_key:
+                          backendProfile.secretRefs?.['custom_pass_key'] ||
+                          'password',
+                        token_json_path:
+                          backendProfile.secretRefs?.['token_json_path'] ||
+                          '$.access_token',
+                      };
+                      return (
+                        <Button
+                          key={backendProfile.id}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start text-left"
+                          onClick={() => {
+                            // Load the selected profile into the form
+                            setProfile(frontendProfile);
+                            setTokenResult(undefined); // Clear previous test results
+                            toast({
+                              title: 'Profile loaded',
+                              description: `Loaded profile for ${frontendProfile.token_url}`,
+                            });
+                          }}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">
+                              {getAuthTypeDisplayName(frontendProfile.type)}
+                            </span>
+                            <span className="text-xs text-muted-foreground truncate max-w-48">
+                              {frontendProfile.token_url}
+                            </span>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}{' '}
             {bestDetection && (
               <DetectionBanner
                 detection={bestDetection}
@@ -557,7 +727,6 @@ function AuthPilotContent() {
                 }
               />
             )}
-
             {/* Detection Button */}
             <Card>
               <CardContent className="pt-6">
@@ -579,7 +748,6 @@ function AuthPilotContent() {
                 </div>
               </CardContent>
             </Card>
-
             <CandidateList
               candidates={candidates}
               selectedType={profile.type}
