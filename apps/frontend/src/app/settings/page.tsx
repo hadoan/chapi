@@ -1,25 +1,24 @@
 'use client';
 
 import { Layout } from '@/components/Layout';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
-import { 
-  User, 
-  Key, 
-  Settings as SettingsIcon, 
-  Trash2, 
-  Plus, 
-  Eye, 
-  EyeOff,
-  LogOut,
+import {
   Camera,
+  Eye,
+  EyeOff,
+  Key,
+  LogOut,
   Moon,
-  Sun
+  Plus,
+  Settings as SettingsIcon,
+  Sun,
+  Trash2,
+  User,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,16 +29,16 @@ const MOCK_SETTINGS_DATA = {
     id: 'user-123',
     name: 'Jane Developer',
     email: 'jane@example.com',
-    avatarUrl: 'https://i.pravatar.cc/150?img=32'
+    avatarUrl: 'https://i.pravatar.cc/150?img=32',
   },
   apiKeys: [
     { id: 'key-1', name: 'Default Key', value: 'sk-1234abcd5678efgh' },
-    { id: 'key-2', name: 'CI/CD Pipeline', value: 'sk-9876zyxw4321lmno' }
+    { id: 'key-2', name: 'CI/CD Pipeline', value: 'sk-9876zyxw4321lmno' },
   ],
   preferences: {
     theme: 'light' as const,
-    notifyOnFailure: true
-  }
+    notifyOnFailure: true,
+  },
 };
 
 interface ApiKey {
@@ -60,7 +59,13 @@ interface Preferences {
   notifyOnFailure: boolean;
 }
 
-function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (name: string) => void }) {
+function ProfileSection({
+  user,
+  onUpdateName,
+}: {
+  user: User;
+  onUpdateName: (name: string) => void;
+}) {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user.name);
@@ -70,14 +75,14 @@ function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (nam
     setIsEditing(false);
     toast({
       title: 'Profile updated',
-      description: 'Your display name has been saved.'
+      description: 'Your display name has been saved.',
     });
   };
 
   const handleLogout = () => {
     toast({
       title: 'Logged out (mock)',
-      description: 'You have been logged out successfully.'
+      description: 'You have been logged out successfully.',
     });
     navigate('/auth/login');
   };
@@ -93,14 +98,14 @@ function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (nam
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <img 
-              src={user.avatarUrl} 
-              alt="Profile" 
+            <img
+              src={user.avatarUrl}
+              alt="Profile"
               className="w-16 h-16 rounded-full"
             />
-            <Button 
+            <Button
               size="sm"
-              variant="outline" 
+              variant="outline"
               className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full p-0 bg-background"
             >
               <Camera className="w-4 h-4" />
@@ -109,23 +114,33 @@ function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (nam
           <div className="flex-1">
             <div className="space-y-2">
               <div>
-                <Label className="text-sm font-medium text-foreground">Display Name</Label>
+                <Label className="text-sm font-medium text-foreground">
+                  Display Name
+                </Label>
                 {isEditing ? (
                   <div className="flex gap-2 mt-1">
                     <Input
                       value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
+                      onChange={e => setEditName(e.target.value)}
                       className="flex-1"
                     />
-                    <Button size="sm" onClick={handleSaveName}>Save</Button>
-                    <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                    <Button size="sm" onClick={handleSaveName}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-foreground">{user.name}</span>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => setIsEditing(true)}
                       className="h-6 px-2 text-xs"
                     >
@@ -135,15 +150,19 @@ function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (nam
                 )}
               </div>
               <div>
-                <Label className="text-sm font-medium text-foreground">Email</Label>
-                <div className="text-sm text-muted-foreground mt-1">{user.email}</div>
+                <Label className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {user.email}
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div className="pt-4 border-t border-border">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleLogout}
             className="text-muted-foreground hover:text-foreground"
           >
@@ -156,8 +175,12 @@ function ProfileSection({ user, onUpdateName }: { user: User; onUpdateName: (nam
   );
 }
 
-function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: { 
-  apiKeys: ApiKey[]; 
+function ApiKeysSection({
+  apiKeys,
+  onGenerateKey,
+  onRevokeKey,
+}: {
+  apiKeys: ApiKey[];
   onGenerateKey: () => void;
   onRevokeKey: (keyId: string) => void;
 }) {
@@ -190,7 +213,7 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
     setRevokeKeyId(null);
     toast({
       title: 'API key revoked',
-      description: 'The API key has been permanently revoked.'
+      description: 'The API key has been permanently revoked.',
     });
   };
 
@@ -203,7 +226,11 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
               <Key className="w-5 h-5" />
               API Keys
             </CardTitle>
-            <Button onClick={handleGenerateKey} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button
+              onClick={handleGenerateKey}
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Generate New Key
             </Button>
@@ -213,12 +240,17 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
           <p className="text-sm text-muted-foreground">
             API keys allow CLI and automation to access Chapi.
           </p>
-          
+
           <div className="space-y-3">
-            {apiKeys.map((key) => (
-              <div key={key.id} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/20">
+            {apiKeys.map(key => (
+              <div
+                key={key.id}
+                className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/20"
+              >
                 <div className="flex-1">
-                  <div className="font-medium text-foreground text-sm">{key.name}</div>
+                  <div className="font-medium text-foreground text-sm">
+                    {key.name}
+                  </div>
                   <div className="font-mono text-xs text-muted-foreground">
                     {visibleKeys.has(key.id) ? key.value : maskKey(key.value)}
                   </div>
@@ -229,7 +261,11 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
                   onClick={() => toggleKeyVisibility(key.id)}
                   className="h-8 w-8 p-0"
                 >
-                  {visibleKeys.has(key.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {visibleKeys.has(key.id) ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </Button>
                 <Button
                   size="sm"
@@ -250,7 +286,9 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
           <Card className="w-96 mx-4 bg-background">
             <CardHeader>
-              <CardTitle className="text-foreground">New API Key Generated</CardTitle>
+              <CardTitle className="text-foreground">
+                New API Key Generated
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -268,7 +306,10 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
                 >
                   Copy Key
                 </Button>
-                <Button variant="outline" onClick={() => setShowNewKeyModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNewKeyModal(false)}
+                >
                   Done
                 </Button>
               </div>
@@ -286,13 +327,14 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                This will permanently revoke the API key. Any applications using this key will stop working.
+                This will permanently revoke the API key. Any applications using
+                this key will stop working.
               </p>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setRevokeKeyId(null)}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={() => handleRevokeKey(revokeKeyId)}
                   className="bg-rose-600 hover:bg-rose-700 text-white"
                 >
@@ -307,8 +349,11 @@ function ApiKeysSection({ apiKeys, onGenerateKey, onRevokeKey }: {
   );
 }
 
-function PreferencesSection({ preferences, onUpdatePreferences }: { 
-  preferences: Preferences; 
+function PreferencesSection({
+  preferences,
+  onUpdatePreferences,
+}: {
+  preferences: Preferences;
   onUpdatePreferences: (prefs: Partial<Preferences>) => void;
 }) {
   const handleThemeToggle = (checked: boolean) => {
@@ -316,7 +361,7 @@ function PreferencesSection({ preferences, onUpdatePreferences }: {
     onUpdatePreferences({ theme: newTheme });
     toast({
       title: 'Theme updated (mock)',
-      description: `Switched to ${newTheme} theme.`
+      description: `Switched to ${newTheme} theme.`,
     });
   };
 
@@ -324,7 +369,7 @@ function PreferencesSection({ preferences, onUpdatePreferences }: {
     onUpdatePreferences({ notifyOnFailure: checked });
     toast({
       title: 'Preferences updated',
-      description: `Email notifications ${checked ? 'enabled' : 'disabled'}.`
+      description: `Email notifications ${checked ? 'enabled' : 'disabled'}.`,
     });
   };
 
@@ -340,8 +385,14 @@ function PreferencesSection({ preferences, onUpdatePreferences }: {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              {preferences.theme === 'light' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              <Label className="text-sm font-medium text-foreground">Theme</Label>
+              {preferences.theme === 'light' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+              <Label className="text-sm font-medium text-foreground">
+                Theme
+              </Label>
             </div>
             <p className="text-xs text-muted-foreground">
               Choose your preferred theme
@@ -359,7 +410,9 @@ function PreferencesSection({ preferences, onUpdatePreferences }: {
 
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-foreground">Email Notifications</Label>
+            <Label className="text-sm font-medium text-foreground">
+              Email Notifications
+            </Label>
             <p className="text-xs text-muted-foreground">
               Get notified when runs fail
             </p>
@@ -382,7 +435,7 @@ function DangerZoneSection() {
     toast({
       title: 'Account deleted (mock)',
       description: 'Your account would be permanently deleted.',
-      variant: 'destructive'
+      variant: 'destructive',
     });
   };
 
@@ -398,12 +451,14 @@ function DangerZoneSection() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-medium text-foreground">Delete Account</div>
+              <div className="text-sm font-medium text-foreground">
+                Delete Account
+              </div>
               <div className="text-xs text-muted-foreground">
                 Permanently remove your account and all data
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowDeleteModal(true)}
               className="bg-rose-600 hover:bg-rose-700 text-white"
             >
@@ -418,17 +473,23 @@ function DangerZoneSection() {
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
           <Card className="w-96 mx-4 bg-background">
             <CardHeader>
-              <CardTitle className="text-rose-600 dark:text-rose-400">Delete Account?</CardTitle>
+              <CardTitle className="text-rose-600 dark:text-rose-400">
+                Delete Account?
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                This action cannot be undone. This will permanently delete your account and remove all data.
+                This action cannot be undone. This will permanently delete your
+                account and remove all data.
               </p>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteModal(false)}
+                >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleDeleteAccount}
                   className="bg-rose-600 hover:bg-rose-700 text-white"
                 >
@@ -446,7 +507,9 @@ function DangerZoneSection() {
 export default function SettingsPage() {
   const [user, setUser] = useState(MOCK_SETTINGS_DATA.user);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>(MOCK_SETTINGS_DATA.apiKeys);
-  const [preferences, setPreferences] = useState<Preferences>(MOCK_SETTINGS_DATA.preferences);
+  const [preferences, setPreferences] = useState<Preferences>(
+    MOCK_SETTINGS_DATA.preferences
+  );
 
   const handleUpdateName = (name: string) => {
     setUser(prev => ({ ...prev, name }));
@@ -456,7 +519,7 @@ export default function SettingsPage() {
     const newKey: ApiKey = {
       id: `key-${Date.now()}`,
       name: 'Generated Key',
-      value: 'sk-newkey1234567890abcdef'
+      value: 'sk-newkey1234567890abcdef',
     };
     setApiKeys(prev => [...prev, newKey]);
   };
@@ -485,18 +548,18 @@ export default function SettingsPage() {
         {/* Main Content */}
         <div className="space-y-8">
           <ProfileSection user={user} onUpdateName={handleUpdateName} />
-          
-          <ApiKeysSection 
-            apiKeys={apiKeys} 
+
+          <ApiKeysSection
+            apiKeys={apiKeys}
             onGenerateKey={handleGenerateKey}
             onRevokeKey={handleRevokeKey}
           />
-          
-          <PreferencesSection 
+
+          <PreferencesSection
             preferences={preferences}
             onUpdatePreferences={handleUpdatePreferences}
           />
-          
+
           <DangerZoneSection />
         </div>
       </div>
