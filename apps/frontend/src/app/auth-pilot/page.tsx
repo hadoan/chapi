@@ -13,10 +13,11 @@ import { authProfilesApi } from '@/lib/api/auth-profiles';
 import { environmentsApi } from '@/lib/api/environments';
 import type { components } from '@/lib/api/schema';
 import { useProject } from '@/lib/state/projectStore';
-import { HelpCircle, RotateCcw, Save, TestTube } from 'lucide-react';
+import { HelpCircle, Save, TestTube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 // Components
+import AiDetectionModal from '@/components/auth-pilot/AiDetectionModal';
 import { CandidateList } from '@/components/auth-pilot/CandidateList';
 import { DetectionBanner } from '@/components/auth-pilot/DetectionBanner';
 import { InjectionPreview } from '@/components/auth-pilot/InjectionPreview';
@@ -598,26 +599,6 @@ function AuthPilotContent() {
 
               {/* Actions */}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetDemo}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Detect Auth
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetDemo}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Detect Auth by Prompt
-              </Button>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" className="px-2">
@@ -651,6 +632,39 @@ function AuthPilotContent() {
               />
             )}
             {/* Detection Button */}
+            <div className="flex gap-2">
+              <AiDetectionModal
+                projectId={selectedProject?.id}
+                serviceId={undefined}
+                onDetected={resp => {
+                  const mapped = (resp.candidates || []).map(c => {
+                    const t =
+                      typeof c.type === 'number'
+                        ? Number(c.type)
+                        : String(c.type || '');
+                    return {
+                      type: t as unknown as AuthType,
+                      confidence: c.confidence || 0,
+                      token_url: c.tokenUrl ?? undefined,
+                      header_name: c.injection?.name ?? undefined,
+                      rawType: String(c.type ?? ''),
+                      form: c.form ?? null,
+                    } as AuthCandidate;
+                  });
+                  setCandidates(mapped);
+                  setBestDetection(
+                    resp.best
+                      ? {
+                          endpoint: resp.best.endpoint!,
+                          source: resp.best.source!,
+                          confidence: resp.best.confidence!,
+                        }
+                      : null
+                  );
+                }}
+              />
+            </div>
+
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">

@@ -9,6 +9,7 @@
   <ProjectReference Include="..\..\modules\Chapi.EndpointCatalog\Chapi.EndpointCatalog.csproj" />
   <ProjectReference Include="..\..\shipmvp\ShipMvp.Integration.SemanticKernel\ShipMvp.Integration.SemanticKernel.csproj" />
   <ProjectReference Include="..\..\modules\RunPack\RunPack.csproj" />
+  <ProjectReference Include="..\..\modules\AuthProfiles\AuthProfiles.csproj" />
   </ItemGroup>
 
   <ItemGroup>

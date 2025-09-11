@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "description": "Detect API auth from pasted code and emit a normalized AuthProfile JSON. STRICT JSON output only.",
+  "execution_settings": {
+    "gpt-4o": {
+      "model_id": "gpt-4o",
+      "service_id": "gpt-4o",
+      "temperature": 0.1,
+      "text_format": "json",
+      "store": false,
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "AuthDetectionResult",
+          "strict": false,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "detect_source": {
+                "type": "string",
+                "const": "ai-by-code"
+              },
+              "detect_confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [ "OAuth2", "OIDC", "ApiKey", "Basic", "Custom" ]
+                  },
+                  "environmentKey": { "type": "string" },
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "tokenUrl": { "type": [ "string", "null" ] },
+                      "authorizationUrl": { "type": [ "string", "null" ] },
+                      "audience": { "type": [ "string", "null" ] },
+                      "scopes": { "type": [ "string", "null" ] },
+                      "clientId": { "type": [ "string", "null" ] },
+                      "clientSecretRef": { "type": [ "string", "null" ] },
+                      "usernameRef": { "type": [ "string", "null" ] },
+                      "passwordRef": { "type": [ "string", "null" ] },
+                      "customLoginUrl": { "type": [ "string", "null" ] },
+                      "customBodyType": {
+                        "type": [ "string", "null" ],
+                        "enum": [ "json", "form", "raw", null ]
+                      },
+                      "customUserKey": { "type": [ "string", "null" ] },
+                      "customPassKey": { "type": [ "string", "null" ] },
+                      "tokenJsonPath": { "type": [ "string", "null" ] }
+                    },
+                    "additionalProperties": false
+                  },
+                  "injection": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [ "Header", "Query", "Cookie", "Body" ]
+                      },
+                      "name": { "type": "string" },
+                      "format": { "type": "string" }
+                    },
+                    "required": [ "mode", "name", "format" ],
+                    "additionalProperties": false
+                  },
+                  "secrets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string" },
+                        "secretRef": { "type": "string" },
+                        "notes": { "type": [ "string", "null" ] }
+                      },
+                      "required": [ "key", "secretRef" ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "token_request": {
+                    "type": "object",
+                    "properties": {
+                      "method": { "type": [ "string", "null" ] },
+                      "url": { "type": [ "string", "null" ] },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                      },
+                      "body": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": [ "string", "null" ],
+                            "enum": [ "json", "form", "raw", null ]
+                          },
+                          "value": {}
+                        },
+                        "required": [ "kind", "value" ],
+                        "additionalProperties": false
+                      },
+                      "expect": {
+                        "type": "object",
+                        "properties": {
+                          "status": { "type": "integer" },
+                          "tokenJsonPath": { "type": [ "string", "null" ] }
+                        },
+                        "required": [ "status", "tokenJsonPath" ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [ "method", "url", "headers", "body", "expect" ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [ "type", "environmentKey", "parameters", "injection", "secrets", "token_request" ],
+                "additionalProperties": false
+              }
+            },
+            "required": [ "detect_source", "detect_confidence", "profile" ],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  },
+  "input_variables": [
+    {
+      "name": "code",
+      "description": "Auth-related snippet (JS/TS/Node, C#, Python, cURL, Postman, YAML, envs, etc.)",
+      "required": true
+    },
+    {
+      "name": "hints",
+      "description": "Optional context: base URLs, tenant, known header names, etc.",
+      "required": false
+    },
+    {
+      "name": "environmentKey",
+      "description": "Target environment key to attach to the generated profile",
+      "required": true
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are AIAuthDetect.ByCode. Return ONLY a JSON object that conforms exactly to the provided JSON Schema. No markdown, no code fences, no commentary. Use conservative confidence. Prefer Authorization: Bearer where applicable. Never output real secrets; use secretRef placeholders."
+    },
+    {
+      "role": "user",
+      "content": "CODE:\n{{code}}"
+    },
+    {
+      "role": "user",
+      "content": "HINTS (optional):\n{{hints}}"
+    },
+    {
+      "role": "user",
+      "content": "ENVIRONMENT_KEY:\n{{environmentKey}}"
+    }
+  ]
+}

@@ -54,6 +54,9 @@ public class ChapiAIModule : IModule
             services.Remove(descriptor);
         }
         services.AddScoped<ISemanticKernelService, ChapiSemanticKernelService>();
+
+        // Register SemanticKernelAuthDetectionService as the implementation for IAuthAiDetectionService
+        services.AddScoped<IAuthAiDetectionService, SemanticKernelAuthDetectionService>();
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)

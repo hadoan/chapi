@@ -159,4 +159,33 @@ export const authProfilesApi = {
       }
     );
   },
+
+  // AI-based detection endpoints
+  async detectByCode(request: {
+    code: string;
+    projectId?: string;
+    serviceId?: string;
+  }): Promise<DetectionResponse> {
+    return await AuthService.authenticatedFetch<DetectionResponse>(
+      '/api/authprofiles/detect/ai/code',
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
+  },
+
+  async detectByPrompt(request: {
+    prompt: string;
+    projectId?: string;
+    serviceId?: string;
+  }): Promise<DetectionResponse> {
+    return await AuthService.authenticatedFetch<DetectionResponse>(
+      '/api/authprofiles/detect/ai/prompt',
+      {
+        method: 'POST',
+        data: request,
+      }
+    );
+  },
 };

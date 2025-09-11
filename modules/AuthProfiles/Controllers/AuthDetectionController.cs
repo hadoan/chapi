@@ -26,4 +26,36 @@ public sealed class AuthDetectionController : ControllerBase
         );
         return Ok(resp);
     }
+
+    [HttpPost("detect/ai/code")]
+    public async Task<ActionResult<DetectionResponse>> DetectByCode([FromBody] AiCodeRequest request, CancellationToken ct)
+    {
+        var results = await _detector.DetectByCodeAsync(request.Code ?? string.Empty, request.ProjectId, ct).ConfigureAwait(false);
+        var best = results.OrderByDescending(c => c.Confidence).FirstOrDefault();
+        var resp = new DetectionResponse(results, best is null ? null : new SimpleDetection(best.Endpoint, best.Source, best.Confidence));
+        return Ok(resp);
+    }
+
+    [HttpPost("detect/ai/prompt")]
+    public async Task<ActionResult<DetectionResponse>> DetectByPrompt([FromBody] AiPromptRequest request, CancellationToken ct)
+    {
+        var results = await _detector.DetectByPromptAsync(request.Prompt ?? string.Empty, request.ProjectId, ct).ConfigureAwait(false);
+        var best = results.OrderByDescending(c => c.Confidence).FirstOrDefault();
+        var resp = new DetectionResponse(results, best is null ? null : new SimpleDetection(best.Endpoint, best.Source, best.Confidence));
+        return Ok(resp);
+    }
+
+    public class AiCodeRequest
+    {
+        public string? Code { get; set; }
+        public Guid? ProjectId { get; set; }
+        public Guid? ServiceId { get; set; }
+    }
+
+    public class AiPromptRequest
+    {
+        public string? Prompt { get; set; }
+        public Guid? ProjectId { get; set; }
+        public Guid? ServiceId { get; set; }
+    }
 }

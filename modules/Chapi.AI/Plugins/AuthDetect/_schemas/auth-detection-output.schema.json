@@ -1,0 +1,58 @@
+{
+  "detect_source": "ai-by-code",
+  "detect_confidence": 0.92,
+  "profile": {
+    "type": "OAuth2",
+    "environmentKey": "prod",
+    "parameters": {
+      "tokenUrl": "https://auth.example.com/connect/token",
+      "authorizationUrl": null,
+      "audience": null,
+      "scopes": "api.read",
+      "clientId": null,
+      "clientSecretRef": "secrets://kv/CLIENT_SECRET",
+      "usernameRef": null,
+      "passwordRef": null,
+      "customLoginUrl": null,
+      "customBodyType": "form",
+      "customUserKey": null,
+      "customPassKey": null,
+      "tokenJsonPath": "$.access_token"
+    },
+    "injection": {
+      "mode": "Header",
+      "name": "Authorization",
+      "format": "Bearer {{access_token}}"
+    },
+    "secrets": [
+      {
+        "key": "CLIENT_ID",
+        "secretRef": "secrets://kv/CLIENT_ID",
+        "notes": null
+      },
+      {
+        "key": "CLIENT_SECRET",
+        "secretRef": "secrets://kv/CLIENT_SECRET",
+        "notes": null
+      }
+    ],
+    "token_request": {
+      "method": "POST",
+      "url": "https://auth.example.com/connect/token",
+      "headers": { "content-type": "application/x-www-form-urlencoded" },
+      "body": {
+        "kind": "form",
+        "value": {
+          "grant_type": "client_credentials",
+          "client_id": "{{CLIENT_ID}}",
+          "client_secret": "{{CLIENT_SECRET}}",
+          "scope": "api.read"
+        }
+      },
+      "expect": {
+        "status": 200,
+        "tokenJsonPath": "$.access_token"
+      }
+    }
+  }
+}
