@@ -69,48 +69,7 @@ public sealed class AuthDetectionService : IAuthDetectionService
         return distinct;
     }
 
-    public async Task<IReadOnlyList<DetectionCandidateDto>> DetectByCodeAsync(string code, Guid? projectId, CancellationToken ct)
-    {
-        await Task.Yield();
-        // Try to detect by attempting OpenAPI/Postman parse heuristics
-        var results = new List<DetectionCandidateDto>();
-        try
-        {
-            // If code looks like JSON, try both OpenAPI and Postman heuristics
-            if (!string.IsNullOrWhiteSpace(code) && code.TrimStart().StartsWith("{"))
-            {
-                try { results.AddRange(DetectFromOpenApi(code, null)); } catch { }
-                try { results.AddRange(DetectFromPostman(code)); } catch { }
-            }
-            else
-            {
-                // As a fallback, run a simple regex scan for token-like URLs in the text
-                var matches = TokenPathRegex.Matches(code ?? string.Empty);
-                if (matches.Count > 0)
-                {
-                    // Use a weak confidence and produce a token endpoint candidate using discovered path
-                    results.Add(new DetectionCandidateDto("oauth2_client_credentials", "/token", null, new InjectionPreview("header", "Authorization", "Bearer {{access_token}}"), "code", 0.4));
-                }
-            }
-        }
-        catch { }
-
-        // Deduplicate/normalize as in DetectAsync
-        var distinct = results
-            .GroupBy(c => $"{c.Form?.GrantType ?? c.Type}|{TryGetPath(c.TokenUrl ?? c.Endpoint).ToLowerInvariant()}|{c.Injection.Mode}|{c.Injection.Name}")
-            .Select(g => g.OrderByDescending(x => x.Confidence).First())
-            .OrderByDescending(c => c.Confidence)
-            .ToList();
-        return distinct;
-    }
-
-    public async Task<IReadOnlyList<DetectionCandidateDto>> DetectByPromptAsync(string prompt, Guid? projectId, CancellationToken ct)
-    {
-        await Task.Yield();
-        // For now, treat prompt as code input and delegate to DetectByCodeAsync
-        return await DetectByCodeAsync(prompt ?? string.Empty, projectId, ct).ConfigureAwait(false);
-    }
-
+  
     // Backwards-compatible wrapper for existing consumers that expect AuthDetectionCandidateDto
     public async Task<IReadOnlyList<AuthDetectionCandidateDto>> DetectAsync(Guid projectId, Guid serviceId, CancellationToken ct)
     {

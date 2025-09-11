@@ -3448,6 +3448,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/llm/detect/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Dto.DetectByCodeRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Dto.DetectByCodeRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Dto.DetectByCodeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                        "application/json": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                        "text/json": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/detect/prompt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Dto.DetectByPromptRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Dto.DetectByPromptRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Dto.DetectByPromptRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                        "application/json": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                        "text/json": components["schemas"]["Chapi.AI.Dto.DetectionResponseDto"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/openapi/{specId}": {
         parameters: {
             query?: never;
@@ -6701,10 +6801,79 @@ export interface components {
             run_pack_inputs?: components["schemas"]["Chapi.AI.Dto.RunPackInputRow"][] | null;
             run_pack_validations?: components["schemas"]["Chapi.AI.Dto.RunPackValidationRow"][] | null;
         };
+        "Chapi.AI.Dto.DetectByCodeRequest": {
+            code?: string | null;
+            /** Format: uuid */
+            projectId?: string | null;
+        };
+        "Chapi.AI.Dto.DetectByPromptRequest": {
+            prompt?: string | null;
+            /** Format: uuid */
+            projectId?: string | null;
+        };
+        "Chapi.AI.Dto.DetectedBody": {
+            kind?: string | null;
+            value?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        "Chapi.AI.Dto.DetectedExpect": {
+            /** Format: int32 */
+            status?: number;
+            tokenJsonPath?: string | null;
+        };
+        "Chapi.AI.Dto.DetectedParameters": {
+            tokenUrl?: string | null;
+            authorizationUrl?: string | null;
+            audience?: string | null;
+            scopes?: string | null;
+            clientId?: string | null;
+            clientSecretRef?: string | null;
+            usernameRef?: string | null;
+            passwordRef?: string | null;
+            customLoginUrl?: string | null;
+            customBodyType?: string | null;
+            customUserKey?: string | null;
+            customPassKey?: string | null;
+            tokenJsonPath?: string | null;
+        };
+        "Chapi.AI.Dto.DetectedProfile": {
+            type?: string | null;
+            environmentKey?: string | null;
+            parameters?: components["schemas"]["Chapi.AI.Dto.DetectedParameters"];
+            injection?: components["schemas"]["Chapi.AI.Dto.InjectionPreview"];
+            secrets?: components["schemas"]["Chapi.AI.Dto.DetectedSecret"][] | null;
+            token_request?: components["schemas"]["Chapi.AI.Dto.DetectedTokenRequest"];
+        };
+        "Chapi.AI.Dto.DetectedSecret": {
+            key?: string | null;
+            secretRef?: string | null;
+            notes?: string | null;
+        };
+        "Chapi.AI.Dto.DetectedTokenRequest": {
+            method?: string | null;
+            url?: string | null;
+            headers?: {
+                [key: string]: string;
+            } | null;
+            body?: components["schemas"]["Chapi.AI.Dto.DetectedBody"];
+            expect?: components["schemas"]["Chapi.AI.Dto.DetectedExpect"];
+        };
+        "Chapi.AI.Dto.DetectionResponseDto": {
+            detect_source?: string | null;
+            /** Format: double */
+            detect_confidence?: number;
+            profile?: components["schemas"]["Chapi.AI.Dto.DetectedProfile"];
+        };
         "Chapi.AI.Dto.FileEntry": {
             path?: string | null;
             /** Format: int32 */
             addedLines?: number;
+        };
+        "Chapi.AI.Dto.InjectionPreview": {
+            mode?: string | null;
+            name?: string | null;
+            format?: string | null;
         };
         "Chapi.AI.Dto.MessageRow": {
             id?: string | null;

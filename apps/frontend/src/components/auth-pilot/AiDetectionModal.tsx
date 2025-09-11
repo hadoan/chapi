@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import type { DetectionResponse } from '@/lib/api/auth-profiles';
-import { authProfilesApi } from '@/lib/api/auth-profiles';
+import { llmApi } from '@/lib/api/llm';
 import React, { useState } from 'react';
 
 export interface AiDetectionModalProps {
@@ -32,7 +32,7 @@ export const AiDetectionModal: React.FC<AiDetectionModalProps> = ({
   const submitCode = async () => {
     setLoading(true);
     try {
-      const resp = await authProfilesApi.detectByCode({
+      const resp = await llmApi.detectByCode({
         code,
         projectId: projectId || undefined,
         serviceId: serviceId || undefined,
@@ -50,7 +50,7 @@ export const AiDetectionModal: React.FC<AiDetectionModalProps> = ({
   const submitPrompt = async () => {
     setLoading(true);
     try {
-      const resp = await authProfilesApi.detectByPrompt({
+      const resp = await llmApi.detectByPrompt({
         prompt,
         projectId: projectId || undefined,
         serviceId: serviceId || undefined,
