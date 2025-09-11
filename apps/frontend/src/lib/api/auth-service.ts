@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config, oauthConfig } from '../config/app.config';
-import type { LoginDto, UserDto, AuthResultDto } from '../../types/auth';
+import type { LoginDto, UserDto, AuthResultDto } from '@/types/auth-pilot';
 
 // OpenIddict token response
 interface TokenResponse {

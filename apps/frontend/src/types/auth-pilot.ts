@@ -79,3 +79,30 @@ export interface LogEntry {
 }
 
 export type Environment = 'Dev' | 'Stage' | 'Prod';
+
+// Authentication service types
+export interface LoginDto {
+  email: string;
+  password: string;
+}
+
+export interface UserDto {
+  id: string;
+  email: string;
+  username: string;
+  name: string;
+  surname: string;
+  roles: string[];
+  isActive: boolean;
+  isEmailConfirmed: boolean;
+  isPhoneNumberConfirmed: boolean;
+  isLockoutEnabled: boolean;
+  createdAt: string;
+}
+
+export interface AuthResultDto {
+  success: boolean;
+  token?: string;
+  user?: UserDto | null;
+  errorMessage?: string;
+}

@@ -440,7 +440,7 @@ export function useAuthProfiles({
 
         const res = (await authProfilesApi.detect(
           detectRequest as unknown as DetectRequest
-        )) as {
+        )) as unknown as {
           candidates: AuthDetectionCandidateDto[];
           best?: {
             endpoint: string;
