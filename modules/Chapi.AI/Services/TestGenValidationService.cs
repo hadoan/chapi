@@ -7,7 +7,7 @@ namespace Chapi.AI.Services
 {
     public interface ITestGenValidationService
     {
-        List<RunPackValidationRow> CreateValidations(string runPackId, List<TestGenFile> files, SelectedEndpoint endpoint, TestGenOptions options, string timestamp);
+        List<RunPackValidationDto> CreateValidations(string runPackId, List<TestGenFile> files, SelectedEndpoint endpoint, TestGenOptions options, string timestamp);
         string ClassifyFileRole(string path);
     }
 
@@ -20,9 +20,9 @@ namespace Chapi.AI.Services
             _logger = logger;
         }
 
-        public List<RunPackValidationRow> CreateValidations(string runPackId, List<TestGenFile> files, SelectedEndpoint endpoint, TestGenOptions options, string timestamp)
+        public List<RunPackValidationDto> CreateValidations(string runPackId, List<TestGenFile> files, SelectedEndpoint endpoint, TestGenOptions options, string timestamp)
         {
-            var validations = new List<RunPackValidationRow>
+            var validations = new List<RunPackValidationDto>
             {
                 CreateValidation(runPackId, "*", "NoRootUrl", ValidateNoRootUrl(files), timestamp),
                 CreateValidation(runPackId, "tests.json", "HasTestsJson", files.Any(f => f.Path == "tests.json"), timestamp),
@@ -53,9 +53,9 @@ namespace Chapi.AI.Services
             return "SMOKE";
         }
 
-        private RunPackValidationRow CreateValidation(string runPackId, string filePath, string rule, bool passed, string timestamp)
+        private RunPackValidationDto CreateValidation(string runPackId, string filePath, string rule, bool passed, string timestamp)
         {
-            return new RunPackValidationRow
+            return new RunPackValidationDto
             {
                 Id = System.Guid.NewGuid().ToString(),
                 RunpackId = runPackId,

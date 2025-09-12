@@ -10,6 +10,7 @@
   <ProjectReference Include="..\..\shipmvp\ShipMvp.Integration.SemanticKernel\ShipMvp.Integration.SemanticKernel.csproj" />
   <ProjectReference Include="..\..\modules\RunPack\RunPack.csproj" />
   <ProjectReference Include="..\..\modules\AuthProfiles\AuthProfiles.csproj" />
+  <ProjectReference Include="..\..\modules\Chat\Chat.csproj" />
   </ItemGroup>
 
   <ItemGroup>

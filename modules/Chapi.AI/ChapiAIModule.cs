@@ -7,6 +7,8 @@ using Chapi.AI.Services;
 using ShipMvp.Integration.SemanticKernel;
 using ShipMvp.Integration.SemanticKernel.Infrastructure;
 using RunPack.Infrastructure;
+using Chat.Infrastructure;
+using ShipMvp.Core.Abstractions;
 using System.Linq;
 
 namespace Chapi.AI;
@@ -22,6 +24,12 @@ public class ChapiAIModule : IModule
         // Register RunPack infrastructure (required for RunPack domain services)
         services.AddRunPackInfrastructure();
 
+        // Register Chat infrastructure (required for Conversation and Message repositories)
+        services.AddChatInfrastructure();
+
+        // Register GUID generator
+        // services.AddSingleton<IGuidGenerator, SequentialGuidGenerator>();
+
         // Register AI related services here
         services.AddTransient<Chapi.AI.Services.IApiTestGenerationService, Chapi.AI.Services.ApiTestGenerationService>();
         services.AddScoped<IEndpointContextService, EndpointContextService>();
@@ -33,6 +41,7 @@ public class ChapiAIModule : IModule
         services.AddScoped<ITestGenCardGenerator, TestGenCardGenerator>();
         services.AddScoped<ITestGenFileGenerator, TestGenFileGenerator>();
         services.AddScoped<ITestGenDatabaseService, TestGenDatabaseService>();
+        services.AddScoped<ITestGenDatabasePersistenceService, TestGenDatabasePersistenceService>();
         services.AddScoped<ITestGenValidationService, TestGenValidationService>();
         services.AddScoped<IChapiIRGenerator, ChapiIRGenerator>();
 

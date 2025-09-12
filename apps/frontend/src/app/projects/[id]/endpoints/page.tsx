@@ -160,8 +160,12 @@ export default function ProjectEndpointsPage() {
         openApiJson: JSON.stringify(testGenInput),
       };
 
+      // Debug: log outgoing request
+      console.debug('testGen request:', request);
+
       const response = await testGenApi.generate(request);
-      console.log('Generated test response:', response);
+      // Debug: log full response
+      console.debug('testGen response:', response);
 
       toast({
         title: 'Tests Generated Successfully',

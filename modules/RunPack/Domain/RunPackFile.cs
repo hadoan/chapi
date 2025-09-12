@@ -16,7 +16,7 @@ public class RunPackFile : Entity<Guid>
     public virtual ShipMvp.Domain.Files.File? File { get; private set; }
     public string Role { get; private set; } = "GENERATED";
 
-    private RunPackFile() : base(Guid.Empty) { }
+    public RunPackFile() : base(Guid.Empty) { }
 
     private RunPackFile(Guid id, Guid runPackId, Guid fileId, string role) : base(id)
     {
@@ -27,11 +27,11 @@ public class RunPackFile : Entity<Guid>
         CreatedAt = DateTime.UtcNow;
     }
 
-   
+
     // New overload that creates a File entity from given path and content
-    public static RunPackFile Create(Guid runPackId, Guid runPackFileId, Guid fileId,  string role = "GENERATED")
+    public static RunPackFile Create(Guid runPackId, Guid runPackFileId, Guid fileId, string role = "GENERATED")
     {
-        var runPackFile = new RunPackFile(runPackFileId, runPackId,fileId, role);
+        var runPackFile = new RunPackFile(runPackFileId, runPackId, fileId, role);
         return runPackFile;
     }
 

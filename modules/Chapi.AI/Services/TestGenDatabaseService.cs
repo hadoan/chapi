@@ -4,6 +4,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Chapi.AI.Dto;
 
@@ -11,6 +13,7 @@ namespace Chapi.AI.Services
 {
     public interface ITestGenDatabaseService
     {
+        Task<DatabaseOperations> CreateAndSaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default);
         DatabaseOperations CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files);
     }
 
@@ -18,11 +21,22 @@ namespace Chapi.AI.Services
     {
         private readonly ILogger<TestGenDatabaseService> _logger;
         private readonly ITestGenValidationService _validationService;
+        private readonly ITestGenDatabasePersistenceService _persistenceService;
 
-        public TestGenDatabaseService(ILogger<TestGenDatabaseService> logger, ITestGenValidationService validationService)
+        public TestGenDatabaseService(
+            ILogger<TestGenDatabaseService> logger,
+            ITestGenValidationService validationService,
+            ITestGenDatabasePersistenceService persistenceService)
         {
             _logger = logger;
             _validationService = validationService;
+            _persistenceService = persistenceService;
+        }
+
+        public async Task<DatabaseOperations> CreateAndSaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default)
+        {
+            // Delegate to the persistence service for actual database operations
+            return await _persistenceService.SaveDatabaseOperationsAsync(input, card, conversationId, messageId, timestamp, files, cancellationToken);
         }
 
         public DatabaseOperations CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files)
@@ -48,9 +62,9 @@ namespace Chapi.AI.Services
         {
             if (string.IsNullOrEmpty(input.Chat.ConversationId))
             {
-                dbOps.Conversations = new List<ConversationRow>
+                dbOps.Conversations = new List<ConversationDto>
                 {
-                    new ConversationRow
+                    new ConversationDto
                     {
                         Id = conversationId,
                         ProjectId = input.Project.Id,
@@ -64,16 +78,16 @@ namespace Chapi.AI.Services
 
         private void CreateMessage(DatabaseOperations dbOps, string conversationId, string messageId, TestGenInput input, ChapiCard card, string timestamp)
         {
-            dbOps.Messages = new List<MessageRow>
+            dbOps.Messages = new List<MessageDto>
             {
-                new MessageRow
+                new MessageDto
                 {
                     Id = messageId,
                     ConversationId = conversationId,
                     Role = "assistant",
                     Content = $"Generated {input.SelectedEndpoint.Method} tests for {input.SelectedEndpoint.Path} using {input.AuthProfile.Type} authentication.",
                     CardType = input.Mode == "CARD" ? "plan" : "run",
-                    CardPayload = card,
+                    CardPayload = JsonSerializer.Serialize(card),
                     CreatedAt = timestamp
                 }
             };
@@ -105,9 +119,9 @@ namespace Chapi.AI.Services
 
         private void CreateRunPack(DatabaseOperations dbOps, string runPackId, TestGenInput input, string conversationId, string messageId, string timestamp, List<TestGenFile> files, string cardHash, string inputsHash)
         {
-            dbOps.RunPacks = new List<RunPackRow>
+            dbOps.RunPacks = new List<RunPackDto>
             {
-                new RunPackRow
+                new RunPackDto
                 {
                     Id = runPackId,
                     ProjectId = input.Project.Id,
@@ -126,7 +140,7 @@ namespace Chapi.AI.Services
 
         private void CreateRunPackFiles(DatabaseOperations dbOps, string runPackId, List<TestGenFile> files, string timestamp)
         {
-            dbOps.RunPackFiles = files.Select(file => new RunPackFileRow
+            dbOps.RunPackFiles = files.Select(file => new RunPackFileDto
             {
                 Id = Guid.NewGuid().ToString(),
                 RunpackId = runPackId,
@@ -142,9 +156,9 @@ namespace Chapi.AI.Services
         {
             var fileRoles = files.ToDictionary(f => f.Path, f => _validationService.ClassifyFileRole(f.Path));
 
-            dbOps.RunPackInputs = new List<RunPackInputRow>
+            dbOps.RunPackInputs = new List<RunPackInputDto>
             {
-                new RunPackInputRow
+                new RunPackInputDto
                 {
                     Id = Guid.NewGuid().ToString(),
                     RunpackId = runPackId,
@@ -160,7 +174,7 @@ namespace Chapi.AI.Services
                     },
                     EndpointsContext = $"{input.SelectedEndpoint.Method} {input.SelectedEndpoint.Path} (auth: {input.AuthProfile.Type.ToLower()})",
                     AllowedOps = "curl,bash",
-                    Env = "local",
+                    Environment = "local",
                     SelectorOutputJson = new Dictionary<string, object>
                     {
                         ["selectedEndpointId"] = input.SelectedEndpoint.Id ?? ""
