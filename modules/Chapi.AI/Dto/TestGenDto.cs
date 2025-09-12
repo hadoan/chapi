@@ -17,6 +17,7 @@ namespace Chapi.AI.Dto
 
         [JsonPropertyName("openApiJson")]
         public string? OpenApiJson { get; set; }
+
     }
 
     public class TestGenInput

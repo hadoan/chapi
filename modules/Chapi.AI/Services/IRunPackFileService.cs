@@ -40,5 +40,12 @@ namespace Chapi.AI.Services
         Task DeleteRunPackFileAsync(
             Guid runPackId,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Checks if a RunPack has associated files
+        /// </summary>
+        Task<bool> CheckRunPackFilesExistAsync(
+            Guid runPackId,
+            CancellationToken cancellationToken = default);
     }
 }

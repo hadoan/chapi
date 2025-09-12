@@ -33,10 +33,9 @@ namespace Chapi.AI.Controllers
         {
             try
             {
-             
                 var result = await _generationService.GenerateRunPackAsync(request);
 
-                // Add metadata headers if file was saved and RunPack was created
+                // Add metadata headers
                 if (result.SavedFileId.HasValue)
                 {
                     Response.Headers["X-File-Id"] = result.SavedFileId.Value.ToString();
@@ -49,6 +48,9 @@ namespace Chapi.AI.Controllers
                 {
                     Response.Headers["X-RunPack-Id"] = result.RunPackId.Value.ToString();
                 }
+
+                // Indicate whether files came from database or were newly generated
+                Response.Headers["X-From-Database"] = result.FromDatabase.ToString().ToLower();
 
                 return File(result.ZipData, "application/zip", result.FileName);
             }

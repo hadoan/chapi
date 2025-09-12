@@ -263,6 +263,8 @@ namespace Chapi.AI.Services
             }
         }
 
+
+
         // Overload to get run pack files for a specific RunPackId
         public async Task<RunPackFileListResult> GetRunPackFilesAsync(
             Guid runPackId,
@@ -495,6 +497,39 @@ namespace Chapi.AI.Services
             {
                 _logger.LogError(ex, "❌ Error deleting RunPack: {RunPackId}", runPackId);
                 throw;
+            }
+        }
+
+        public async Task<bool> CheckRunPackFilesExistAsync(
+            Guid runPackId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("=== Checking if RunPack Files Exist ===");
+            _logger.LogInformation("RunPackId: {RunPackId}", runPackId);
+
+            try
+            {
+                var runPack = await _runPackRepository.Query()
+                    .Include(rp => rp.Files)
+                        .ThenInclude(rpf => rpf.File)
+                    .FirstOrDefaultAsync(rp => rp.Id == runPackId, cancellationToken);
+
+                if (runPack == null)
+                {
+                    _logger.LogInformation("RunPack not found: {RunPackId}", runPackId);
+                    return false;
+                }
+
+                var hasFiles = runPack.Files.Any(rpf => rpf.File != null);
+                _logger.LogInformation("RunPack {RunPackId} has files: {HasFiles} (FileCount: {FileCount})", 
+                    runPackId, hasFiles, runPack.Files.Count);
+
+                return hasFiles;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error checking RunPack files existence for RunPackId: {RunPackId}", runPackId);
+                return false; // Return false on error to be safe
             }
         }
 

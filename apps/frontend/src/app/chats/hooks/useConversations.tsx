@@ -159,6 +159,7 @@ export function useConversations(
           environment: selectedEnv ?? 'local',
           conversationId: currentConversationId || undefined,
           messageId: messageModel.id,
+          runPackId: messageModel.runPackId || undefined,
         };
 
         const result = await runPacksApi.generate(generateRequest);

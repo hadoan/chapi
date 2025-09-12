@@ -6786,20 +6786,20 @@ export interface components {
             files?: components["schemas"]["Chapi.AI.Dto.FileEntry"][] | null;
             actions?: string[] | null;
         };
-        "Chapi.AI.Dto.ConversationRow": {
+        "Chapi.AI.Dto.ConversationDto": {
             id?: string | null;
-            project_id?: string | null;
+            projectId?: string | null;
             title?: string | null;
-            created_at?: string | null;
-            updated_at?: string | null;
+            createdAt?: string | null;
+            updatedAt?: string | null;
         };
         "Chapi.AI.Dto.DatabaseOperations": {
-            conversations?: components["schemas"]["Chapi.AI.Dto.ConversationRow"][] | null;
-            messages?: components["schemas"]["Chapi.AI.Dto.MessageRow"][] | null;
-            run_packs?: components["schemas"]["Chapi.AI.Dto.RunPackRow"][] | null;
-            run_pack_files?: components["schemas"]["Chapi.AI.Dto.RunPackFileRow"][] | null;
-            run_pack_inputs?: components["schemas"]["Chapi.AI.Dto.RunPackInputRow"][] | null;
-            run_pack_validations?: components["schemas"]["Chapi.AI.Dto.RunPackValidationRow"][] | null;
+            conversations?: components["schemas"]["Chapi.AI.Dto.ConversationDto"][] | null;
+            messages?: components["schemas"]["Chapi.AI.Dto.MessageDto"][] | null;
+            runPacks?: components["schemas"]["Chapi.AI.Dto.RunPackDto"][] | null;
+            runPackFiles?: components["schemas"]["Chapi.AI.Dto.RunPackFileDto"][] | null;
+            runPackInputs?: components["schemas"]["Chapi.AI.Dto.RunPackInputDto"][] | null;
+            runPackValidations?: components["schemas"]["Chapi.AI.Dto.RunPackValidationDto"][] | null;
         };
         "Chapi.AI.Dto.DetectByCodeRequest": {
             code?: string | null;
@@ -6875,65 +6875,64 @@ export interface components {
             name?: string | null;
             format?: string | null;
         };
-        "Chapi.AI.Dto.MessageRow": {
+        "Chapi.AI.Dto.MessageDto": {
             id?: string | null;
-            conversation_id?: string | null;
+            conversationId?: string | null;
             role?: string | null;
             content?: string | null;
-            card_type?: string | null;
-            card_payload?: unknown;
-            created_at?: string | null;
+            cardType?: string | null;
+            cardPayload?: string | null;
+            createdAt?: string | null;
         };
-        "Chapi.AI.Dto.RunPackFileRow": {
+        "Chapi.AI.Dto.RunPackDto": {
             id?: string | null;
-            runpack_id?: string | null;
+            projectId?: string | null;
+            conversationId?: string | null;
+            messageId?: string | null;
+            mode?: string | null;
+            /** Format: int32 */
+            filesCount?: number;
+            status?: string | null;
+            generatorVersion?: string | null;
+            cardHash?: string | null;
+            inputsHash?: string | null;
+            createdAt?: string | null;
+        };
+        "Chapi.AI.Dto.RunPackFileDto": {
+            id?: string | null;
+            runpackId?: string | null;
             path?: string | null;
             content?: string | null;
             /** Format: int32 */
-            size_bytes?: number;
+            sizeBytes?: number;
             role?: string | null;
-            created_at?: string | null;
+            createdAt?: string | null;
         };
-        "Chapi.AI.Dto.RunPackInputRow": {
+        "Chapi.AI.Dto.RunPackInputDto": {
             id?: string | null;
-            runpack_id?: string | null;
-            file_roles_json?: {
+            runpackId?: string | null;
+            fileRolesJson?: {
                 [key: string]: string;
             } | null;
-            role_contexts_json?: {
+            roleContextsJson?: {
                 [key: string]: unknown;
             } | null;
-            endpoints_context?: string | null;
-            allowed_ops?: string | null;
-            env?: string | null;
-            selector_output_json?: {
+            endpointsContext?: string | null;
+            allowedOps?: string | null;
+            environment?: string | null;
+            selectorOutputJson?: {
                 [key: string]: unknown;
             } | null;
             notes?: string | null;
-            created_at?: string | null;
+            createdAt?: string | null;
         };
-        "Chapi.AI.Dto.RunPackRow": {
+        "Chapi.AI.Dto.RunPackValidationDto": {
             id?: string | null;
-            project_id?: string | null;
-            conversation_id?: string | null;
-            message_id?: string | null;
-            mode?: string | null;
-            /** Format: int32 */
-            files_count?: number;
-            status?: string | null;
-            generator_version?: string | null;
-            card_hash?: string | null;
-            inputs_hash?: string | null;
-            created_at?: string | null;
-        };
-        "Chapi.AI.Dto.RunPackValidationRow": {
-            id?: string | null;
-            runpack_id?: string | null;
-            file_path?: string | null;
+            runpackId?: string | null;
+            filePath?: string | null;
             rule?: string | null;
             passed?: boolean;
-            details?: unknown;
-            created_at?: string | null;
+            createdAt?: string | null;
         };
         "Chapi.AI.Dto.TestGenFile": {
             path?: string | null;
@@ -6951,7 +6950,7 @@ export interface components {
             role?: string | null;
             card?: components["schemas"]["Chapi.AI.Dto.ChapiCard"];
             files?: components["schemas"]["Chapi.AI.Dto.TestGenFile"][] | null;
-            db_ops?: components["schemas"]["Chapi.AI.Dto.DatabaseOperations"];
+            dbOps?: components["schemas"]["Chapi.AI.Dto.DatabaseOperations"];
         };
         "Chapi.AI.Services.GenerateRunPackRequest": {
             /** Format: uuid */
@@ -6963,6 +6962,8 @@ export interface components {
             conversationId?: string;
             /** Format: uuid */
             messageId?: string;
+            /** Format: uuid */
+            runPackId?: string | null;
         };
         "Chapi.ApiSpecs.Application.ApiSpecDto": {
             /** Format: uuid */
