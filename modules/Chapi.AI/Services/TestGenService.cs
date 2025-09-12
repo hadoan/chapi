@@ -29,7 +29,7 @@ namespace Chapi.AI.Services
             _databaseService = databaseService;
         }
 
-        public Task<TestGenResponse> GenerateTestsAsync(TestGenInput input)
+        public async Task<TestGenResponse> GenerateTestsAsync(TestGenInput input)
         {
             _logger.LogInformation("Generating tests for endpoint {Method} {Path}",
                 input.SelectedEndpoint.Method, input.SelectedEndpoint.Path);
@@ -38,26 +38,24 @@ namespace Chapi.AI.Services
             var conversationId = input.Chat.ConversationId ?? Guid.NewGuid().ToString();
             var messageId = Guid.NewGuid().ToString();
 
-            // Generate the card using the card generator
             var card = _cardGenerator.GenerateCard(input);
 
-            // Generate files if in FILES mode using the file generator
             List<TestGenFile>? files = null;
             if (input.Mode == "FILES")
             {
                 files = _fileGenerator.GenerateFiles(input.SelectedEndpoint, input.AuthProfile, input.Options);
             }
 
-            // Create database operations using the database service
-            var dbOps = _databaseService.CreateDatabaseOperations(input, card, conversationId, messageId, timestamp, files);
+            // Create database operations using the database service (now saves to database)
+            var dbOps = await _databaseService.CreateDatabaseOperations(input, card, conversationId, messageId, timestamp, files);
 
-            return Task.FromResult(new TestGenResponse
+            return new TestGenResponse
             {
                 Role = "Chapi",
                 Card = card,
                 Files = files,
                 DbOps = dbOps
-            });
+            };
         }
     }
 }

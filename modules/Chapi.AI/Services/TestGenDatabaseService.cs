@@ -14,7 +14,7 @@ namespace Chapi.AI.Services
     public interface ITestGenDatabaseService
     {
         Task<DatabaseOperations> CreateAndSaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default);
-        DatabaseOperations CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files);
+        Task<DatabaseOperations> CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default);
     }
 
     public class TestGenDatabaseService : ITestGenDatabaseService
@@ -39,23 +39,10 @@ namespace Chapi.AI.Services
             return await _persistenceService.SaveDatabaseOperationsAsync(input, card, conversationId, messageId, timestamp, files, cancellationToken);
         }
 
-        public DatabaseOperations CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files)
+        public async Task<DatabaseOperations> CreateDatabaseOperations(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default)
         {
-            var dbOps = new DatabaseOperations();
-
-            // Create conversation if needed
-            CreateConversationIfNeeded(dbOps, input, conversationId, timestamp);
-
-            // Create message
-            CreateMessage(dbOps, conversationId, messageId, input, card, timestamp);
-
-            // Create run pack if in FILES mode
-            if (input.Mode == "FILES" && files != null)
-            {
-                CreateRunPackOperations(dbOps, input, card, conversationId, messageId, timestamp, files);
-            }
-
-            return dbOps;
+            // Use the persistence service to save data to the database and return the operations
+            return await _persistenceService.SaveDatabaseOperationsAsync(input, card, conversationId, messageId, timestamp, files, cancellationToken);
         }
 
         private void CreateConversationIfNeeded(DatabaseOperations dbOps, TestGenInput input, string conversationId, string timestamp)
