@@ -205,7 +205,7 @@ export default function ProjectEndpointsPage() {
         toast({ title: 'Failed', description: err?.message ?? String(err) })
       )
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, selectedAuthProfile]);
 
   // Load specs for filtering
   useEffect(() => {
@@ -226,7 +226,14 @@ export default function ProjectEndpointsPage() {
     if (!id) return;
     authProfilesApi
       .getAll({ projectId: id, enabled: true })
-      .then(profiles => setAuthProfiles(profiles || []))
+      .then(profiles => {
+        const list = profiles || [];
+        setAuthProfiles(list);
+        // default to first profile if available
+        if (list.length > 0 && !selectedAuthProfile) {
+          setSelectedAuthProfile(list[0].id);
+        }
+      })
       .catch(err =>
         toast({
           title: 'Failed to load auth profiles',
@@ -669,48 +676,53 @@ export default function ProjectEndpointsPage() {
                     </div>
                   )}
 
-                {/* Test Generation Section */}
+                {/* Test Generation Section - show button always, combobox only if endpoint requires auth */}
                 <div className="border-t pt-6">
                   <h3 className="font-semibold mb-4">Generate API Tests</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Auth Profile
-                      </label>
-                      <Select
-                        value={selectedAuthProfile}
-                        onValueChange={setSelectedAuthProfile}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an auth profile" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {authProfiles.map(profile => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.type} -{' '}
-                              {profile.injectionName || 'Default'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {selectedEndpoint.security &&
+                      selectedEndpoint.security.length > 0 && (
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">
+                            Auth Profile
+                          </label>
+                          <Select
+                            value={selectedAuthProfile}
+                            onValueChange={setSelectedAuthProfile}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an auth profile" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {authProfiles.map(profile => (
+                                <SelectItem key={profile.id} value={profile.id}>
+                                  {profile.type} -{' '}
+                                  {profile.injectionName || 'Default'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handleGenerateTests('FILES')}
-                        disabled={testGenerating || !selectedAuthProfile}
+                        disabled={testGenerating}
                         className="flex-1"
                       >
                         {testGenerating ? 'Generating...' : 'Generate Tests'}
                       </Button>
                     </div>
 
-                    {authProfiles.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        No auth profiles found. Create an auth profile in the
-                        project settings to generate tests.
-                      </p>
-                    )}
+                    {selectedEndpoint.security &&
+                      selectedEndpoint.security.length > 0 &&
+                      authProfiles.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          No auth profiles found. Create an auth profile in the
+                          project settings to generate tests.
+                        </p>
+                      )}
                   </div>
                 </div>
               </div>
