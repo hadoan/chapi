@@ -353,11 +353,11 @@ const EndpointDetail: React.FC<Props> = ({
                     </div>
                   )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                   <Button
                     onClick={() => onGenerateTests('FILES')}
                     disabled={testGenerating}
-                    className="flex-1"
+                    className="px-4 py-2"
                   >
                     {testGenerating ? 'Generating...' : 'Generate Tests'}
                   </Button>
