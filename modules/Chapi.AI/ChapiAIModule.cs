@@ -40,7 +40,7 @@ public class ChapiAIModule : IModule
         services.AddScoped<ITestGenService, TestGenService>();
         services.AddScoped<ITestGenCardGenerator, TestGenCardGenerator>();
         services.AddScoped<ITestGenFileGenerator, TestGenFileGenerator>();
-        services.AddScoped<ITestGenDatabaseService, TestGenDatabaseService>();
+        
         services.AddScoped<ITestGenDatabasePersistenceService, TestGenDatabasePersistenceService>();
         services.AddScoped<ITestGenValidationService, TestGenValidationService>();
         services.AddScoped<IChapiIRGenerator, ChapiIRGenerator>();

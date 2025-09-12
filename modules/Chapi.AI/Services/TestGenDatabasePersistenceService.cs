@@ -11,12 +11,15 @@ using Chat.Infrastructure;
 using RunPack.Infrastructure;
 using ShipMvp.Core.Persistence;
 using ShipMvp.Core.Abstractions;
+using ShipMvp.Core.Attributes;
+using System.IO.Compression;
+using System.IO;
 
 namespace Chapi.AI.Services;
 
 public interface ITestGenDatabasePersistenceService
 {
-    Task<DatabaseOperations> SaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default);
+    Task<DatabaseOperations> SaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default);
 }
 
 public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceService
@@ -26,34 +29,33 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
     private readonly IRunPackRepository _runPackRepository;
     private readonly ITestGenValidationService _validationService;
     private readonly IGuidGenerator _guidGenerator;
+    private readonly IRunPackFileService _runPackFileService;
 
     public TestGenDatabasePersistenceService(
         IDbContext dbContext,
         IConversationRepository conversationRepository,
         IRunPackRepository runPackRepository,
         ITestGenValidationService validationService,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        IRunPackFileService runPackFileService)
     {
         _dbContext = dbContext;
         _conversationRepository = conversationRepository;
         _runPackRepository = runPackRepository;
         _validationService = validationService;
         _guidGenerator = guidGenerator;
+        _runPackFileService = runPackFileService;
     }
 
-    public async Task<DatabaseOperations> SaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card, string conversationId, string messageId, string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default)
+    [UnitOfWork]
+    public async Task<DatabaseOperations> SaveDatabaseOperationsAsync(TestGenInput input, ChapiCard card,  string timestamp, List<TestGenFile>? files, CancellationToken cancellationToken = default)
     {
         var dbOps = new DatabaseOperations();
 
         try
         {
-            // Parse GUIDs from string IDs
-            var convGuid = Guid.Parse(conversationId);
-            var msgGuid = Guid.Parse(messageId);
-
-            // For now, use a default project ID since we don't have it in the input
-            var projectId = _guidGenerator.Create(); // This should come from the actual project context
-
+            var projectId = Guid.Parse(input.Project.Id);
+            var convGuid = _guidGenerator.Create();
             // Create or get conversation using repository
             var conversation = await CreateOrGetConversationAsync(input, convGuid, projectId, timestamp, cancellationToken);
             if (conversation != null)
@@ -64,6 +66,7 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
                 var messageContent = CreateMessageContent(card);
                 var message = conversation.Append(MessageRole.Assistant, messageContent, MessageCardType.Diff, JsonSerializer.Serialize(card));
 
+                _dbContext.Set<Message>().Add(message);
                 // Save conversation with new message
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 dbOps.Messages = new List<MessageDto> { CreateMessageDto(message) };
@@ -71,7 +74,7 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
                 // Create RunPack if files are provided
                 if (files?.Any() == true)
                 {
-                    await CreateRunPackAsync(dbOps, input, card, convGuid, msgGuid, projectId, timestamp, files, cancellationToken);
+                    await CreateRunPackAsync(dbOps, input, card, convGuid, message.Id, projectId, timestamp, files, cancellationToken);
                 }
             }
 
@@ -144,7 +147,7 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
 
         // Create new conversation using the domain factory method
         var title = input.Chat.ConversationTitle ?? $"{input.SelectedEndpoint.Method} {input.SelectedEndpoint.Path} — tests";
-        var conversation = Conversation.Create(title, projectId);
+        var conversation = new Conversation(conversationId,title, projectId);
 
         await _conversationRepository.AddAsync(conversation, cancellationToken);
         return conversation;
@@ -164,15 +167,6 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
         var inputsHash = JsonSerializer.Serialize(input).GetHashCode().ToString();
         runPack.SetHashes(cardHash, inputsHash);
 
-        // Add files to RunPack
-        foreach (var file in files)
-        {
-            var fileId = _guidGenerator.Create(); // In real implementation, this would come from a File entity
-            var role = _validationService.ClassifyFileRole(file.Path);
-            var runPackFile = RunPackFile.Create(runPack.Id, _guidGenerator.Create(), fileId, role);
-            runPack.AddFile(runPackFile);
-        }
-
         // Set RunPack input using domain method
         var fileRoles = files.ToDictionary(f => f.Path, f => _validationService.ClassifyFileRole(f.Path));
         var roleContexts = files.ToDictionary(f => f.Path, f => f.Content ?? "");
@@ -187,13 +181,38 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
             allowedOps,
             environment);
 
-        // Save to repository
+        // Save RunPack to repository first
         await _runPackRepository.AddAsync(runPack, cancellationToken);
 
-        // Create DTO for return
+        // Create ZIP from files and use RunPackFileService to handle file storage
+        var zipData = CreateZipFromFiles(files);
+        var fileResult = await _runPackFileService.SaveRunPackAsync(
+            zipData, 
+            projectId, 
+            environment, 
+            runPack.Id, 
+            cancellationToken);
+
+        // Create DTOs for return
         dbOps.RunPacks = new List<RunPackDto> { CreateRunPackDto(runPack) };
-        dbOps.RunPackFiles = runPack.Files.Select(CreateRunPackFileDto).ToList();
+        dbOps.RunPackFiles = files.Select(f => CreateRunPackFileDto(f, runPack.Id)).ToList();
         dbOps.RunPackInputs = new List<RunPackInputDto> { CreateRunPackInputDto(runPack.Input!) };
+    }
+
+    private byte[] CreateZipFromFiles(List<TestGenFile> files)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        {
+            foreach (var file in files)
+            {
+                var entry = archive.CreateEntry(file.Path);
+                using var entryStream = entry.Open();
+                using var writer = new StreamWriter(entryStream);
+                writer.Write(file.Content ?? string.Empty);
+            }
+        }
+        return memoryStream.ToArray();
     }
 
     private RunPackDto CreateRunPackDto(RunPack.Domain.RunPack runPack)
@@ -214,17 +233,17 @@ public class TestGenDatabasePersistenceService : ITestGenDatabasePersistenceServ
         };
     }
 
-    private RunPackFileDto CreateRunPackFileDto(RunPackFile runPackFile)
+    private RunPackFileDto CreateRunPackFileDto(TestGenFile file, Guid runPackId)
     {
         return new RunPackFileDto
         {
-            Id = runPackFile.Id.ToString(),
-            RunpackId = runPackFile.RunPackId.ToString(), // Note: DTO uses "Runpack" not "RunPack"
-            Path = "", // This would need to be derived from the File entity
-            Content = "", // This would need to be derived from the File entity
-            SizeBytes = 0, // This would need to be calculated
-            Role = runPackFile.Role,
-            CreatedAt = runPackFile.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            Id = _guidGenerator.Create().ToString(),
+            RunpackId = runPackId.ToString(), // Note: DTO uses "Runpack" not "RunPack"
+            Path = file.Path,
+            Content = file.Content ?? "",
+            SizeBytes = System.Text.Encoding.UTF8.GetByteCount(file.Content ?? ""),
+            Role = _validationService.ClassifyFileRole(file.Path),
+            CreatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
         };
     }
 

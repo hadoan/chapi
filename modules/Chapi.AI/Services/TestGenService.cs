@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Chapi.AI.Dto;
+using ShipMvp.Core.Abstractions;
 
 namespace Chapi.AI.Services
 {
@@ -15,15 +16,18 @@ namespace Chapi.AI.Services
         private readonly ILogger<TestGenService> _logger;
         private readonly ITestGenCardGenerator _cardGenerator;
         private readonly ITestGenFileGenerator _fileGenerator;
-        private readonly ITestGenDatabaseService _databaseService;
+        private readonly ITestGenDatabasePersistenceService _databaseService;
+        private readonly IGuidGenerator _guidGenerator; 
 
         public TestGenService(
             ILogger<TestGenService> logger,
             ITestGenCardGenerator cardGenerator,
             ITestGenFileGenerator fileGenerator,
-            ITestGenDatabaseService databaseService)
+            IGuidGenerator guidGenerator,
+            ITestGenDatabasePersistenceService databaseService)
         {
             _logger = logger;
+            _guidGenerator = guidGenerator;
             _cardGenerator = cardGenerator;
             _fileGenerator = fileGenerator;
             _databaseService = databaseService;
@@ -35,9 +39,7 @@ namespace Chapi.AI.Services
                 input.SelectedEndpoint.Method, input.SelectedEndpoint.Path);
 
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            var conversationId = input.Chat.ConversationId ?? Guid.NewGuid().ToString();
-            var messageId = Guid.NewGuid().ToString();
-
+            
             var card = _cardGenerator.GenerateCard(input);
 
             List<TestGenFile>? files = null;
@@ -47,7 +49,7 @@ namespace Chapi.AI.Services
             }
 
             // Create database operations using the database service (now saves to database)
-            var dbOps = await _databaseService.CreateDatabaseOperations(input, card, conversationId, messageId, timestamp, files);
+            var dbOps = await _databaseService.SaveDatabaseOperationsAsync(input, card,  timestamp, files);
 
             return new TestGenResponse
             {

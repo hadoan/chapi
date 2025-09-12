@@ -9,12 +9,9 @@ public class Conversation : Entity<Guid>
     public Guid ProjectId { get; private set; }
     public IReadOnlyCollection<Message> Messages => _messages;
 
-    // Remove shadowing properties - use base class properties instead
-    // public DateTime CreatedAt { get; private set; }  ❌ REMOVED - shadows base
-    // public DateTime UpdatedAt { get; private set; }  ❌ REMOVED - shadows base
 
-    private Conversation() : base(Guid.Empty) { }
-    private Conversation(Guid id, string title, Guid projectId) : base(id)
+    public Conversation() : base(Guid.Empty) { }
+    public Conversation(Guid id, string title, Guid projectId) : base(id)
     {
         Title = title;
         ProjectId = projectId;
@@ -22,7 +19,7 @@ public class Conversation : Entity<Guid>
         UpdatedAt = DateTime.UtcNow; // Base class UpdatedAt is DateTime?, so this works
     }
     public static Conversation Create(string title, Guid projectId)
-    { if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title required", nameof(title)); return new(Guid.NewGuid(), title.Trim(), projectId); }
+    {if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Title required", nameof(title)); return new(Guid.NewGuid(), title.Trim(), projectId); }
     public Message Append(MessageRole role, string content, MessageCardType cardType = MessageCardType.None, string? cardPayload = null)
     {
         var msg = Message.Create(Id, role, content, cardType, cardPayload);
