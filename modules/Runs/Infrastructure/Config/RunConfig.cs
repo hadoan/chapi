@@ -31,6 +31,6 @@ public class RunStepConfig : IEntityTypeConfiguration<RunStep>
     {
         builder.ToTable("RunSteps");
         builder.HasKey(s => s.Id);
-        builder.Property(s => s.Name).IsRequired().HasMaxLength(200);
+        builder.Property(s => s.StepId).IsRequired().HasMaxLength(200);
     }
 }
