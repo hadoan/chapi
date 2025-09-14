@@ -33,6 +33,7 @@ import { chatApi } from '@/lib/api/chat';
 import { EnvironmentDto } from '@/lib/api/environments';
 import { llmsApi } from '@/lib/api/llms';
 import { ProjectDto } from '@/lib/api/projects';
+import { runsApi, type CreateRunRequest } from '@/lib/api/runs';
 import type { components } from '@/lib/api/schema';
 import { LogOut, MessageSquare, Moon, Settings, Sun, User } from 'lucide-react';
 import { useState } from 'react';
@@ -448,12 +449,43 @@ All smoke tests are passing. Ready to merge!`,
   };
 
   // Button actions
-  const runInCloud = async () => {
+  const runInCloud = async (message?: MessageModel) => {
+    if (!selectedProject?.id) {
+      toast({ title: 'Please select a project first' });
+      return;
+    }
+
     toast({ title: 'Starting run in cloud...' });
     try {
-      // Placeholder: call backend run api if available
-      // await llmsApi.runInCloud({ /* params */ });
-      toast({ title: 'Cloud run started' });
+      // Extract runPackId from message if available
+      const messageWithIds = message as unknown as {
+        runPackId?: string;
+      };
+      const validRunPackId =
+        messageWithIds?.runPackId &&
+        messageWithIds.runPackId !== '00000000-0000-0000-0000-000000000000'
+          ? messageWithIds.runPackId
+          : undefined;
+
+      // Create a run request
+      const runRequest: CreateRunRequest = {
+        projectId: selectedProject.id,
+        suiteName: 'Cloud Run Suite', // You might want to make this dynamic
+        version: '1.0.0', // You might want to make this dynamic
+        actor: 'Chat User', // You might want to get this from user context
+        trigger: 'Chat',
+        runPackId: validRunPackId,
+        // ir and irPath can be omitted if runPackId is available
+      };
+
+      const response = await runsApi.create(runRequest);
+
+      toast({
+        title: 'Cloud run started',
+        description: `Run ${response.runId} created with status: ${response.status}`,
+      });
+
+      console.log('Created run:', response);
     } catch (err) {
       console.error('Run in cloud failed', err);
       toast({ title: 'Failed to start cloud run' });
@@ -632,7 +664,8 @@ All smoke tests are passing. Ready to merge!`,
                                   llmCard?: import('@/lib/api/llms').ChapiCard;
                                 }
                               ).llmCard;
-                              if (label === 'Run in Cloud') await runInCloud();
+                              if (label === 'Run in Cloud')
+                                await runInCloud(message as MessageModel);
                               if (label === 'Download Run Pack')
                                 await downloadRunPack(
                                   message as MessageModel,

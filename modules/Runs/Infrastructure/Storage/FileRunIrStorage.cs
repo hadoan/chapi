@@ -7,7 +7,7 @@ namespace Runs.Infrastructure.Storage;
 public sealed class FileRunIrStorage : IRunIrStorage
 {
     private readonly IFileStorageService _fs;          // your abstraction
-    private const string Container = "artifacts";      // logical bucket/container
+    private const string Container = "chapi-artifacts";      // logical bucket/container
 
     public FileRunIrStorage(IFileStorageService fs) => _fs = fs;
 

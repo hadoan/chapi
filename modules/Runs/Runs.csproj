@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\shipmvp\ShipMvp.Domain\ShipMvp.Domain.csproj" />
     <ProjectReference Include="..\..\shipmvp\ShipMvp.Application\ShipMvp.Application.csproj" />
     <ProjectReference Include="..\Suites\Suite.csproj" />
+    <ProjectReference Include="..\RunPack\RunPack.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />

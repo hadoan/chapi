@@ -8,6 +8,7 @@ public sealed record CreateRunRequest(
     string Version,
     JsonElement? Ir,
     string? IrPath,      // optional: pre-uploaded key
+    string? RunPackId,   // optional: get IR from runpack files
     string Actor,
     string Trigger = "Manual",
     string? IdempotencyKey = null);
