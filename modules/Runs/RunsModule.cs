@@ -5,6 +5,7 @@ using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Modules;
 using Runs.Application.Services;
 using Runs.Application.Ports;
+using Runs.Application.Handlers;
 using Runs.Domain;
 using Runs.Infrastructure.Eventing;
 using Runs.Infrastructure.Storage;
@@ -31,6 +32,11 @@ public class RunsModule : IModule
         // Register ports and their implementations
         services.AddScoped<IRunScheduler, DistributedRunScheduler>();
         services.AddScoped<IRunIrStorage, FileRunIrStorage>();
+
+        // Event handler registration
+        services.AddTransient<RunRequestedHandler>();
+        // Background service that subscribes the handler to RunRequestedEto
+        services.AddHostedService<SubscribeEventsBackgroundService>();
 
         // Note: IDistributedEventBus and IFileStorageService are registered by infrastructure packages
     }
