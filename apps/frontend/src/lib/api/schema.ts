@@ -4557,6 +4557,117 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    projectId?: string;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
+                    };
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
+                    "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
+                    "application/*+json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized - Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden - Insufficient permissions */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/runs/{id}": {
         parameters: {
             query?: never;
@@ -4611,70 +4722,6 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/runs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
-                    "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
-                    "application/*+json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
-                        "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
-                        "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
-                    };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
@@ -6960,6 +7007,11 @@ export interface components {
             payload?: string | null;
             /** Format: date-time */
             createdAt?: string;
+        };
+        "Runs.Application.Contracts.RunsPagedResult": {
+            items?: components["schemas"]["Runs.Application.Contracts.RunDto"][] | null;
+            /** Format: int32 */
+            total?: number;
         };
         /** @description DTO for user registration */
         "ShipMvp.Api.Controllers.AuthController.RegisterDto": {

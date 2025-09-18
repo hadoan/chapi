@@ -83,7 +83,7 @@ public class RunsAppService : IRunsAppService
         try
         {
             _logger.LogInformation("Getting IR from RunPack {RunPackId}", runPackId);
-            
+
             // Get the runpack with files directly from repository
             var runPack = await _runPackRepo.Query()
                 .Include(rp => rp.Files)
@@ -101,7 +101,7 @@ public class RunsAppService : IRunsAppService
             if (testFile?.File == null)
                 throw new InvalidOperationException("No tests.json file found in the RunPack");
 
-            _logger.LogInformation("Found tests.json file: Container={Container}, StoragePath={StoragePath}", 
+            _logger.LogInformation("Found tests.json file: Container={Container}, StoragePath={StoragePath}",
                 testFile.File.ContainerName, testFile.File.StoragePath);
 
             // Extract the actual file path from the storage path if it's a full GCS URL
@@ -173,5 +173,16 @@ public class RunsAppService : IRunsAppService
             run.FinishedAt,
             run.Error,
             run.Steps.Count);
+    }
+
+    public async Task<Runs.Application.Contracts.RunsPagedResult> GetPagedAsync(int page, int pageSize, Guid? projectId = null, string? status = null, CancellationToken ct = default)
+    {
+        Runs.Domain.RunStatus? parsedStatus = null;
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<Runs.Domain.RunStatus>(status, true, out var s))
+            parsedStatus = s;
+
+        var (items, total) = await _runRepo.GetPagedAsync(page, pageSize, projectId, parsedStatus, ct);
+        var dtos = items.Select(MapToDto).ToList();
+        return new Runs.Application.Contracts.RunsPagedResult(dtos, total);
     }
 }

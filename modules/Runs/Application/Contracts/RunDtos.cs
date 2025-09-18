@@ -53,3 +53,5 @@ public sealed record RunEventDto(
     string Kind,
     string Payload,
     DateTime CreatedAt);
+
+public sealed record RunsPagedResult(IEnumerable<RunDto> Items, int Total);

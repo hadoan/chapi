@@ -19,6 +19,12 @@ public class RunsController : ControllerBase
         _service = service;
         _fileStorageService = fileStorageService;
     }
+    [HttpGet]
+    public async Task<ActionResult<Runs.Application.Contracts.RunsPagedResult>> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] Guid? projectId = null, [FromQuery] string? status = null, CancellationToken ct = default)
+    {
+        var result = await _service.GetPagedAsync(page, pageSize, projectId, status, ct);
+        return Ok(result);
+    }
     [HttpGet("{id}")]
     public async Task<ActionResult<RunDto?>> Get(Guid id, CancellationToken ct)
     {
