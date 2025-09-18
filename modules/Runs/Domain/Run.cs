@@ -11,6 +11,7 @@ public enum RunStatus { Pending, Running, Passed, Failed, Cancelled }
 public class Run : Entity<Guid>
 {
     public Guid? ProjectId { get; private set; }
+    public Guid? EnvironmentId { get; private set; }
     public string SuiteName { get; private set; } = string.Empty;
     public string Version { get; private set; } = string.Empty;
     public RunStatus Status { get; private set; } = RunStatus.Pending;
@@ -26,10 +27,11 @@ public class Run : Entity<Guid>
 
     private Run() : base(Guid.Empty) { }
 
-    private Run(Guid id, Guid? projectId, string suiteName, string version, string actor, string trigger)
+    private Run(Guid id, Guid? projectId, Guid? environmentId, string suiteName, string version, string actor, string trigger)
         : base(id)
     {
         ProjectId = projectId;
+        EnvironmentId = environmentId;
         SuiteName = suiteName;
         Version = version;
         Actor = actor;
@@ -37,9 +39,9 @@ public class Run : Entity<Guid>
         CreatedAt = DateTime.UtcNow;
     }
 
-    public static Run New(Guid? projectId, string suiteName, string version, string actor, string trigger = "Manual")
+    public static Run New(Guid? projectId, Guid? environmentId, string suiteName, string version, string actor, string trigger = "Manual")
     {
-        return new Run(Guid.NewGuid(), projectId, suiteName, version, actor, trigger);
+        return new Run(Guid.NewGuid(), projectId, environmentId, suiteName, version, actor, trigger);
     }
 
     public void AttachIr(string irPath)

@@ -6910,6 +6910,8 @@ export interface components {
         "Runs.Application.Contracts.CreateRunRequest": {
             /** Format: uuid */
             projectId?: string | null;
+            /** Format: uuid */
+            environmentId?: string | null;
             suiteName?: string | null;
             version?: string | null;
             ir?: unknown;
@@ -6930,6 +6932,8 @@ export interface components {
             id?: string;
             /** Format: uuid */
             projectId?: string | null;
+            /** Format: uuid */
+            environmentId?: string | null;
             suiteName?: string | null;
             version?: string | null;
             status?: string | null;

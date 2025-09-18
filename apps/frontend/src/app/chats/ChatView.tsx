@@ -36,7 +36,7 @@ import { ProjectDto } from '@/lib/api/projects';
 import { runsApi, type CreateRunRequest } from '@/lib/api/runs';
 import type { components } from '@/lib/api/schema';
 import { LogOut, MessageSquare, Moon, Settings, Sun, User } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useConversations } from './hooks/useConversations';
 
 type Card = MessageCard;
@@ -475,8 +475,10 @@ All smoke tests are passing. Ready to merge!`,
         actor: 'Chat User', // You might want to get this from user context
         trigger: 'Chat',
         runPackId: validRunPackId,
+        environmentId: selectedEnv || undefined,
         // ir and irPath can be omitted if runPackId is available
       };
+      console.log('Creating run with request:', runRequest);
 
       const response = await runsApi.create(runRequest);
 
@@ -517,6 +519,22 @@ All smoke tests are passing. Ready to merge!`,
     document.documentElement.classList.toggle('dark');
   };
 
+  // Stable callbacks passed to child components to avoid unnecessary re-renders
+  const handleSelectProject = useCallback((p: ProjectDto) => {
+    setSelectedProject(
+      prev =>
+        ({
+          id: p.id ?? prev?.id ?? '',
+          name: p.name ?? prev?.name ?? '',
+        } as ProjectDto)
+    );
+  }, []);
+
+  const handleSelectEnv = useCallback((e: string | null) => {
+    console.log('Selected environment:', e);
+    setSelectedEnv(e);
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="h-screen w-full bg-background text-foreground overflow-hidden">
@@ -532,16 +550,8 @@ All smoke tests are passing. Ready to merge!`,
                 <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
                   <ProjectSelectionBar
                     initialProjectId={selectedProject?.id}
-                    onSelectProject={p =>
-                      setSelectedProject(
-                        prev =>
-                          ({
-                            id: p.id ?? prev?.id ?? '',
-                            name: p.name ?? prev?.name ?? '',
-                          } as ProjectDto)
-                      )
-                    }
-                    onSelectEnv={e => setSelectedEnv(e)}
+                    onSelectProject={handleSelectProject}
+                    onSelectEnv={handleSelectEnv}
                     onToggleDarkMode={toggleDarkMode}
                   />
                 </div>

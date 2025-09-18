@@ -4,6 +4,7 @@ namespace Runs.Application.Contracts;
 
 public sealed record CreateRunRequest(
     Guid? ProjectId,
+    Guid? EnvironmentId,
     string SuiteName,
     string Version,
     JsonElement? Ir,
@@ -18,6 +19,7 @@ public sealed record CreateRunResponse(Guid RunId, string Status, string IrPath)
 public sealed record RunDto(
     Guid Id,
     Guid? ProjectId,
+    Guid? EnvironmentId,
     string SuiteName,
     string Version,
     string Status,

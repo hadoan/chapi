@@ -65,7 +65,7 @@ export default function ProjectSelectionBar({
     return () => {
       mounted = false;
     };
-  }, [initialProjectId]);
+  }, [initialProjectId, onSelectProject]);
 
   useEffect(() => {
     if (!selectedProject?.id) return;
@@ -75,10 +75,11 @@ export default function ProjectSelectionBar({
     const cached = envCacheRef.current.get(selectedProject.id);
     if (cached) {
       setEnvOptions(cached);
+      console.log('Using cached envs for project', selectedProject.id, cached);
       if (cached.length > 0) {
-        setSelectedEnv(cached[0].name ?? null);
+        setSelectedEnv(cached[0].id ?? null);
         if (typeof onSelectEnv === 'function')
-          onSelectEnv(cached[0].name ?? null);
+          onSelectEnv(cached[0].id ?? null);
       }
       return () => {
         mounted = false;
@@ -93,9 +94,9 @@ export default function ProjectSelectionBar({
         envCacheRef.current.set(selectedProject.id, mapped);
         setEnvOptions(mapped);
         if (mapped.length > 0) {
-          setSelectedEnv(mapped[0].name ?? null);
+          setSelectedEnv(mapped[0].id ?? null);
           if (typeof onSelectEnv === 'function')
-            onSelectEnv(mapped[0].name ?? null);
+            onSelectEnv(mapped[0].id ?? null);
         }
       })
       .catch(() => toast({ title: 'Failed to load environments' }));
@@ -103,7 +104,7 @@ export default function ProjectSelectionBar({
     return () => {
       mounted = false;
     };
-  }, [selectedProject?.id]);
+  }, [selectedProject?.id, onSelectEnv]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
@@ -150,11 +151,11 @@ export default function ProjectSelectionBar({
           <button
             key={env.id}
             onClick={() => {
-              setSelectedEnv(env.name ?? null);
-              if (onSelectEnv) onSelectEnv(env.name ?? null);
+              setSelectedEnv(env.id ?? null);
+              if (onSelectEnv) onSelectEnv(env.id ?? null);
             }}
             className={`px-3 py-1 rounded text-sm transition-colors ${
-              selectedEnv === (env.name ?? null)
+              selectedEnv === (env.id ?? null)
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -169,7 +170,14 @@ export default function ProjectSelectionBar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="sm:hidden">
             <Button variant="outline" size="sm" className="px-2">
-              <span className="truncate">{selectedEnv || 'Env'}</span>
+              <span className="truncate">
+                {
+                  // Show the currently selected environment name, fallback to raw id if we don't have the name
+                  envOptions.find(e => e.id === selectedEnv)?.name ??
+                    selectedEnv ??
+                    'Env'
+                }
+              </span>
               <ChevronDown className="w-3 h-3 ml-1" />
             </Button>
           </DropdownMenuTrigger>
@@ -178,8 +186,8 @@ export default function ProjectSelectionBar({
               <DropdownMenuItem
                 key={env.id}
                 onClick={() => {
-                  setSelectedEnv(env.name ?? null);
-                  if (onSelectEnv) onSelectEnv(env.name ?? null);
+                  setSelectedEnv(env.id ?? null);
+                  if (onSelectEnv) onSelectEnv(env.id ?? null);
                 }}
               >
                 {env.name}

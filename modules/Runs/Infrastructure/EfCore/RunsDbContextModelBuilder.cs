@@ -15,6 +15,7 @@ public static class RunsDbContextModelBuilder
             entity.Property(e => e.Id).ValueGeneratedNever();
             
             entity.Property(e => e.ProjectId);
+            entity.Property(e => e.EnvironmentId);
             entity.Property(e => e.SuiteName).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Version).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
@@ -34,6 +35,7 @@ public static class RunsDbContextModelBuilder
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => e.ProjectId);
+            entity.HasIndex(e => e.EnvironmentId);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.CreatedAt);
         });

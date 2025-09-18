@@ -16,6 +16,7 @@ public sealed class DistributedRunScheduler : IRunScheduler
         var eto = new RunRequestedEto(
             run.Id,
             run.ProjectId,
+            run.EnvironmentId,
             run.IrPath!,   // e.g., runs/{runId}/suite.json
             run.Actor,
             run.Trigger,

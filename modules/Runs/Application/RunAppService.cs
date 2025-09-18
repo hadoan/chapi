@@ -6,6 +6,7 @@ using RunPack.Application.Services;
 using ShipMvp.Domain.Files;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Runs.Application.Services;
 
@@ -18,6 +19,7 @@ public class RunsAppService : IRunsAppService
     private readonly IRunPackAppService _runPackService;
     private readonly IFileStorageService _fileStorageService;
     private readonly RunPack.Domain.IRunPackRepository _runPackRepo;
+    private readonly ILogger<RunsAppService> _logger;
 
     public RunsAppService(
         IRunRepository runRepo,
@@ -26,7 +28,8 @@ public class RunsAppService : IRunsAppService
         IRunScheduler scheduler,
         IRunPackAppService runPackService,
         IFileStorageService fileStorageService,
-        RunPack.Domain.IRunPackRepository runPackRepo)
+        RunPack.Domain.IRunPackRepository runPackRepo,
+        ILogger<RunsAppService> logger)
     {
         _runRepo = runRepo;
         _eventRepo = eventRepo;
@@ -35,6 +38,7 @@ public class RunsAppService : IRunsAppService
         _runPackService = runPackService;
         _fileStorageService = fileStorageService;
         _runPackRepo = runPackRepo;
+        _logger = logger;
     }
 
     public async Task<CreateRunResponse> CreateAsync(CreateRunRequest input, CancellationToken ct = default)
@@ -42,7 +46,7 @@ public class RunsAppService : IRunsAppService
         if (input.Ir is null && string.IsNullOrWhiteSpace(input.IrPath) && string.IsNullOrWhiteSpace(input.RunPackId))
             throw new ArgumentException("Either IR, IrPath, or RunPackId must be provided");
 
-        var run = Run.New(input.ProjectId, input.SuiteName, input.Version, input.Actor, input.Trigger);
+        var run = Run.New(input.ProjectId, input.EnvironmentId, input.SuiteName, input.Version, input.Actor, input.Trigger);
         await _runRepo.AddAsync(run, ct);
 
         string irPath;
@@ -76,32 +80,62 @@ public class RunsAppService : IRunsAppService
 
     private async Task<JsonElement> GetIrFromRunPackAsync(Guid runPackId, CancellationToken ct)
     {
-        // Get the runpack with files directly from repository
-        var runPack = await _runPackRepo.Query()
-            .Include(rp => rp.Files)
-            .ThenInclude(rpf => rpf.File)
-            .FirstOrDefaultAsync(rp => rp.Id == runPackId, ct);
+        try
+        {
+            _logger.LogInformation("Getting IR from RunPack {RunPackId}", runPackId);
+            
+            // Get the runpack with files directly from repository
+            var runPack = await _runPackRepo.Query()
+                .Include(rp => rp.Files)
+                .ThenInclude(rpf => rpf.File)
+                .FirstOrDefaultAsync(rp => rp.Id == runPackId, ct);
 
-        if (runPack == null)
-            throw new ArgumentException($"RunPack with ID {runPackId} not found");
+            if (runPack == null)
+                throw new ArgumentException($"RunPack with ID {runPackId} not found");
 
-        // Find the tests.json file in the runpack files
-        var testFile = runPack.Files
-            .FirstOrDefault(rpf => rpf.File != null &&
-                                 rpf.File.FileName.Equals("tests.json", StringComparison.OrdinalIgnoreCase));
+            // Find the tests.json file in the runpack files
+            var testFile = runPack.Files
+                .FirstOrDefault(rpf => rpf.File != null &&
+                                     rpf.File.FileName.Equals("tests.json", StringComparison.OrdinalIgnoreCase));
 
-        if (testFile?.File == null)
-            throw new InvalidOperationException("No tests.json file found in the RunPack");
+            if (testFile?.File == null)
+                throw new InvalidOperationException("No tests.json file found in the RunPack");
 
-        // Download the file content using IFileStorageService
-        var fileContent = await _fileStorageService.DownloadAsync(
-            testFile.File.ContainerName,
-            testFile.File.StoragePath,
-            ct);
+            _logger.LogInformation("Found tests.json file: Container={Container}, StoragePath={StoragePath}", 
+                testFile.File.ContainerName, testFile.File.StoragePath);
 
-        // Parse the JSON content and return as JsonElement
-        var jsonDocument = JsonDocument.Parse(fileContent);
-        return jsonDocument.RootElement.Clone(); // Clone to ensure it survives document disposal
+            // Extract the actual file path from the storage path if it's a full GCS URL
+            string filePath = testFile.File.StoragePath;
+            if (filePath.StartsWith("gs://"))
+            {
+                // Extract path after bucket name: gs://bucket-name/path/to/file.json -> path/to/file.json
+                var uri = new Uri(filePath);
+                filePath = uri.AbsolutePath.TrimStart('/');
+            }
+
+            // Check if file exists before attempting download
+            var exists = await _fileStorageService.ExistsAsync(testFile.File.ContainerName, filePath, ct);
+            if (!exists)
+            {
+                _logger.LogError("File does not exist: {Container}/{FilePath}", testFile.File.ContainerName, filePath);
+                throw new InvalidOperationException($"File does not exist: {testFile.File.ContainerName}/{filePath}");
+            }
+
+            // Download the file content using IFileStorageService
+            using var fileContent = await _fileStorageService.DownloadAsync(
+                testFile.File.ContainerName,
+                filePath,
+                ct);
+
+            // Parse the JSON content and return as JsonElement
+            var jsonDocument = await JsonDocument.ParseAsync(fileContent, cancellationToken: ct);
+            return jsonDocument.RootElement.Clone(); // Clone to ensure it survives document disposal
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting IR from RunPack {RunPackId}", runPackId);
+            throw;
+        }
     }
 
     public async Task<RunDto?> GetAsync(Guid runId, CancellationToken ct = default)
@@ -127,6 +161,7 @@ public class RunsAppService : IRunsAppService
         return new RunDto(
             run.Id,
             run.ProjectId,
+            run.EnvironmentId,
             run.SuiteName,
             run.Version,
             run.Status.ToString(),

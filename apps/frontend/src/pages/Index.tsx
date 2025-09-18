@@ -67,6 +67,14 @@ const Index = () => {
                 GitHub
               </a>
             </Button>
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href="/app"
+                className="text-muted-foreground hover:text-accent transition-colors"
+              >
+                Sign In
+              </a>
+            </Button>
           </nav>
         </div>
       </header>
