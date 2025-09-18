@@ -91,7 +91,8 @@ function AuthPilotContent() {
     deleteProfile,
     detectCandidates,
   } = useAuthProfiles({
-    environmentId: environment.toLowerCase(),
+    // Pass the selected environment id (if available). The hook expects an environmentId.
+    environmentId: selectedEnv ?? undefined,
     projectId: selectedProject?.id,
     serviceId: undefined, // TODO: Add service selection
     autoLoad: true,
@@ -248,7 +249,19 @@ function AuthPilotContent() {
   // Project and environment are provided by ProjectContext (top bar)
   useEffect(() => {
     setProjectId(selectedProject?.id ?? undefined);
-    if (selectedEnv) setEnvironment(selectedEnv as Environment);
+    // selectedEnv is now an environment id. Resolve the human-readable name for UI
+    const resolveEnvName = async () => {
+      if (!selectedProject?.id || !selectedEnv) return;
+      try {
+        const envs = await environmentsApi.getByProject(selectedProject.id);
+        const match = envs.find(e => e.id === selectedEnv);
+        if (match && match.name) setEnvironment(match.name as Environment);
+      } catch (err) {
+        console.warn('Failed to resolve environment name', err);
+      }
+    };
+
+    if (selectedEnv) resolveEnvName();
   }, [selectedProject, selectedEnv]);
 
   // Fetch environment data and update profile when environment changes
@@ -290,9 +303,7 @@ function AuthPilotContent() {
           return;
         }
 
-        const currentEnv = environments.find(
-          env => env.name?.toLowerCase() === selectedEnv.toLowerCase()
-        );
+        const currentEnv = environments.find(env => env.id === selectedEnv);
 
         if (currentEnv) {
           console.log('Found matching environment:', currentEnv);

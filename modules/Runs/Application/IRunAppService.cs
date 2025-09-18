@@ -1,17 +1,8 @@
-using Runs.Application.Dtos;
+using Runs.Application.Services;
 
 namespace Runs.Application;
 
-public interface IRunAppService
+// Thin compatibility alias to the newer IRunsAppService to avoid migration churn.
+public interface IRunAppService : IRunsAppService
 {
-    Task<RunDto> QueueAsync(QueueRunRequest request, CancellationToken cancellationToken = default);
-    Task<RunDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<RunDto>> GetListAsync(GetRunsQuery query, CancellationToken cancellationToken = default);
-    Task<int> GetCountAsync(GetRunsQuery query, CancellationToken cancellationToken = default);
-    Task<RunDto> StartAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<RunDto> SucceedAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<RunDto> FailAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<RunDto> CancelAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<RunDto> AddStepAsync(Guid id, AddRunStepRequest request, CancellationToken cancellationToken = default);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

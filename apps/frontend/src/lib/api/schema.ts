@@ -4567,10 +4567,10 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    Page?: number;
-                    PageSize?: number;
-                    SuiteId?: string;
-                    Status?: string;
+                    page?: number;
+                    pageSize?: number;
+                    projectId?: string;
+                    status?: string;
                 };
                 header?: never;
                 path?: never;
@@ -4584,9 +4584,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"][];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"][];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"][];
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.RunsPagedResult"];
                     };
                 };
                 /** @description Unauthorized - Authentication required */
@@ -4598,6 +4598,13 @@ export interface paths {
                 };
                 /** @description Forbidden - Insufficient permissions */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found - Resource does not exist */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4615,9 +4622,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
-                    "text/json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
-                    "application/*+json": components["schemas"]["Runs.Application.Dtos.QueueRunRequest"];
+                    "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
+                    "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
+                    "application/*+json": components["schemas"]["Runs.Application.Contracts.CreateRunRequest"];
                 };
             };
             responses: {
@@ -4627,9 +4634,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.CreateRunResponse"];
                     };
                 };
                 /** @description Bad Request - Invalid input data */
@@ -4655,62 +4662,6 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/runs/count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    Page?: number;
-                    PageSize?: number;
-                    SuiteId?: string;
-                    Status?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": number;
-                        "application/json": number;
-                        "text/json": number;
-                    };
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4741,9 +4692,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.RunDto"];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.RunDto"];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.RunDto"];
                     };
                 };
                 /** @description Unauthorized - Authentication required */
@@ -4771,120 +4722,25 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/runs/{id}/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                    };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/runs/{id}/succeed": {
+    "/api/runs/{runId}/timeline": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post: {
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: string;
+                    runId: string;
                 };
                 cookie?: never;
             };
@@ -4896,17 +4752,10 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
+                        "text/plain": components["schemas"]["Runs.Application.Contracts.RunEventDto"][];
+                        "application/json": components["schemas"]["Runs.Application.Contracts.RunEventDto"][];
+                        "text/json": components["schemas"]["Runs.Application.Contracts.RunEventDto"][];
                     };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
                 };
                 /** @description Unauthorized - Authentication required */
                 401: {
@@ -4922,29 +4771,38 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/runs/{id}/fail": {
+    "/api/runs/{runId}/artifacts/{stepId}/{name}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post: {
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: string;
+                    runId: string;
+                    stepId: string;
+                    name: string;
                 };
                 cookie?: never;
             };
@@ -4955,17 +4813,6 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                    };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
                     content?: never;
                 };
                 /** @description Unauthorized - Authentication required */
@@ -4982,134 +4829,17 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Not Found - Resource does not exist */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/runs/{id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
         put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                    };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/runs/{id}/steps": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
-                    "text/json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
-                    "application/*+json": components["schemas"]["Runs.Application.Dtos.AddRunStepRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "application/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                        "text/json": components["schemas"]["Runs.Application.Dtos.RunDto"];
-                    };
-                };
-                /** @description Bad Request - Invalid input data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized - Authentication required */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden - Insufficient permissions */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7224,33 +6954,64 @@ export interface components {
             projectId?: string;
             mode?: string | null;
         };
-        "Runs.Application.Dtos.AddRunStepRequest": {
-            name?: string | null;
-            log?: string | null;
-        };
-        "Runs.Application.Dtos.QueueRunRequest": {
+        "Runs.Application.Contracts.CreateRunRequest": {
             /** Format: uuid */
-            suiteId?: string;
+            projectId?: string | null;
+            /** Format: uuid */
+            environmentId?: string | null;
+            suiteName?: string | null;
+            version?: string | null;
+            ir?: unknown;
+            irPath?: string | null;
+            runPackId?: string | null;
+            actor?: string | null;
+            trigger?: string | null;
+            idempotencyKey?: string | null;
         };
-        "Runs.Application.Dtos.RunDto": {
+        "Runs.Application.Contracts.CreateRunResponse": {
+            /** Format: uuid */
+            runId?: string;
+            status?: string | null;
+            irPath?: string | null;
+        };
+        "Runs.Application.Contracts.RunDto": {
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
-            suiteId?: string;
+            projectId?: string | null;
+            /** Format: uuid */
+            environmentId?: string | null;
+            suiteName?: string | null;
+            version?: string | null;
             status?: string | null;
+            actor?: string | null;
+            trigger?: string | null;
+            irPath?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
             startedAt?: string | null;
             /** Format: date-time */
             finishedAt?: string | null;
-            steps?: components["schemas"]["Runs.Application.Dtos.RunStepDto"][] | null;
+            error?: string | null;
+            /** Format: int32 */
+            stepsCount?: number;
         };
-        "Runs.Application.Dtos.RunStepDto": {
+        "Runs.Application.Contracts.RunEventDto": {
             /** Format: uuid */
             id?: string;
-            name?: string | null;
-            log?: string | null;
+            /** Format: uuid */
+            runId?: string;
+            stepId?: string | null;
+            kind?: string | null;
+            payload?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        "Runs.Application.Contracts.RunsPagedResult": {
+            items?: components["schemas"]["Runs.Application.Contracts.RunDto"][] | null;
+            /** Format: int32 */
+            total?: number;
         };
         /** @description DTO for user registration */
         "ShipMvp.Api.Controllers.AuthController.RegisterDto": {

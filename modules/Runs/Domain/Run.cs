@@ -1,37 +1,96 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using ShipMvp.Core.Entities;
+using ShipMvp.Core.Abstractions;
+
 namespace Runs.Domain;
 
-public enum RunStatus { Queued, Running, Succeeded, Failed, Cancelled }
+public enum RunStatus { Pending, Running, Passed, Failed, Cancelled }
 
-public class Run : ShipMvp.Core.Entities.Entity<Guid>
+public class Run : Entity<Guid>
 {
-    public Guid SuiteId { get; private set; }
-    public RunStatus Status { get; private set; } = RunStatus.Queued;
+    public Guid? ProjectId { get; private set; }
+    public Guid? EnvironmentId { get; private set; }
+    public string SuiteName { get; private set; } = string.Empty;
+    public string Version { get; private set; } = string.Empty;
+    public RunStatus Status { get; private set; } = RunStatus.Pending;
+    public string Actor { get; private set; } = string.Empty;
+    public string Trigger { get; private set; } = "Manual";
+    public string? IrPath { get; private set; }
     public DateTime? StartedAt { get; private set; }
     public DateTime? FinishedAt { get; private set; }
+    public string? Error { get; private set; }
+
     private readonly List<RunStep> _steps = new();
     public IReadOnlyCollection<RunStep> Steps => _steps;
 
     private Run() : base(Guid.Empty) { }
-    private Run(Guid id, Guid suiteId) : base(id) { SuiteId = suiteId; }
-    public static Run Queue(Guid suiteId) => new(Guid.NewGuid(), suiteId);
-    public void Start() { if (Status == RunStatus.Queued) { Status = RunStatus.Running; StartedAt = DateTime.UtcNow; } }
-    public void Succeed() { if (Status == RunStatus.Running) { Status = RunStatus.Succeeded; FinishedAt = DateTime.UtcNow; } }
-    public void Fail() { if (Status == RunStatus.Running) { Status = RunStatus.Failed; FinishedAt = DateTime.UtcNow; } }
-    public void Cancel() { if (Status is RunStatus.Queued or RunStatus.Running) { Status = RunStatus.Cancelled; FinishedAt = DateTime.UtcNow; } }
-    public void AddStep(string name, string? log = null) => _steps.Add(RunStep.Create(Id, name, log));
+
+    private Run(Guid id, Guid? projectId, Guid? environmentId, string suiteName, string version, string actor, string trigger)
+        : base(id)
+    {
+        ProjectId = projectId;
+        EnvironmentId = environmentId;
+        SuiteName = suiteName;
+        Version = version;
+        Actor = actor;
+        Trigger = trigger;
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    public static Run New(Guid? projectId, Guid? environmentId, string suiteName, string version, string actor, string trigger = "Manual")
+    {
+        return new Run(Guid.NewGuid(), projectId, environmentId, suiteName, version, actor, trigger);
+    }
+
+    public void AttachIr(string irPath)
+    {
+        IrPath = irPath;
+    }
+
+    public void MarkRunning()
+    {
+        if (Status == RunStatus.Pending)
+        {
+            Status = RunStatus.Running;
+            StartedAt = DateTime.UtcNow;
+        }
+    }
+
+    public void Complete(bool success, string? error = null)
+    {
+        if (Status == RunStatus.Running)
+        {
+            Status = success ? RunStatus.Passed : RunStatus.Failed;
+            FinishedAt = DateTime.UtcNow;
+            Error = error;
+        }
+    }
+
+    public void Cancel()
+    {
+        if (Status is RunStatus.Pending or RunStatus.Running)
+        {
+            Status = RunStatus.Cancelled;
+            FinishedAt = DateTime.UtcNow;
+        }
+    }
+
+    public void AddStep(RunStep step)
+    {
+        _steps.Add(step);
+    }
 }
 
-public class RunStep : ShipMvp.Core.Entities.Entity<Guid>
+public interface IRunRepository : IRepository<Run, Guid>
 {
-    public Guid RunId { get; private set; }
-    public string Name { get; private set; } = string.Empty;
-    public string? Log { get; private set; }
-    private RunStep() : base(Guid.Empty) { }
-    private RunStep(Guid id, Guid runId, string name, string? log) : base(id) { RunId = runId; Name = name; Log = log; }
-    public static RunStep Create(Guid runId, string name, string? log) => new(Guid.NewGuid(), runId, name, log);
+    Task<(IEnumerable<Run> Items, int Total)> GetPagedAsync(int page, int pageSize, Guid? projectId = null, RunStatus? status = null, CancellationToken cancellationToken = default);
+    Task<Run?> GetWithStepsAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
-public interface IRunRepository : ShipMvp.Core.Abstractions.IRepository<Run, Guid>
+public interface IRunEventRepository : IRepository<RunEvent, Guid>
 {
-    Task<(IEnumerable<Run> Items, int Total)> GetPagedAsync(int page, int pageSize, Guid? suiteId = null, RunStatus? status = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RunEvent>> GetByRunIdAsync(Guid runId, CancellationToken cancellationToken = default);
+    Task AppendEventAsync(RunEvent runEvent, CancellationToken cancellationToken = default);
 }

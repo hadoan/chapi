@@ -71,13 +71,21 @@ export default function ProjectEndpointsPage() {
   const handleGenerateTests = async (mode: 'CARD' | 'FILES' = 'FILES') => {
     if (!selectedEndpoint || !id) return;
 
+    // Check if the endpoint requires authentication
+    const requiresAuth = !!(
+      selectedEndpoint.security && selectedEndpoint.security.length > 0
+    );
+
     const selectedProfile = authProfiles.find(
       p => p.id === selectedAuthProfile
     );
-    if (!selectedProfile) {
+
+    // Only require auth profile if the endpoint needs authentication
+    if (requiresAuth && !selectedProfile) {
       toast({
         title: 'Please select an auth profile',
-        description: 'An auth profile is required to generate tests',
+        description:
+          'An auth profile is required to generate tests for authenticated endpoints',
       });
       return;
     }
@@ -88,12 +96,13 @@ export default function ProjectEndpointsPage() {
       // AuthType enum: 0=NONE, 1=API_KEY, 2=BEARER, 3=OIDC_CLIENT_CREDENTIALS
       // InjectionMode enum: 0=Header, 1=Query, 2=None
       const authConfig: Record<string, string | undefined> = {};
-      const authTypeString =
-        ['NONE', 'API_KEY', 'BEARER', 'OIDC_CLIENT_CREDENTIALS'][
-          selectedProfile.type
-        ] || 'NONE';
+      const authTypeString = selectedProfile
+        ? ['NONE', 'API_KEY', 'BEARER', 'OIDC_CLIENT_CREDENTIALS'][
+            selectedProfile.type
+          ] || 'NONE'
+        : 'NONE';
 
-      if (selectedProfile.type === 1) {
+      if (selectedProfile?.type === 1) {
         // API_KEY
         authConfig.headerName =
           selectedProfile.injectionName || 'Authorization';
@@ -102,10 +111,10 @@ export default function ProjectEndpointsPage() {
         if (selectedProfile.injectionMode === 1) {
           authConfig.queryName = selectedProfile.injectionName || 'api_key';
         }
-      } else if (selectedProfile.type === 2) {
+      } else if (selectedProfile?.type === 2) {
         // BEARER
         authConfig.tokenEnv = 'API_TOKEN';
-      } else if (selectedProfile.type === 3) {
+      } else if (selectedProfile?.type === 3) {
         // OIDC_CLIENT_CREDENTIALS
         authConfig.tokenUrl = selectedProfile.tokenUrl;
         authConfig.clientIdEnv = 'CLIENT_ID';
@@ -137,12 +146,19 @@ export default function ProjectEndpointsPage() {
           successCode: 200,
           requestSchemaHint: selectedEndpoint.request ? 'json' : 'none',
         },
-        authProfile: {
-          id: selectedProfile.id,
-          name: `${authTypeString} Profile`,
-          type: authTypeString,
-          config: authConfig,
-        },
+        authProfile: selectedProfile
+          ? {
+              id: selectedProfile.id,
+              name: `${authTypeString} Profile`,
+              type: authTypeString,
+              config: authConfig,
+            }
+          : {
+              id: 'none',
+              name: 'No Authentication',
+              type: 'NONE',
+              config: {},
+            },
         options: {
           includeForbidden: true,
           envPlaceholders: ['BASE_URL'],
@@ -204,7 +220,7 @@ export default function ProjectEndpointsPage() {
         toast({ title: 'Failed', description: err?.message ?? String(err) })
       )
       .finally(() => setLoading(false));
-  }, [id, selectedAuthProfile]);
+  }, [id]);
 
   // Load specs for filtering
   useEffect(() => {
@@ -218,7 +234,7 @@ export default function ProjectEndpointsPage() {
           description: err?.message ?? String(err),
         })
       );
-  }, [id, selectedAuthProfile]);
+  }, [id]);
 
   // Load auth profiles
   useEffect(() => {
@@ -239,7 +255,7 @@ export default function ProjectEndpointsPage() {
           description: err?.message ?? String(err),
         })
       );
-  }, [id]);
+  }, [id, selectedAuthProfile]);
 
   // Helper type guards
   const isRequestBody = (
