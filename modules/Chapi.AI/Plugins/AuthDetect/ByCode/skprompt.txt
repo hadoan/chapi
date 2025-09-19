@@ -23,7 +23,7 @@ JSON Schema
   "type": "object",
   "properties": {
     "detect_source": { "type": "string", "const": "ai-by-code" },
-    "detect_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "detect_confidence": { "type": "number", "minimum": 0, "maximum": 100 },
     "profile": {
       "type": "object",
       "properties": {

@@ -21,6 +21,13 @@ export interface AuthCandidate {
   // Optional prefill secret refs suggested by detection (frontend will use if provided)
   username_ref?: string;
   password_ref?: string;
+  // Additional OAuth2 fields from AI detection
+  client_id?: string;
+  scopes?: string;
+  audience?: string;
+  login_user_key?: string;
+  login_pass_key?: string;
+  token_json_path?: string;
 }
 
 export interface AuthProfile {

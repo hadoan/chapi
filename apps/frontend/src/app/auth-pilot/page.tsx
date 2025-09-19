@@ -1,458 +1,305 @@
 import { Layout } from '@/components/Layout';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useAuthProfiles } from '@/hooks/use-auth-profiles';
-import { toast } from '@/hooks/use-toast';
-import { authProfilesApi } from '@/lib/api/auth-profiles';
-import type { components } from '@/lib/api/schema';
-import { useProject } from '@/lib/state/projectStore';
-import { Brain, HelpCircle, Save, Sparkles, TestTube } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { AnimatedContainer } from '@/components/auth-pilot/AnimationEffects';
+import { AuthPilotDetection } from '@/components/auth-pilot/AuthPilotDetection';
+import { AuthPilotHeader } from '@/components/auth-pilot/AuthPilotHeader';
+import { AuthPilotLogs } from '@/components/auth-pilot/AuthPilotLogs';
+import { AuthPilotProfiles } from '@/components/auth-pilot/AuthPilotProfiles';
+import { AuthPilotTesting } from '@/components/auth-pilot/AuthPilotTesting';
+import { useAuthPilot } from '@/hooks/use-auth-pilot';
+import type { DetectionResponse } from '@/lib/api/auth-profiles';
+import type { AuthCandidate } from '@/types/auth-pilot';
+import { useCallback, useEffect } from 'react';
 
-// Components
-import {
-  AnimatedContainer,
-  FloatingElements,
-  GradientBorder,
-} from '@/components/auth-pilot/AnimationEffects';
-import { AuthProfileList } from '@/components/auth-pilot/AuthProfileList';
-import EnhancedAiDetection from '@/components/auth-pilot/EnhancedAiDetection';
-import {
-  EnhancedCandidateList,
-  EnhancedDetectionBanner,
-} from '@/components/auth-pilot/EnhancedDetectionVisuals';
-import { InjectionPreview } from '@/components/auth-pilot/InjectionPreview';
-import { ProfileForm } from '@/components/auth-pilot/ProfileForm';
-import { TokenCachePreview } from '@/components/auth-pilot/TokenCachePreview';
+// Type for Chapi.AI Detection Response
+interface ChapiAiDetectionResponse {
+  detect_source?: string | null;
+  detect_confidence?: number;
+  profile?: {
+    type?: string;
+    environmentKey?: string;
+    parameters?: {
+      tokenUrl?: string;
+      authorizationUrl?: string | null;
+      audience?: string | null;
+      scopes?: string;
+      clientId?: string;
+      clientSecretRef?: string | null;
+      usernameRef?: string;
+      passwordRef?: string;
+      customLoginUrl?: string | null;
+      customBodyType?: string;
+      customUserKey?: string | null;
+      customPassKey?: string | null;
+      tokenJsonPath?: string;
+    };
+    injection?: {
+      mode?: string;
+      name?: string;
+      format?: string;
+    };
+    secrets?: Array<{
+      key: string;
+      secretRef: string;
+      notes?: string | null;
+    }>;
+    token_request?: {
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: {
+        kind?: string;
+        value?: Record<string, string>;
+      };
+      expect?: {
+        status?: number;
+        tokenJsonPath?: string;
+      };
+    };
+  };
+}
 
-// Types and utilities
-import {
-  createInitialProfile,
-  formatTimestamp,
-  getErrorMessage,
-  simulateTokenRequest,
-  validateProfile,
-} from '@/lib/auth-pilot';
-import type {
-  AuthCandidate,
-  AuthProfile,
-  AuthType,
-  Environment,
-  LogEntry,
-  TokenResult,
-} from '@/types/auth-pilot';
+// Helper function to map Chapi.AI auth types to our AuthType
+const mapChapiAiTypeToAuthType = (
+  chapiType?: string,
+  grantType?: string
+): AuthCandidate['type'] => {
+  if (!chapiType) return 'oauth2_client_credentials';
 
-const STORAGE_KEY = 'chapi-auth-pilot-demo';
-
-// Local mapping function for backend auth types
-
-function AuthPilotContent() {
-  const [environment, setEnvironment] = useState<Environment>('Dev');
-  const [profile, setProfile] = useState<AuthProfile>(createInitialProfile());
-  const { selectedProject } = useProject(); // Remove selectedEnv dependency
-  const [projectId, setProjectId] = useState<string | undefined>(
-    selectedProject?.id ?? undefined
-  );
-  const [tokenResult, setTokenResult] = useState<TokenResult>();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [candidates, setCandidates] = useState<AuthCandidate[]>([]);
-  const [bestDetection, setBestDetection] = useState<{
-    endpoint: string;
-    source: string;
-    confidence: number;
-  } | null>(null);
-
-  // New state for selected profile from list
-  const [selectedProfile, setSelectedProfile] = useState<AuthProfile | null>(
-    null
-  );
-
-  // Use the auth profiles hook
-  const {
-    profiles,
-    loading: profilesLoading,
-    createProfile,
-    detectCandidates,
-    loadProfiles,
-  } = useAuthProfiles({
-    // Remove environment dependency for auth pilot
-    projectId: selectedProject?.id,
-    serviceId: undefined, // TODO: Add service selection
-    autoLoad: true,
-  });
-
-  // Load demo state from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.profiles?.[environment]) {
-          setProfile(data.profiles[environment]);
-        }
-        if (data.logs) {
-          setLogs(data.logs);
-        }
-      } catch (error) {
-        console.error('Failed to load demo state:', error);
+  // For OAuth2, check the grant type to determine the specific flow
+  if (chapiType.toLowerCase() === 'oauth2') {
+    if (grantType) {
+      switch (grantType.toLowerCase()) {
+        case 'password':
+          return 'password';
+        case 'client_credentials':
+          return 'oauth2_client_credentials';
+        case 'authorization_code':
+          return 'auth_code';
+        case 'device_code':
+          return 'device_code';
+        default:
+          return 'oauth2_client_credentials';
       }
     }
-  }, [environment]);
+    // Default to client_credentials if no grant type specified
+    return 'oauth2_client_credentials';
+  }
 
-  // Save demo state to localStorage
-  const saveDemoState = useCallback(
-    (updatedProfile?: AuthProfile, updatedLogs?: LogEntry[]) => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        const data = saved ? JSON.parse(saved) : { profiles: {}, logs: [] };
+  switch (chapiType.toLowerCase()) {
+    case 'oauth2_client_credentials':
+      return 'oauth2_client_credentials';
+    case 'api_key':
+    case 'api_key_header':
+      return 'api_key_header';
+    case 'bearer':
+    case 'bearer_static':
+      return 'bearer_static';
+    case 'basic':
+      return 'basic';
+    case 'password':
+      return 'password';
+    case 'session_cookie':
+      return 'session_cookie';
+    case 'custom_login':
+      return 'custom_login';
+    default:
+      return 'oauth2_client_credentials'; // Default fallback
+  }
+};
 
-        if (updatedProfile) {
-          data.profiles[environment] = updatedProfile;
-        }
+function AuthPilotContent() {
+  const {
+    // State
+    profile,
+    tokenResult,
+    logs,
+    isTestingConnection,
+    candidates,
+    bestDetection,
+    selectedProfile,
+    profilesLoading,
+    projectId,
+    profiles,
 
-        if (updatedLogs) {
-          data.logs = updatedLogs;
-        }
+    // Computed values
+    validation,
+    canTest,
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (error) {
-        console.error('Failed to save demo state:', error);
+    // Actions
+    setProfile,
+    handleCandidateSelect,
+    handleUseDetectedEndpoint,
+    handleProfileSelection,
+    handleDetectCandidates,
+    handleSaveProfile,
+    handleTestConnection,
+    setCandidates,
+    setBestDetection,
+    addLog,
+  } = useAuthPilot();
+  const { handleDeleteProfile } = useAuthPilot();
+
+  // Handle AI detection response
+  const handleAiDetected = useCallback(
+    (resp: DetectionResponse) => {
+      console.log('🎯 handleAiDetected TRIGGERED! Response received:', resp);
+
+      let mapped: AuthCandidate[] = [];
+
+      // Check if response has candidates array (AuthProfiles format)
+      if (resp.candidates && Array.isArray(resp.candidates)) {
+        console.log('📋 Processing AuthProfiles format with candidates array');
+        mapped = (resp.candidates || []).map(c => {
+          console.log('🔄 Mapping candidate:', c);
+          const t =
+            typeof c.type === 'number' ? Number(c.type) : String(c.type || '');
+          const mappedCandidate = {
+            type: t as unknown as AuthCandidate['type'],
+            confidence: c.confidence || 0,
+            token_url: c.tokenUrl ?? undefined,
+            header_name: c.injection?.name ?? undefined,
+            rawType: String(c.type ?? ''),
+            form: c.form ?? null,
+          } as AuthCandidate;
+          console.log('✅ Mapped candidate:', mappedCandidate);
+          return mappedCandidate;
+        });
+      }
+      // Check if response has profile object (Chapi.AI format)
+      else if ((resp as ChapiAiDetectionResponse).profile) {
+        console.log('📋 Processing Chapi.AI format with profile object');
+        const chapiResp = resp as ChapiAiDetectionResponse;
+        const profile = chapiResp.profile!;
+        const confidence = chapiResp.detect_confidence || 0.5;
+
+        // Map Chapi.AI profile to AuthCandidate
+        const grantType =
+          chapiResp.profile?.token_request?.body?.value?.grant_type;
+        const candidate: AuthCandidate = {
+          type: mapChapiAiTypeToAuthType(profile.type, grantType),
+          confidence: confidence,
+          token_url: profile.parameters?.tokenUrl || undefined,
+          header_name: profile.injection?.name || undefined,
+          rawType: profile.type || '',
+          username_ref: profile.parameters?.usernameRef || undefined,
+          password_ref: profile.parameters?.passwordRef || undefined,
+          // Map additional OAuth2 fields
+          client_id: profile.parameters?.clientId || undefined,
+          scopes: profile.parameters?.scopes || undefined,
+          audience: profile.parameters?.audience || undefined,
+          // Extract user/pass keys from token_request or use parameters
+          login_user_key:
+            profile.parameters?.customUserKey ||
+            (chapiResp.profile?.token_request?.body?.value
+              ? Object.keys(chapiResp.profile.token_request.body.value).find(
+                  k =>
+                    k.toLowerCase().includes('user') ||
+                    k.toLowerCase() === 'username'
+                )
+              : undefined) ||
+            'username',
+          login_pass_key:
+            profile.parameters?.customPassKey ||
+            (chapiResp.profile?.token_request?.body?.value
+              ? Object.keys(chapiResp.profile.token_request.body.value).find(
+                  k =>
+                    k.toLowerCase().includes('pass') ||
+                    k.toLowerCase() === 'password'
+                )
+              : undefined) ||
+            'password',
+          token_json_path:
+            profile.parameters?.tokenJsonPath ||
+            chapiResp.profile?.token_request?.expect?.tokenJsonPath ||
+            undefined,
+          form:
+            profile.parameters?.customBodyType === 'form'
+              ? {
+                  grantType:
+                    chapiResp.profile?.token_request?.body?.value?.grant_type ||
+                    'password',
+                  fields: chapiResp.profile?.token_request?.body?.value || {},
+                }
+              : null,
+        };
+
+        console.log('✅ Mapped Chapi.AI profile to candidate:', candidate);
+        mapped = [candidate];
+      } else {
+        console.log(
+          '⚠️ Unknown response format, no candidates or profile found'
+        );
+        mapped = [];
+      }
+
+      console.log('📋 Final mapped candidates array:', mapped);
+      console.log('📊 Number of candidates:', mapped.length);
+
+      // Update candidates and best detection through the hook's state
+      console.log('🔄 Calling setCandidates with:', mapped);
+      setCandidates(mapped);
+
+      const bestDetectionData = resp.best
+        ? {
+            endpoint: resp.best.endpoint!,
+            source: resp.best.source!,
+            confidence: resp.best.confidence!,
+          }
+        : (resp as ChapiAiDetectionResponse).detect_source
+        ? {
+            endpoint:
+              (resp as ChapiAiDetectionResponse).profile?.parameters
+                ?.tokenUrl || '',
+            source: (resp as ChapiAiDetectionResponse).detect_source,
+            confidence:
+              (resp as ChapiAiDetectionResponse).detect_confidence || 0,
+          }
+        : null;
+      console.log('🔄 Calling setBestDetection with:', bestDetectionData);
+      setBestDetection(bestDetectionData);
+
+      // Add log entry for the detection
+      if (mapped.length > 0) {
+        console.log('📝 Adding log entry for detection');
+        addLog({
+          type: 'detect',
+          status: 'success',
+          message: `AI detected ${mapped.length} authentication candidate(s)`,
+        });
+      } else {
+        console.log('⚠️ No candidates detected, adding warning log');
+        addLog({
+          type: 'detect',
+          status: 'error',
+          message: 'AI detection completed but no candidates found',
+        });
       }
     },
-    [environment]
+    [setCandidates, setBestDetection, addLog]
   );
 
-  const addLog = useCallback(
-    (entry: Omit<LogEntry, 'timestamp'>) => {
-      const newLog: LogEntry = {
-        ...entry,
-        timestamp: formatTimestamp(),
-      };
-      const updatedLogs = [...logs, newLog];
-      setLogs(updatedLogs);
-      saveDemoState(undefined, updatedLogs);
-    },
-    [logs, saveDemoState]
-  );
-
-  const handleCandidateSelect = (candidate: AuthCandidate) => {
-    if (candidate.disabled) return;
-
-    // Start with defaults and then apply form/type hints
-    const newProfile: AuthProfile = {
-      type: candidate.type,
-      token_url: candidate.token_url || profile.token_url,
-      scopes: profile.scopes,
-      audience: profile.audience,
-      notes: profile.notes,
-      // Reset type-specific fields
+  // Handle profile creation
+  const handleCreateNew = useCallback(() => {
+    setProfile({
+      type: 'oauth2_client_credentials',
+      token_url: '',
+      scopes: '',
+      audience: '',
+      notes: '',
       client_id: '',
       client_secret: '',
-      header_name: candidate.header_name || 'X-API-Key',
+      header_name: 'X-API-Key',
       api_key: '',
       bearer_token: '',
       cookie_value: '',
-      // map optional prefill secret refs from detection
-      username_ref: (candidate.username_ref ?? '') as string,
-      password_ref: (candidate.password_ref ?? '') as string,
+      username_ref: '',
+      password_ref: '',
       login_body_type: 'form',
       login_user_key: 'username',
       login_pass_key: 'password',
       token_json_path: '$.access_token',
-    };
-
-    // If detection provided a form hint, adapt profile accordingly
-    if (candidate.form?.grantType) {
-      const grant = candidate.form.grantType.toLowerCase();
-      if (grant === 'password') {
-        newProfile.type = 'password';
-        // keep username/password refs if provided
-        if (candidate.form.fields?.username)
-          newProfile.username_ref = candidate.form.fields.username;
-        if (candidate.form.fields?.password)
-          newProfile.password_ref = candidate.form.fields.password;
-      } else if (
-        grant === 'client_credentials' ||
-        grant === 'client_credentials'
-      ) {
-        newProfile.type = 'oauth2_client_credentials';
-      }
-    }
-
-    // If candidate indicates api key, ensure header shown
-    if (candidate.type === 'api_key_header') {
-      newProfile.type = 'api_key_header';
-      newProfile.header_name = candidate.header_name || newProfile.header_name;
-    }
-
-    setProfile(newProfile);
-    setTokenResult(undefined); // Clear previous test results
-  };
-
-  const handleUseDetectedEndpoint = (bestEndpoint?: string) => {
-    if (!bestEndpoint) return;
-
-    setProfile(prev => ({
-      ...prev,
-      token_url: bestEndpoint,
-    }));
-
-    toast({
-      title: 'Endpoint updated',
-      description: `Token URL set to detected endpoint: ${bestEndpoint}`,
     });
-  };
-
-  // Handle profile selection from the list
-  const handleProfileSelection = (selectedAuthProfile: AuthProfile | null) => {
-    setSelectedProfile(selectedAuthProfile);
-    if (selectedAuthProfile) {
-      // Update the current profile with selected profile data
-      setProfile(selectedAuthProfile);
-      setTokenResult(undefined); // Clear previous test results
-      addLog({
-        type: 'info',
-        status: 'success',
-        message: `Profile "${
-          selectedAuthProfile.notes || 'Untitled'
-        }" selected`,
-      });
-    } else {
-      // If null selected, reset to initial profile
-      setProfile(createInitialProfile());
-      setTokenResult(undefined);
-    }
-  };
-
-  // Load candidates from backend
-  const handleDetectCandidates = useCallback(async () => {
-    if (profile.token_url) {
-      try {
-        const detected = await detectCandidates(
-          profile.token_url,
-          selectedProject?.id
-        );
-        setCandidates(detected.candidates);
-        setBestDetection(detected.best ?? null);
-
-        addLog({
-          type: 'detect',
-          status: 'success',
-          message: `Found ${detected.candidates.length} authentication candidates`,
-        });
-      } catch (error) {
-        addLog({
-          type: 'detect',
-          status: 'error',
-          message: 'Failed to detect authentication methods',
-        });
-      }
-    }
-  }, [profile.token_url, detectCandidates, addLog, selectedProject]);
-
-  // Project context
-  useEffect(() => {
-    setProjectId(selectedProject?.id ?? undefined);
-  }, [selectedProject]);
-
-  // Save profile to backend
-  const handleSaveProfile = useCallback(async () => {
-    try {
-      const savedProfile = await createProfile(profile);
-      if (savedProfile) {
-        addLog({
-          type: 'save',
-          status: 'success',
-          message: 'Profile saved successfully',
-        });
-      }
-    } catch (error) {
-      addLog({
-        type: 'save',
-        status: 'error',
-        message: 'Failed to save profile',
-      });
-    }
-  }, [profile, createProfile, addLog]);
-
-  const handleTestConnection = useCallback(async () => {
-    const validation = validateProfile(profile);
-
-    if (!validation.isValid) {
-      toast({
-        title: 'Validation failed',
-        description: validation.errors[0],
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsTestingConnection(true);
-
-    try {
-      // For flows that require server-side secret resolution (OAuth2, Basic, Custom login)
-      // call the backend tester which can access secret stores and make outbound requests.
-      let result;
-
-      if (
-        profile.type === 'oauth2_client_credentials' ||
-        profile.type === 'password' ||
-        profile.type === 'basic' ||
-        profile.type === 'custom_login'
-      ) {
-        // Map frontend type to backend AuthType enum (using schema types)
-        const mapType = (
-          t: string
-        ): components['schemas']['AuthProfiles.Domain.AuthType'] => {
-          switch (t) {
-            case 'oauth2_client_credentials':
-              return 0; // OAuth2ClientCredentials
-            case 'password':
-              return 1; // OAuth2Password
-            case 'basic':
-              return 2; // Basic
-            case 'custom_login':
-              return 6; // CustomLogin
-            default:
-              return 0;
-          }
-        };
-
-        // Helper: if a user-entered value looks like a secret ref (contains ':'), pass it through.
-        // Otherwise, place the actual secret into OverrideSecretValues and reference it by an override key.
-        const overrides: Record<string, string> = {};
-        const makeRef = (val: string | undefined, keyPrefix: string) => {
-          if (!val) return null;
-          if (val.includes(':')) return val; // assume it's already a secret ref/key
-          const overrideKey = `__inline_${keyPrefix}`;
-          overrides[overrideKey] = val;
-          return overrideKey;
-        };
-
-        // Build AuthProfileDto using schema type
-        const profileInline: components['schemas']['AuthProfiles.Application.Dtos.AuthProfileDto'] =
-          {
-            id: null,
-            projectId:
-              selectedProject?.id || '00000000-0000-0000-0000-000000000000',
-            serviceId: null,
-            environmentKey: environment.toLowerCase(),
-            type: mapType(profile.type),
-            tokenUrl: profile.token_url,
-            params: {
-              ClientId: profile.client_id ?? null,
-              // If user typed a client secret, send it via overrides so the server can resolve it
-              ClientSecretRef: makeRef(
-                profile.client_secret ?? undefined,
-                'client_secret'
-              ),
-              // username_ref/password_ref may be actual values or secret refs in the demo UI
-              UsernameRef: makeRef(
-                profile.username_ref ?? undefined,
-                'username'
-              ),
-              PasswordRef: makeRef(
-                profile.password_ref ?? undefined,
-                'password'
-              ),
-              CustomLoginUrl: profile.token_url ?? null,
-              CustomUserKey: profile.login_user_key ?? null,
-              CustomPassKey: profile.login_pass_key ?? null,
-              CustomBodyType: profile.login_body_type ?? null,
-            },
-            audience: profile.audience,
-            scopesCsv: profile.scopes,
-            injectionMode: null,
-            injectionName: null,
-            injectionFormat: null,
-            detectSource: null,
-            detectConfidence: null,
-            enabled: null,
-            createdAt: null,
-            updatedAt: null,
-            secretRefs: null,
-          };
-
-        // Call server-side test using proper schema types
-        const resp = await authProfilesApi.test({
-          authProfileId: null,
-          profileInline: profileInline,
-          envId: null,
-          overrideSecretValues: Object.keys(overrides).length
-            ? overrides
-            : null,
-        });
-        // Normalize to TokenResult-like shape for frontend views
-        if (resp.ok) {
-          result = {
-            status: 'ok',
-            access_token:
-              resp.accessToken ?? resp.sampleTokenPrefix ?? undefined,
-            token_type: resp.tokenType ?? undefined,
-            expires_at: resp.expiresAt ?? undefined,
-            message: resp.message ?? undefined,
-          };
-        } else {
-          result = {
-            status: resp.status || 'error',
-            message: resp.message || 'Test failed',
-          };
-        }
-      } else {
-        // For simple client-only flows use the local simulator
-        // keep simulated delay to show UX feedback
-        await new Promise(resolve => setTimeout(resolve, 500));
-        result = simulateTokenRequest(profile);
-      }
-
-      setTokenResult(result);
-
-      if (result.status === 'ok') {
-        const expiresInMinutes = Math.floor((result.expires_in || 0) / 60);
-        toast({
-          title: 'Token acquired',
-          description: `Token expires in ${expiresInMinutes}m`,
-        });
-
-        addLog({
-          type: 'test',
-          message: `Test successful for ${profile.type}`,
-          status: 'success',
-        });
-      } else {
-        toast({
-          title: 'Test failed',
-          description: getErrorMessage(result.status),
-          variant: 'destructive',
-        });
-
-        addLog({
-          type: 'test',
-          message: `Test failed: ${result.message}`,
-          status: 'error',
-        });
-      }
-    } catch (error) {
-      console.error('Test connection error', error);
-      toast({
-        title: 'Test failed',
-        description: 'Unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsTestingConnection(false);
-    }
-  }, [profile, addLog, environment, selectedProject?.id]);
-
-  const validation = validateProfile(profile);
-  const canTest = validation.isValid && !isTestingConnection;
+  }, [setProfile]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -472,54 +319,23 @@ function AuthPilotContent() {
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [canTest, handleTestConnection, handleSaveProfile]);
 
+  // Debug logging for candidates
+  useEffect(() => {
+    console.log('🚀 Page - candidates changed:', candidates);
+    console.log('🚀 Page - candidates length:', candidates?.length || 0);
+    if (candidates && candidates.length > 0) {
+      console.log('🚀 Page - first candidate:', candidates[0]);
+    }
+  }, [candidates]);
+
+  useEffect(() => {
+    console.log('🚀 Page - bestDetection changed:', bestDetection);
+  }, [bestDetection]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border sticky top-0 z-10 overflow-hidden">
-        <FloatingElements />
-        <div className="max-w-7xl mx-auto px-6 py-4 relative z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg">
-                  <Brain className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                    AI-Powered Auth Discovery
-                    <Sparkles className="w-5 h-5 text-purple-500" />
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Intelligently detect and configure authentication methods
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="px-2">
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="max-w-sm space-y-2">
-                    <p className="font-medium">AI Auth Detection:</p>
-                    <p className="text-sm">
-                      Use AI to analyze code samples or describe authentication
-                      requirements
-                    </p>
-                    <p className="font-medium">Keyboard Shortcuts:</p>
-                    <p className="text-sm">Ctrl/Cmd+Enter: Test Connection</p>
-                    <p className="text-sm">Ctrl/Cmd+S: Save Profile</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AuthPilotHeader />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
@@ -527,91 +343,16 @@ function AuthPilotContent() {
           {/* Left Column - Detection & Candidates */}
           <div className="space-y-6">
             <AnimatedContainer delay={200}>
-              {bestDetection && (
-                <GradientBorder hover>
-                  <EnhancedDetectionBanner
-                    detection={bestDetection}
-                    onUseEndpoint={() =>
-                      handleUseDetectedEndpoint(bestDetection.endpoint)
-                    }
-                  />
-                </GradientBorder>
-              )}
-            </AnimatedContainer>
-
-            {/* Enhanced AI Detection Button */}
-            <AnimatedContainer delay={400}>
-              <div className="flex gap-2">
-                <EnhancedAiDetection
-                  projectId={selectedProject?.id}
-                  serviceId={undefined}
-                  variant="prominent"
-                  className="flex-1"
-                  onDetected={resp => {
-                    const mapped = (resp.candidates || []).map(c => {
-                      const t =
-                        typeof c.type === 'number'
-                          ? Number(c.type)
-                          : String(c.type || '');
-                      return {
-                        type: t as unknown as AuthType,
-                        confidence: c.confidence || 0,
-                        token_url: c.tokenUrl ?? undefined,
-                        header_name: c.injection?.name ?? undefined,
-                        rawType: String(c.type ?? ''),
-                        form: c.form ?? null,
-                      } as AuthCandidate;
-                    });
-                    setCandidates(mapped);
-                    setBestDetection(
-                      resp.best
-                        ? {
-                            endpoint: resp.best.endpoint!,
-                            source: resp.best.source!,
-                            confidence: resp.best.confidence!,
-                          }
-                        : null
-                    );
-                  }}
-                />
-              </div>
-            </AnimatedContainer>
-
-            {/* Traditional Auth Detection Card */}
-            <AnimatedContainer delay={600}>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium">Manual Detection</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Analyze endpoint for authentication methods
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleDetectCandidates}
-                      disabled={!profile.token_url || profilesLoading}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {profilesLoading ? 'Detecting...' : 'Detect Auth'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </AnimatedContainer>
-
-            <AnimatedContainer delay={800}>
-              <EnhancedCandidateList
+              <AuthPilotDetection
+                profile={profile}
                 candidates={candidates}
-                selectedType={profile.type}
-                // Use header_name as the selected token identifier for API key header profiles
-                selectedTokenUrl={
-                  profile.type === 'api_key_header'
-                    ? profile.header_name
-                    : profile.token_url
-                }
-                onSelectCandidate={handleCandidateSelect}
+                bestDetection={bestDetection}
+                projectId={projectId}
+                profilesLoading={profilesLoading}
+                onCandidateSelect={handleCandidateSelect}
+                onUseDetectedEndpoint={handleUseDetectedEndpoint}
+                onDetectCandidates={handleDetectCandidates}
+                onAiDetected={handleAiDetected}
               />
             </AnimatedContainer>
           </div>
@@ -619,17 +360,21 @@ function AuthPilotContent() {
           {/* Middle Column - Auth Profile List */}
           <div className="space-y-6">
             <AnimatedContainer delay={100}>
-              <AuthProfileList
+              <AuthPilotProfiles
                 profiles={profiles}
                 selectedProfile={selectedProfile}
+                profilesLoading={profilesLoading}
                 onSelectProfile={handleProfileSelection}
-                loading={profilesLoading}
-                onCreateNew={() => {
-                  // Reset to create new profile
-                  setProfile(createInitialProfile());
-                  setSelectedProfile(null);
-                  setTokenResult(undefined);
+                onDeleteProfile={async p => {
+                  // ensure selected in UI and then call delete handler from hook
+                  handleProfileSelection(p);
+                  try {
+                    await handleDeleteProfile(p);
+                  } catch (e) {
+                    console.error('Delete failed', e);
+                  }
                 }}
+                onCreateNew={handleCreateNew}
               />
             </AnimatedContainer>
           </div>
@@ -637,92 +382,20 @@ function AuthPilotContent() {
           {/* Right Column - Profile Details & Test */}
           <div className="space-y-6">
             <AnimatedContainer delay={300}>
-              <ProfileForm
+              <AuthPilotTesting
                 profile={profile}
-                onChange={setProfile}
-                errors={validation.errors}
+                tokenResult={tokenResult}
+                validation={validation}
+                canTest={canTest}
+                isTestingConnection={isTestingConnection}
+                onProfileChange={setProfile}
+                onTestConnection={handleTestConnection}
+                onSaveProfile={handleSaveProfile}
               />
             </AnimatedContainer>
 
-            <AnimatedContainer delay={500}>
-              <InjectionPreview profile={profile} tokenResult={tokenResult} />
-            </AnimatedContainer>
-
-            <AnimatedContainer delay={700}>
-              <TokenCachePreview tokenResult={tokenResult} />
-            </AnimatedContainer>
-
-            {/* Actions */}
-            <AnimatedContainer delay={900}>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex gap-3 flex-wrap">
-                    <GradientBorder
-                      gradient="from-indigo-500 via-purple-500 to-pink-500"
-                      hover
-                      className="flex-1"
-                    >
-                      <Button
-                        onClick={handleTestConnection}
-                        disabled={!canTest}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0"
-                        size="lg"
-                      >
-                        <TestTube className="h-4 w-4 mr-2" />
-                        {isTestingConnection ? 'Testing...' : 'Test Connection'}
-                      </Button>
-                    </GradientBorder>
-
-                    <Button variant="outline" onClick={handleSaveProfile}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Profile
-                    </Button>
-                  </div>
-
-                  {!validation.isValid && (
-                    <p className="text-sm text-slate-500 mt-3">
-                      Complete required fields to enable testing
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </AnimatedContainer>
-
             {/* Status/Log Panel */}
-            {logs.length > 0 && (
-              <AnimatedContainer delay={1100}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Activity Log</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {logs.slice(-5).map((log, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <span className="text-slate-500 font-mono text-xs w-16">
-                            {log.timestamp}
-                          </span>
-                          <Badge
-                            variant={
-                              log.status === 'success'
-                                ? 'default'
-                                : 'destructive'
-                            }
-                            className="text-xs"
-                          >
-                            {log.type}
-                          </Badge>
-                          <span className="text-slate-700">{log.message}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </AnimatedContainer>
-            )}
+            <AuthPilotLogs logs={logs} />
           </div>
         </div>
       </div>

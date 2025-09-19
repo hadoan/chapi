@@ -3,6 +3,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { AuthProfile } from '@/types/auth-pilot';
 import { Key, Lock, Plus, Settings, Shield, User, Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -12,6 +19,7 @@ interface AuthProfileListProps {
   selectedProfile: AuthProfile | null;
   onSelectProfile: (profile: AuthProfile | null) => void;
   onCreateNew?: () => void;
+  onDeleteProfile?: (profile: AuthProfile) => void;
   loading?: boolean;
 }
 
@@ -79,9 +87,13 @@ export function AuthProfileList({
   selectedProfile,
   onSelectProfile,
   onCreateNew,
+  onDeleteProfile,
   loading = false,
 }: AuthProfileListProps) {
   const [hoveredProfile, setHoveredProfile] = useState<string | null>(null);
+  const [deletingProfile, setDeletingProfile] = useState<AuthProfile | null>(
+    null
+  );
 
   return (
     <Card className="h-full">
@@ -184,12 +196,66 @@ export function AuthProfileList({
                             {profile.scopes.split(' ').length !== 1 ? 's' : ''}
                           </span>
                         )}
+                        {/* Delete button - visible on hover */}
+                        {onSelectProfile && onDeleteProfile && isHovered && (
+                          <div className="ml-auto">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                setDeletingProfile(profile);
+                              }}
+                              className="text-destructive text-sm px-2 py-1 rounded hover:bg-destructive/10"
+                              aria-label={`Delete ${profileName}`}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               );
             })}
+
+            {/* Confirmation Dialog */}
+            <Dialog
+              open={!!deletingProfile}
+              onOpenChange={open => {
+                if (!open) setDeletingProfile(null);
+              }}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Auth Profile</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Are you sure you want to delete the profile "
+                    {deletingProfile?.notes || deletingProfile?.token_url}"?
+                    This action cannot be undone.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setDeletingProfile(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (deletingProfile && onDeleteProfile)
+                        onDeleteProfile(deletingProfile);
+                      setDeletingProfile(null);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </CardContent>
