@@ -553,6 +553,8 @@ All smoke tests are passing. Ready to merge!`,
                     onSelectProject={handleSelectProject}
                     onSelectEnv={handleSelectEnv}
                     onToggleDarkMode={toggleDarkMode}
+                    showUserMenu={false}
+                    showSidebarTrigger={true}
                   />
                 </div>
 

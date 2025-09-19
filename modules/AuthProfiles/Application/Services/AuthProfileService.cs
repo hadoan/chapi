@@ -7,6 +7,7 @@ using AuthProfiles.Domain;
 using AuthProfiles.Application.Dtos;
 using AuthProfiles.Application.Requests;
 using AuthProfiles.Application.Mappings;
+using Environments.Application;
 
 namespace AuthProfiles.Application.Services
 {
@@ -19,13 +20,15 @@ namespace AuthProfiles.Application.Services
         private readonly ISecretStore _secretStore;
         private readonly IAuthTokenService _tokenService;
         private readonly ITokenCache _tokenCache;
+        private readonly IEnvironmentAppService _environmentService;
 
-        public AuthProfileService(IAuthProfileRepository repo, ISecretStore secretStore, IAuthTokenService tokenService, ITokenCache tokenCache)
+        public AuthProfileService(IAuthProfileRepository repo, ISecretStore secretStore, IAuthTokenService tokenService, ITokenCache tokenCache, IEnvironmentAppService environmentService)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _secretStore = secretStore ?? throw new ArgumentNullException(nameof(secretStore));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _tokenCache = tokenCache ?? throw new ArgumentNullException(nameof(tokenCache));
+            _environmentService = environmentService ?? throw new ArgumentNullException(nameof(environmentService));
         }
 
         public async Task<AuthProfileDto> CreateAsync(CreateAuthProfileRequest r, CancellationToken ct)
@@ -95,10 +98,14 @@ namespace AuthProfiles.Application.Services
             return (items.Select(i => i.ToDto()), total);
         }
 
-        public async Task<AuthProfileDto?> GetFirstForProjectEnvironmentAsync(Guid projectId, string environmentKey, CancellationToken ct)
+        public async Task<AuthProfileDto?> GetFirstForProjectEnvironmentAsync(Guid projectId, Guid environmentId, CancellationToken ct)
         {
-            // Query the repository for enabled profiles matching project and environment, take first
-            var (items, _) = await _repo.GetPagedAsync(1, 1, true, projectId, null, environmentKey, ct).ConfigureAwait(false);
+            // Get the environment to find its name/key
+            var environment = await _environmentService.GetByIdAsync(environmentId, ct).ConfigureAwait(false);
+            if (environment == null) return null;
+
+            // Query the repository for enabled profiles matching project and environment key, take first
+            var (items, total) = await _repo.GetPagedAsync(1, 1, true, projectId, null, environment.Name, ct).ConfigureAwait(false);
             var first = items.FirstOrDefault();
             if (first == null) return null;
             return first.ToDto();

@@ -15,12 +15,25 @@ import { useState } from 'react';
 interface LayoutProps {
   children: React.ReactNode;
   showProjectSelector?: boolean;
+  /** Show the environment/project selector area (default: true) */
+  showEnvironment?: boolean;
+  /** Show the profile/user menu in the top bar (default: true) */
+  showProfileMenu?: boolean;
+  showUserMenu?: boolean;
+  showSidebarTrigger?: boolean;
 }
-
-export function Layout({ children, showProjectSelector = true }: LayoutProps) {
+export function Layout({
+  children,
+  showProjectSelector = true,
+  showEnvironment = true,
+  showProfileMenu = true,
+  showUserMenu = true,
+  showSidebarTrigger = true,
+}: LayoutProps) {
   const [selectedProject, setSelectedProject] =
     useState<ProjectContextType['selectedProject']>(null);
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
+  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
@@ -53,45 +66,50 @@ export function Layout({ children, showProjectSelector = true }: LayoutProps) {
                       onSelectProject={p => setSelectedProject(p)}
                       onSelectEnv={e => setSelectedEnv(e)}
                       onToggleDarkMode={toggleDarkMode}
+                      showEnvironment={showEnvironment}
+                      showUserMenu={showUserMenu}
+                      showSidebarTrigger={showSidebarTrigger}
                     />
                   )}
                 </div>
 
                 {/* User Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 rounded-full"
+                {showProfileMenu && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
+                          <User className="w-4 h-4" />
+                        </div>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 bg-popover z-50"
                     >
-                      <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-                        <User className="w-4 h-4" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-48 bg-popover z-50"
-                  >
-                    <DropdownMenuItem onClick={toggleDarkMode}>
-                      {darkMode ? (
-                        <Sun className="w-4 h-4 mr-2" />
-                      ) : (
-                        <Moon className="w-4 h-4 mr-2" />
-                      )}
-                      {darkMode ? 'Light mode' : 'Dark mode'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuItem onClick={toggleDarkMode}>
+                        {darkMode ? (
+                          <Sun className="w-4 h-4 mr-2" />
+                        ) : (
+                          <Moon className="w-4 h-4 mr-2" />
+                        )}
+                        {darkMode ? 'Light mode' : 'Dark mode'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
 
@@ -103,6 +121,8 @@ export function Layout({ children, showProjectSelector = true }: LayoutProps) {
                   setSelectedProject: p => setSelectedProject(p),
                   selectedEnv,
                   setSelectedEnv: e => setSelectedEnv(e),
+                  selectedEnvId,
+                  setSelectedEnvId: id => setSelectedEnvId(id),
                 }}
               >
                 {children}

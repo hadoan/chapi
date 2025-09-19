@@ -5,13 +5,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/hooks/use-toast';
 import { getOrFetch } from '@/lib/api/cache';
 import { environmentsApi } from '@/lib/api/environments';
 import { projectsApi } from '@/lib/api/projects';
 import { ChevronDown, LogOut, Moon, Settings, Sun, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { SidebarTrigger } from './ui/sidebar';
 
 type Project = { id?: string; name?: string };
 type Env = { id?: string; name?: string };
@@ -21,6 +21,8 @@ interface Props {
   onSelectEnv?: (env: string | null) => void;
   showSidebarTrigger?: boolean;
   showUserMenu?: boolean;
+  /** Whether to show environment selector UI (default: true) */
+  showEnvironment?: boolean;
   onToggleDarkMode?: () => void;
   initialProjectId?: string | undefined;
 }
@@ -32,6 +34,7 @@ export default function ProjectSelectionBar({
   showUserMenu = true,
   onToggleDarkMode,
   initialProjectId,
+  showEnvironment = true,
 }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -69,6 +72,7 @@ export default function ProjectSelectionBar({
 
   useEffect(() => {
     if (!selectedProject?.id) return;
+    if (!showEnvironment) return; // skip fetching envs when environment UI is hidden
     let mounted = true;
 
     // Use cached envs for this project if available
@@ -104,7 +108,7 @@ export default function ProjectSelectionBar({
     return () => {
       mounted = false;
     };
-  }, [selectedProject?.id, onSelectEnv]);
+  }, [selectedProject?.id, onSelectEnv, showEnvironment]);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
@@ -146,27 +150,29 @@ export default function ProjectSelectionBar({
       </DropdownMenu>
 
       {/* Environment Selector - Hidden on small screens, shown as buttons on medium */}
-      <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
-        {envOptions.map(env => (
-          <button
-            key={env.id}
-            onClick={() => {
-              setSelectedEnv(env.id ?? null);
-              if (onSelectEnv) onSelectEnv(env.id ?? null);
-            }}
-            className={`px-3 py-1 rounded text-sm transition-colors ${
-              selectedEnv === (env.id ?? null)
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {env.name}
-          </button>
-        ))}
-      </div>
+      {showEnvironment && (
+        <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
+          {envOptions.map(env => (
+            <button
+              key={env.id}
+              onClick={() => {
+                setSelectedEnv(env.id ?? null);
+                if (onSelectEnv) onSelectEnv(env.id ?? null);
+              }}
+              className={`px-3 py-1 rounded text-sm transition-colors ${
+                selectedEnv === (env.id ?? null)
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {env.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Mobile Environment Selector */}
-      {envOptions.length > 0 && (
+      {showEnvironment && envOptions.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="sm:hidden">
             <Button variant="outline" size="sm" className="px-2">

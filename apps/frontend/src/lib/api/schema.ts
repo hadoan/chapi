@@ -541,7 +541,7 @@ export interface paths {
             parameters: {
                 query?: {
                     projectId?: string;
-                    environmentKey?: string;
+                    environmentId?: string;
                 };
                 header?: never;
                 path?: never;

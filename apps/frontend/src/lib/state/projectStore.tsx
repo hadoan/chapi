@@ -8,6 +8,9 @@ export type ProjectContextType = {
   setSelectedProject: (p: ProjectModel) => void;
   selectedEnv: string | null;
   setSelectedEnv: (env: string | null) => void;
+  // id of the selected environment (if different from the name/key)
+  selectedEnvId: string | null;
+  setSelectedEnvId: (id: string | null) => void;
 };
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);

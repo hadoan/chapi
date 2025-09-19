@@ -92,7 +92,7 @@ const mapToFrontendProfile = (
 // Convert frontend profile to backend create request
 const mapToCreateRequest = (
   frontendProfile: import('@/types/auth-pilot').AuthProfile,
-  environmentId: string,
+  environmentId: string | undefined,
   projectId?: string,
   serviceId?: string
 ): CreateAuthProfileRequest => {
@@ -147,7 +147,7 @@ const mapToCreateRequest = (
   return {
     projectId: projectId || '00000000-0000-0000-0000-000000000001', // Default project ID if not provided
     serviceId: serviceId || '00000000-0000-0000-0000-000000000002', // Default service ID if not provided
-    environmentKey: environmentId,
+    environmentKey: environmentId || 'default', // Default environment if not provided
     type: mapFrontendAuthType(frontendProfile.type),
     tokenUrl: frontendProfile.token_url,
     scopesCsv: frontendProfile.scopes,
@@ -227,7 +227,7 @@ export interface UseAuthProfilesOptions {
 }
 
 export function useAuthProfiles({
-  environmentId = 'default-env',
+  environmentId,
   projectId,
   serviceId,
   autoLoad = true,
@@ -241,13 +241,19 @@ export function useAuthProfiles({
     try {
       setLoading(true);
       setError(null);
-      // Use server-side helper to get the first profile for project/environment
       if (!projectId) {
         setProfiles([]);
         return;
       }
-      const first = await authProfilesApi.getFirst(projectId, environmentId);
-      setProfiles(first ? [first] : []);
+      // Use getAll instead of getFirst to load all profiles for the project/environment
+      const queryParams: { projectId: string; env?: string } = {
+        projectId: projectId,
+      };
+      if (environmentId) {
+        queryParams.env = environmentId;
+      }
+      const allProfiles = await authProfilesApi.getAll(queryParams);
+      setProfiles(allProfiles || []);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to load auth profiles';
@@ -269,9 +275,10 @@ export function useAuthProfiles({
         setLoading(true);
         setError(null);
         // Check for existing profile for this project/service/environment
-        const first = projectId
-          ? await authProfilesApi.getFirst(projectId, environmentId)
-          : null;
+        const first =
+          projectId && environmentId
+            ? await authProfilesApi.getFirst(projectId, environmentId)
+            : null;
 
         if (first) {
           // If an existing profile exists, update it instead of creating a duplicate

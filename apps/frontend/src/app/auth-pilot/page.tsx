@@ -10,7 +10,6 @@ import {
 import { useAuthProfiles } from '@/hooks/use-auth-profiles';
 import { toast } from '@/hooks/use-toast';
 import { authProfilesApi } from '@/lib/api/auth-profiles';
-import { environmentsApi } from '@/lib/api/environments';
 import type { components } from '@/lib/api/schema';
 import { useProject } from '@/lib/state/projectStore';
 import { Brain, HelpCircle, Save, Sparkles, TestTube } from 'lucide-react';
@@ -22,6 +21,7 @@ import {
   FloatingElements,
   GradientBorder,
 } from '@/components/auth-pilot/AnimationEffects';
+import { AuthProfileList } from '@/components/auth-pilot/AuthProfileList';
 import EnhancedAiDetection from '@/components/auth-pilot/EnhancedAiDetection';
 import {
   EnhancedCandidateList,
@@ -51,29 +51,11 @@ import type {
 const STORAGE_KEY = 'chapi-auth-pilot-demo';
 
 // Local mapping function for backend auth types
-const mapBackendAuthType = (backendType: unknown): AuthType => {
-  // Backend uses numeric enum: 0 | 1 | 2 | 3 | 4 | 5 | 6
-  const typeMap: Record<number, AuthType> = {
-    0: 'oauth2_client_credentials',
-    1: 'api_key_header',
-    2: 'bearer_static',
-    3: 'session_cookie',
-    4: 'password',
-    5: 'basic',
-    6: 'custom_login',
-  };
-  const n =
-    typeof backendType === 'number'
-      ? backendType
-      : parseInt(String(backendType || ''), 10);
-  return typeMap[n] || 'oauth2_client_credentials';
-};
 
 function AuthPilotContent() {
   const [environment, setEnvironment] = useState<Environment>('Dev');
   const [profile, setProfile] = useState<AuthProfile>(createInitialProfile());
-  const { selectedProject, selectedEnv, setSelectedEnv, setSelectedProject } =
-    useProject();
+  const { selectedProject } = useProject(); // Remove selectedEnv dependency
   const [projectId, setProjectId] = useState<string | undefined>(
     selectedProject?.id ?? undefined
   );
@@ -87,19 +69,20 @@ function AuthPilotContent() {
     confidence: number;
   } | null>(null);
 
+  // New state for selected profile from list
+  const [selectedProfile, setSelectedProfile] = useState<AuthProfile | null>(
+    null
+  );
+
   // Use the auth profiles hook
   const {
     profiles,
-    backendProfiles,
     loading: profilesLoading,
-    error: profilesError,
     createProfile,
-    updateProfile,
-    deleteProfile,
     detectCandidates,
+    loadProfiles,
   } = useAuthProfiles({
-    // Pass the selected environment id (if available). The hook expects an environmentId.
-    environmentId: selectedEnv ?? undefined,
+    // Remove environment dependency for auth pilot
     projectId: selectedProject?.id,
     serviceId: undefined, // TODO: Add service selection
     autoLoad: true,
@@ -227,6 +210,27 @@ function AuthPilotContent() {
     });
   };
 
+  // Handle profile selection from the list
+  const handleProfileSelection = (selectedAuthProfile: AuthProfile | null) => {
+    setSelectedProfile(selectedAuthProfile);
+    if (selectedAuthProfile) {
+      // Update the current profile with selected profile data
+      setProfile(selectedAuthProfile);
+      setTokenResult(undefined); // Clear previous test results
+      addLog({
+        type: 'info',
+        status: 'success',
+        message: `Profile "${
+          selectedAuthProfile.notes || 'Untitled'
+        }" selected`,
+      });
+    } else {
+      // If null selected, reset to initial profile
+      setProfile(createInitialProfile());
+      setTokenResult(undefined);
+    }
+  };
+
   // Load candidates from backend
   const handleDetectCandidates = useCallback(async () => {
     if (profile.token_url) {
@@ -253,124 +257,10 @@ function AuthPilotContent() {
     }
   }, [profile.token_url, detectCandidates, addLog, selectedProject]);
 
-  // Project and environment are provided by ProjectContext (top bar)
+  // Project context
   useEffect(() => {
     setProjectId(selectedProject?.id ?? undefined);
-    // selectedEnv is now an environment id. Resolve the human-readable name for UI
-    const resolveEnvName = async () => {
-      if (!selectedProject?.id || !selectedEnv) return;
-      try {
-        const envs = await environmentsApi.getByProject(selectedProject.id);
-        const match = envs.find(e => e.id === selectedEnv);
-        if (match && match.name) setEnvironment(match.name as Environment);
-      } catch (err) {
-        console.warn('Failed to resolve environment name', err);
-      }
-    };
-
-    if (selectedEnv) resolveEnvName();
-  }, [selectedProject, selectedEnv]);
-
-  // Fetch environment data and update profile when environment changes
-  useEffect(() => {
-    const fetchEnvironmentData = async () => {
-      if (!selectedProject?.id || !selectedEnv) {
-        console.log(
-          'Skipping environment fetch: missing projectId or selectedEnv'
-        );
-        return;
-      }
-
-      console.log(
-        `Fetching environment data for project ${selectedProject.id}, environment ${selectedEnv}`
-      );
-
-      try {
-        // Use the API endpoint: /api/projects/{projectId}/environments
-        console.log(
-          `Making API call to: /api/projects/${selectedProject.id}/environments`
-        );
-        const environments = await environmentsApi.getByProject(
-          selectedProject.id
-        );
-        console.log(
-          'API call successful, received environments:',
-          environments
-        );
-
-        if (!environments || environments.length === 0) {
-          console.warn('No environments found for project');
-          // Removed addLog to prevent repeated API calls
-
-          // Fallback to default
-          setProfile(prev => ({
-            ...prev,
-            token_url: 'https://api.demo.local/connect/token',
-          }));
-          return;
-        }
-
-        const currentEnv = environments.find(env => env.id === selectedEnv);
-
-        if (currentEnv) {
-          console.log('Found matching environment:', currentEnv);
-
-          // Update profile with environment data
-          setProfile(prev => {
-            const updatedProfile = {
-              ...prev,
-              token_url: currentEnv.baseUrl || prev.token_url,
-            };
-
-            // If environment has headers, we could potentially use them
-            // For now, we'll just log them for debugging
-            if (currentEnv.headers && currentEnv.headers.length > 0) {
-              console.log('Environment headers available:', currentEnv.headers);
-              // Removed addLog to prevent repeated API calls
-            }
-
-            // If environment has secrets, we could potentially suggest them
-            if (currentEnv.secrets && currentEnv.secrets.length > 0) {
-              console.log(
-                'Environment secrets available:',
-                currentEnv.secrets.map(s => s.keyPath)
-              );
-              // Removed addLog to prevent repeated API calls
-            }
-
-            return updatedProfile;
-          });
-
-          // Removed addLog to prevent repeated API calls
-          console.log(
-            `Successfully loaded environment "${currentEnv.name}" with base URL: ${currentEnv.baseUrl}`
-          );
-        } else {
-          console.warn(
-            `Environment "${selectedEnv}" not found in project environments`
-          );
-          // Removed addLog to prevent repeated API calls
-
-          // Fallback to default
-          setProfile(prev => ({
-            ...prev,
-            token_url: 'https://api.demo.local/connect/token',
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to fetch environment data:', error);
-        // Removed addLog to prevent repeated API calls
-
-        // Fallback to default if environment fetch fails
-        setProfile(prev => ({
-          ...prev,
-          token_url: 'https://api.demo.local/connect/token',
-        }));
-      }
-    };
-
-    fetchEnvironmentData();
-  }, [selectedProject?.id, selectedEnv]);
+  }, [selectedProject]);
 
   // Save profile to backend
   const handleSaveProfile = useCallback(async () => {
@@ -561,18 +451,6 @@ function AuthPilotContent() {
     }
   }, [profile, addLog, environment, selectedProject?.id]);
 
-  const handleResetDemo = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setProfile(createInitialProfile());
-    setTokenResult(undefined);
-    setLogs([]);
-
-    toast({
-      title: 'Demo reset',
-      description: 'All demo data has been cleared',
-    });
-  };
-
   const validation = validateProfile(profile);
   const canTest = validation.isValid && !isTestingConnection;
 
@@ -645,7 +523,7 @@ function AuthPilotContent() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-6">
           {/* Left Column - Detection & Candidates */}
           <div className="space-y-6">
             <AnimatedContainer delay={200}>
@@ -738,7 +616,25 @@ function AuthPilotContent() {
             </AnimatedContainer>
           </div>
 
-          {/* Right Column - Profile & Test */}
+          {/* Middle Column - Auth Profile List */}
+          <div className="space-y-6">
+            <AnimatedContainer delay={100}>
+              <AuthProfileList
+                profiles={profiles}
+                selectedProfile={selectedProfile}
+                onSelectProfile={handleProfileSelection}
+                loading={profilesLoading}
+                onCreateNew={() => {
+                  // Reset to create new profile
+                  setProfile(createInitialProfile());
+                  setSelectedProfile(null);
+                  setTokenResult(undefined);
+                }}
+              />
+            </AnimatedContainer>
+          </div>
+
+          {/* Right Column - Profile Details & Test */}
           <div className="space-y-6">
             <AnimatedContainer delay={300}>
               <ProfileForm
@@ -836,7 +732,11 @@ function AuthPilotContent() {
 
 export default function AuthPilotPage() {
   return (
-    <Layout>
+    <Layout
+      showEnvironment={false}
+      showUserMenu={false}
+      showSidebarTrigger={false}
+    >
       <AuthPilotContent />
     </Layout>
   );
