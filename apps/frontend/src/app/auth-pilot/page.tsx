@@ -13,13 +13,20 @@ import { authProfilesApi } from '@/lib/api/auth-profiles';
 import { environmentsApi } from '@/lib/api/environments';
 import type { components } from '@/lib/api/schema';
 import { useProject } from '@/lib/state/projectStore';
-import { HelpCircle, Save, TestTube } from 'lucide-react';
+import { Brain, HelpCircle, Save, Sparkles, TestTube } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 // Components
-import AiDetectionModal from '@/components/auth-pilot/AiDetectionModal';
-import { CandidateList } from '@/components/auth-pilot/CandidateList';
-import { DetectionBanner } from '@/components/auth-pilot/DetectionBanner';
+import {
+  AnimatedContainer,
+  FloatingElements,
+  GradientBorder,
+} from '@/components/auth-pilot/AnimationEffects';
+import EnhancedAiDetection from '@/components/auth-pilot/EnhancedAiDetection';
+import {
+  EnhancedCandidateList,
+  EnhancedDetectionBanner,
+} from '@/components/auth-pilot/EnhancedDetectionVisuals';
 import { InjectionPreview } from '@/components/auth-pilot/InjectionPreview';
 import { ProfileForm } from '@/components/auth-pilot/ProfileForm';
 import { TokenCachePreview } from '@/components/auth-pilot/TokenCachePreview';
@@ -590,26 +597,28 @@ function AuthPilotContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="bg-card border-b border-border sticky top-0 z-10 overflow-hidden">
+        <FloatingElements />
+        <div className="max-w-7xl mx-auto px-6 py-4 relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-foreground">
-                Token & Auth Profile Wizard
-              </h1>
-              {/* <Badge
-                variant="secondary"
-                className="bg-primary/10 text-primary"
-              >
-                Demo Mode
-              </Badge> */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg">
+                  <Brain className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    AI-Powered Auth Discovery
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Intelligently detect and configure authentication methods
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Project selection is shown in the global top bar; hide duplicate here */}
-
-              {/* Actions */}
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" className="px-2">
@@ -618,6 +627,11 @@ function AuthPilotContent() {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="max-w-sm space-y-2">
+                    <p className="font-medium">AI Auth Detection:</p>
+                    <p className="text-sm">
+                      Use AI to analyze code samples or describe authentication
+                      requirements
+                    </p>
                     <p className="font-medium">Keyboard Shortcuts:</p>
                     <p className="text-sm">Ctrl/Cmd+Enter: Test Connection</p>
                     <p className="text-sm">Ctrl/Cmd+S: Save Profile</p>
@@ -634,150 +648,184 @@ function AuthPilotContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Detection & Candidates */}
           <div className="space-y-6">
-            {bestDetection && (
-              <DetectionBanner
-                detection={bestDetection}
-                onUseEndpoint={() =>
-                  handleUseDetectedEndpoint(bestDetection.endpoint)
-                }
-              />
-            )}
-            {/* Detection Button */}
-            <div className="flex gap-2">
-              <AiDetectionModal
-                projectId={selectedProject?.id}
-                serviceId={undefined}
-                onDetected={resp => {
-                  const mapped = (resp.candidates || []).map(c => {
-                    const t =
-                      typeof c.type === 'number'
-                        ? Number(c.type)
-                        : String(c.type || '');
-                    return {
-                      type: t as unknown as AuthType,
-                      confidence: c.confidence || 0,
-                      token_url: c.tokenUrl ?? undefined,
-                      header_name: c.injection?.name ?? undefined,
-                      rawType: String(c.type ?? ''),
-                      form: c.form ?? null,
-                    } as AuthCandidate;
-                  });
-                  setCandidates(mapped);
-                  setBestDetection(
-                    resp.best
-                      ? {
-                          endpoint: resp.best.endpoint!,
-                          source: resp.best.source!,
-                          confidence: resp.best.confidence!,
-                        }
-                      : null
-                  );
-                }}
-              />
-            </div>
+            <AnimatedContainer delay={200}>
+              {bestDetection && (
+                <GradientBorder hover>
+                  <EnhancedDetectionBanner
+                    detection={bestDetection}
+                    onUseEndpoint={() =>
+                      handleUseDetectedEndpoint(bestDetection.endpoint)
+                    }
+                  />
+                </GradientBorder>
+              )}
+            </AnimatedContainer>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium">Auth Detection</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Analyze endpoint for authentication methods
-                    </p>
+            {/* Enhanced AI Detection Button */}
+            <AnimatedContainer delay={400}>
+              <div className="flex gap-2">
+                <EnhancedAiDetection
+                  projectId={selectedProject?.id}
+                  serviceId={undefined}
+                  variant="prominent"
+                  className="flex-1"
+                  onDetected={resp => {
+                    const mapped = (resp.candidates || []).map(c => {
+                      const t =
+                        typeof c.type === 'number'
+                          ? Number(c.type)
+                          : String(c.type || '');
+                      return {
+                        type: t as unknown as AuthType,
+                        confidence: c.confidence || 0,
+                        token_url: c.tokenUrl ?? undefined,
+                        header_name: c.injection?.name ?? undefined,
+                        rawType: String(c.type ?? ''),
+                        form: c.form ?? null,
+                      } as AuthCandidate;
+                    });
+                    setCandidates(mapped);
+                    setBestDetection(
+                      resp.best
+                        ? {
+                            endpoint: resp.best.endpoint!,
+                            source: resp.best.source!,
+                            confidence: resp.best.confidence!,
+                          }
+                        : null
+                    );
+                  }}
+                />
+              </div>
+            </AnimatedContainer>
+
+            {/* Traditional Auth Detection Card */}
+            <AnimatedContainer delay={600}>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium">Manual Detection</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Analyze endpoint for authentication methods
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleDetectCandidates}
+                      disabled={!profile.token_url || profilesLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {profilesLoading ? 'Detecting...' : 'Detect Auth'}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleDetectCandidates}
-                    disabled={!profile.token_url || profilesLoading}
-                    variant="outline"
-                    size="sm"
-                  >
-                    {profilesLoading ? 'Detecting...' : 'Detect Auth'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            <CandidateList
-              candidates={candidates}
-              selectedType={profile.type}
-              // Use header_name as the selected token identifier for API key header profiles
-              selectedTokenUrl={
-                profile.type === 'api_key_header'
-                  ? profile.header_name
-                  : profile.token_url
-              }
-              onSelectCandidate={handleCandidateSelect}
-            />
+                </CardContent>
+              </Card>
+            </AnimatedContainer>
+
+            <AnimatedContainer delay={800}>
+              <EnhancedCandidateList
+                candidates={candidates}
+                selectedType={profile.type}
+                // Use header_name as the selected token identifier for API key header profiles
+                selectedTokenUrl={
+                  profile.type === 'api_key_header'
+                    ? profile.header_name
+                    : profile.token_url
+                }
+                onSelectCandidate={handleCandidateSelect}
+              />
+            </AnimatedContainer>
           </div>
 
           {/* Right Column - Profile & Test */}
           <div className="space-y-6">
-            <ProfileForm
-              profile={profile}
-              onChange={setProfile}
-              errors={validation.errors}
-            />
+            <AnimatedContainer delay={300}>
+              <ProfileForm
+                profile={profile}
+                onChange={setProfile}
+                errors={validation.errors}
+              />
+            </AnimatedContainer>
 
-            <InjectionPreview profile={profile} tokenResult={tokenResult} />
+            <AnimatedContainer delay={500}>
+              <InjectionPreview profile={profile} tokenResult={tokenResult} />
+            </AnimatedContainer>
 
-            <TokenCachePreview tokenResult={tokenResult} />
+            <AnimatedContainer delay={700}>
+              <TokenCachePreview tokenResult={tokenResult} />
+            </AnimatedContainer>
 
             {/* Actions */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex gap-3 flex-wrap">
-                  <Button
-                    onClick={handleTestConnection}
-                    disabled={!canTest}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                  >
-                    <TestTube className="h-4 w-4 mr-2" />
-                    {isTestingConnection ? 'Testing...' : 'Test Connection'}
-                  </Button>
+            <AnimatedContainer delay={900}>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex gap-3 flex-wrap">
+                    <GradientBorder
+                      gradient="from-indigo-500 via-purple-500 to-pink-500"
+                      hover
+                      className="flex-1"
+                    >
+                      <Button
+                        onClick={handleTestConnection}
+                        disabled={!canTest}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0"
+                        size="lg"
+                      >
+                        <TestTube className="h-4 w-4 mr-2" />
+                        {isTestingConnection ? 'Testing...' : 'Test Connection'}
+                      </Button>
+                    </GradientBorder>
 
-                  <Button variant="outline" onClick={handleSaveProfile}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Profile
-                  </Button>
-                </div>
+                    <Button variant="outline" onClick={handleSaveProfile}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Profile
+                    </Button>
+                  </div>
 
-                {!validation.isValid && (
-                  <p className="text-sm text-slate-500 mt-3">
-                    Complete required fields to enable testing
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  {!validation.isValid && (
+                    <p className="text-sm text-slate-500 mt-3">
+                      Complete required fields to enable testing
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </AnimatedContainer>
 
             {/* Status/Log Panel */}
             {logs.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Activity Log</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {logs.slice(-5).map((log, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <span className="text-slate-500 font-mono text-xs w-16">
-                          {log.timestamp}
-                        </span>
-                        <Badge
-                          variant={
-                            log.status === 'success' ? 'default' : 'destructive'
-                          }
-                          className="text-xs"
+              <AnimatedContainer delay={1100}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Activity Log</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {logs.slice(-5).map((log, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 text-sm"
                         >
-                          {log.type}
-                        </Badge>
-                        <span className="text-slate-700">{log.message}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          <span className="text-slate-500 font-mono text-xs w-16">
+                            {log.timestamp}
+                          </span>
+                          <Badge
+                            variant={
+                              log.status === 'success'
+                                ? 'default'
+                                : 'destructive'
+                            }
+                            className="text-xs"
+                          >
+                            {log.type}
+                          </Badge>
+                          <span className="text-slate-700">{log.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </AnimatedContainer>
             )}
           </div>
         </div>

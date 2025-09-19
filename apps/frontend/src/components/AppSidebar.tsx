@@ -23,10 +23,10 @@ import {
 } from '@/components/ui/sidebar';
 
 const navigationItems = [
+  { title: 'Auth Config', url: '/app/auth-pilot', icon: Shield },
   { title: 'Chat', url: '/app', icon: MessageSquare },
   { title: 'Projects', url: '/app/projects', icon: FolderOpen },
   { title: 'Runs', url: '/app/runs', icon: Play },
-  { title: 'Auth Pilot', url: '/app/auth-pilot', icon: Shield },
 ];
 
 const managementItems = [
