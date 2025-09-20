@@ -384,7 +384,7 @@ export const RunPackFileBrowser: React.FC<RunPackFileBrowserProps> = ({
                 </div>
 
                 {/* File Content */}
-                <div className="flex-1 p-4">
+                <div className="flex-1 p-4 min-h-0">
                   {isEditing ? (
                     <Textarea
                       value={editedContent}
