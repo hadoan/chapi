@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Chapi.AI.Dto;
+using Chapi.AI.Services.Auth;
 
 namespace Chapi.AI.Services
 {
@@ -15,10 +16,12 @@ namespace Chapi.AI.Services
     public class ChapiIRGenerator : IChapiIRGenerator
     {
         private readonly ILogger<ChapiIRGenerator> _logger;
+        private readonly ITokenGenerator _tokenGenerator;
 
-        public ChapiIRGenerator(ILogger<ChapiIRGenerator> logger)
+        public ChapiIRGenerator(ILogger<ChapiIRGenerator> logger, ITokenGenerator tokenGenerator)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _tokenGenerator = tokenGenerator ?? throw new ArgumentNullException(nameof(tokenGenerator));
         }
 
         public string GenerateTestsJsonContent(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options)
@@ -30,7 +33,7 @@ namespace Chapi.AI.Services
                 {
                     name = $"{endpoint.Method.ToLower()}-{SanitizePath(endpoint.Path)}",
                     env = new { BASE_URL = "{{BASE_URL}}" },
-                    secrets = GetRequiredSecrets(authProfile),
+                    secrets = GetRequiredSecrets(authProfile, options?.ForbiddenAuthProfile),
                     auth = GenerateAuthConfig(authProfile),
                     steps = GenerateTestSteps(endpoint, authProfile, options)
                 }
@@ -39,45 +42,42 @@ namespace Chapi.AI.Services
             return JsonSerializer.Serialize(suite, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        private string[] GetRequiredSecrets(AuthProfile authProfile)
+        private string[] GetRequiredSecrets(AuthProfile authProfile, AuthProfile? forbidden = null)
         {
-            var secrets = new List<string> { "BASE_URL" };
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "BASE_URL" };
 
-            switch (authProfile.Type)
+            void add(AuthProfile p)
             {
-                case "API_KEY":
-                    secrets.Add("API_KEY");
-                    break;
-                case "BASIC":
-                    secrets.Add("BASIC_USER");
-                    secrets.Add("BASIC_PASS");
-                    break;
-                case "BEARER":
-                    secrets.Add("API_TOKEN");
-                    break;
-                case "OIDC_CLIENT_CREDENTIALS":
-                    secrets.Add("TOKEN_URL");
-                    secrets.Add("CLIENT_ID");
-                    secrets.Add("CLIENT_SECRET");
-                    if (authProfile.Config.ContainsKey("scope")) secrets.Add("SCOPE");
-                    if (authProfile.Config.ContainsKey("audience")) secrets.Add("AUDIENCE");
-                    break;
-                case "OIDC_PASSWORD":
-                    secrets.Add("TOKEN_URL");
-                    secrets.Add("CLIENT_ID");
-                    secrets.Add("CLIENT_SECRET");
-                    secrets.Add("USERNAME");
-                    secrets.Add("PASSWORD");
-                    break;
-                case "CUSTOM_SCRIPT":
-                    secrets.Add("TOKEN_SCRIPT_PATH");
-                    break;
+                switch (p.Type)
+                {
+                    case "API_KEY":
+                        set.Add("API_KEY"); break;
+                    case "BASIC":
+                        set.Add("BASIC_USER"); set.Add("BASIC_PASS"); break;
+                    case "BEARER":
+                        set.Add("API_TOKEN"); break;
+                    case "OIDC_CLIENT_CREDENTIALS":
+                        set.Add("TOKEN_URL"); set.Add("CLIENT_ID"); set.Add("CLIENT_SECRET");
+                        if (p.Config.ContainsKey("scope") || p.Config.ContainsKey("SCOPE")) set.Add("SCOPE");
+                        if (p.Config.ContainsKey("audience") || p.Config.ContainsKey("AUDIENCE")) set.Add("AUDIENCE");
+                        break;
+                    case "OIDC_PASSWORD":
+                        set.Add("TOKEN_URL"); set.Add("CLIENT_ID"); set.Add("CLIENT_SECRET");
+                        set.Add("USERNAME"); set.Add("PASSWORD");
+                        if (p.Config.ContainsKey("scope") || p.Config.ContainsKey("SCOPE")) set.Add("SCOPE");
+                        break;
+                    case "CUSTOM_SCRIPT":
+                        set.Add("TOKEN_SCRIPT_PATH"); break;
+                }
             }
 
-            return secrets.ToArray();
+            if (authProfile != null) add(authProfile);
+            if (forbidden != null) add(forbidden);
+
+            return set.ToArray();
         }
 
-        private object GenerateAuthConfig(AuthProfile authProfile)
+        private object GenerateAuthConfig(AuthProfile authProfile, string? tokenStepId = null)
         {
             switch (authProfile.Type)
             {
@@ -114,7 +114,7 @@ namespace Chapi.AI.Services
                     return new
                     {
                         strategy = "client_credentials",
-                        token_step = "get_token",
+                        token_step = tokenStepId ?? "get_token",
                         inject = new { header = "Authorization", format = "Bearer {access_token}" }
                     };
 
@@ -122,7 +122,7 @@ namespace Chapi.AI.Services
                     return new
                     {
                         strategy = "password",
-                        token_step = "get_token",
+                        token_step = tokenStepId ?? "get_token",
                         inject = new { header = "Authorization", format = "Bearer {access_token}" }
                     };
 
@@ -130,7 +130,7 @@ namespace Chapi.AI.Services
                     return new
                     {
                         strategy = "custom",
-                        token_step = "get_token",
+                        token_step = tokenStepId ?? "get_token",
                         inject = new { header = "Authorization", format = "Bearer {access_token}" }
                     };
 
@@ -139,18 +139,41 @@ namespace Chapi.AI.Services
             }
         }
 
-        private object[] GenerateTestSteps(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options)
+        private object[] GenerateTestSteps(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions? options)
         {
             var steps = new List<object>();
 
             // Add token step if needed
             if (authProfile.Type == "OIDC_CLIENT_CREDENTIALS" || authProfile.Type == "OIDC_PASSWORD" || authProfile.Type == "CUSTOM_SCRIPT")
             {
-                steps.Add(GenerateTokenStep(authProfile));
+                steps.Add(GenerateTokenStep(authProfile, forForbidden: false));
+            }
+
+            // If a forbidden alternate profile is provided and it needs tokens, emit its token step too
+            if (options?.ForbiddenAuthProfile != null)
+            {
+                var f = options.ForbiddenAuthProfile;
+                if (f.Type == "OIDC_CLIENT_CREDENTIALS" || f.Type == "OIDC_PASSWORD" || f.Type == "CUSTOM_SCRIPT")
+                {
+                    steps.Add(GenerateTokenStep(f, forForbidden: true));
+                    // Attempt to prefetch token via ITokenGenerator for realism (do not inline)
+                    try
+                    {
+                        var tok = _tokenGenerator.GetAccessTokenAsync(f).ConfigureAwait(false).GetAwaiter().GetResult();
+                        if (tok != null)
+                        {
+                            _logger.LogInformation("Prefetched forbidden profile token (not inlined) for profile {ProfileId}", f.Id);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to prefetch token for forbidden profile {ProfileId}", f.Id);
+                    }
+                }
             }
 
             // Add happy path step
-            steps.Add(GenerateHappyPathStep(endpoint, authProfile));
+            steps.Add(GenerateHappyPathStep(endpoint, authProfile, options));
 
             // Add unauthorized step if endpoint requires auth
             if (endpoint.RequiresAuth)
@@ -159,16 +182,22 @@ namespace Chapi.AI.Services
             }
 
             // Add forbidden step if requested and applicable
-            if (options.IncludeForbidden && endpoint.RequiresAuth)
+            if (options != null && options.IncludeForbidden && endpoint.RequiresAuth)
             {
-                steps.Add(GenerateForbiddenStep(endpoint));
+                steps.Add(GenerateForbiddenStep(endpoint, options));
             }
 
             return steps.ToArray();
         }
 
-        private object GenerateTokenStep(AuthProfile authProfile)
+        private string GenerateTokenStepId(AuthProfile profile, bool forForbidden)
         {
+            return forForbidden ? "get_token_forbidden" : "get_token";
+        }
+
+        private object GenerateTokenStep(AuthProfile authProfile, bool forForbidden)
+        {
+            var id = GenerateTokenStepId(authProfile, forForbidden);
             switch (authProfile.Type)
             {
                 case "OIDC_CLIENT_CREDENTIALS":
@@ -179,20 +208,20 @@ namespace Chapi.AI.Services
                         ["client_secret"] = "{{CLIENT_SECRET}}"
                     };
 
-                    if (authProfile.Config.ContainsKey("scope"))
+                    if (authProfile.Config.ContainsKey("scope") || authProfile.Config.ContainsKey("SCOPE"))
                         form["scope"] = "{{SCOPE|api}}";
-                    if (authProfile.Config.ContainsKey("audience"))
+                    if (authProfile.Config.ContainsKey("audience") || authProfile.Config.ContainsKey("AUDIENCE"))
                         form["audience"] = "{{AUDIENCE|}}";
 
                     return new
                     {
-                        id = "get_token",
+                        id,
                         type = "http",
                         request = new
                         {
                             method = "POST",
                             url = "{{TOKEN_URL}}",
-                            headers = new { ContentType = "application/x-www-form-urlencoded" },
+                            headers = new Dictionary<string, string> { ["Content-Type"] = "application/x-www-form-urlencoded" },
                             form,
                             timeout_ms = 15000
                         },
@@ -210,15 +239,18 @@ namespace Chapi.AI.Services
                         ["password"] = "{{PASSWORD}}"
                     };
 
+                    if (authProfile.Config.ContainsKey("scope") || authProfile.Config.ContainsKey("SCOPE"))
+                        passwordForm["scope"] = "{{SCOPE|}}";
+
                     return new
                     {
-                        id = "get_token",
+                        id,
                         type = "http",
                         request = new
                         {
                             method = "POST",
                             url = "{{TOKEN_URL}}",
-                            headers = new { ContentType = "application/x-www-form-urlencoded" },
+                            headers = new Dictionary<string, string> { ["Content-Type"] = "application/x-www-form-urlencoded" },
                             form = passwordForm,
                             timeout_ms = 15000
                         },
@@ -229,7 +261,7 @@ namespace Chapi.AI.Services
                 case "CUSTOM_SCRIPT":
                     return new
                     {
-                        id = "get_token",
+                        id,
                         type = "script",
                         script = "{{TOKEN_SCRIPT_PATH}}",
                         save = new { access_token = new { from = "stdout" } },
@@ -241,12 +273,12 @@ namespace Chapi.AI.Services
             }
         }
 
-        private object GenerateHappyPathStep(SelectedEndpoint endpoint, AuthProfile authProfile)
+        private object GenerateHappyPathStep(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions? options)
         {
             var headers = new Dictionary<string, object>();
             var url = $"{{{{BASE_URL}}}}{endpoint.Path}";
+            object? perStepAuth = null;
 
-            // Add auth headers based on auth profile
             switch (authProfile.Type)
             {
                 case "API_KEY":
@@ -265,7 +297,7 @@ namespace Chapi.AI.Services
                     break;
 
                 case "BASIC":
-                    // Basic auth handled via curl -u flag in runner
+                    // handled by runner; no header here
                     break;
 
                 case "BEARER":
@@ -275,7 +307,8 @@ namespace Chapi.AI.Services
                 case "OIDC_CLIENT_CREDENTIALS":
                 case "OIDC_PASSWORD":
                 case "CUSTOM_SCRIPT":
-                    headers["Authorization"] = "Bearer {access_token}";
+                    // Use per-step auth bound to get_token instead of manual header
+                    perStepAuth = GenerateAuthConfig(authProfile, tokenStepId: "get_token");
                     break;
             }
 
@@ -285,38 +318,39 @@ namespace Chapi.AI.Services
                 ["url"] = url,
                 ["timeout_ms"] = 15000
             };
+            if (headers.Any()) request["headers"] = headers;
 
-            if (headers.Any())
-                request["headers"] = headers;
-
-            // Add request body for non-GET methods
             if (endpoint.Method != "GET" && !string.IsNullOrEmpty(endpoint.RequestSchemaHint))
             {
                 switch (endpoint.RequestSchemaHint)
                 {
-                    case "json":
-                        request["json"] = new { };
-                        break;
-                    case "form":
-                        request["form"] = new { test = "data" };
-                        break;
-                    case "multipart":
-                        request["multipart"] = new { field = "value" };
-                        break;
+                    case "json": request["json"] = new { }; break;
+                    case "form": request["form"] = new { test = "data" }; break;
+                    case "multipart": request["multipart"] = new { field = "value" }; break;
                 }
             }
 
-            return new
+            var assertObj = new Dictionary<string, object> { ["status"] = endpoint.SuccessCode };
+            if (options?.IncludeJsonTypeChecks ?? true)
             {
-                id = "endpoint_happy",
-                type = "http",
-                request,
-                assert = new
-                {
-                    status = endpoint.SuccessCode,
-                    body_contains = new[] { "[", "]" } // Minimal check for JSON response
-                }
+                assertObj["content_type"] = "application/json";
+                assertObj["jsonpath"] = new object[] { new object[] { "$", "type", "array" } };
+            }
+            else
+            {
+                assertObj["body_contains"] = new[] { "[", "]" };
+            }
+
+            var step = new Dictionary<string, object?>
+            {
+                ["id"] = "endpoint_happy",
+                ["type"] = "http",
+                ["request"] = request,
+                ["assert"] = assertObj
             };
+            if (perStepAuth != null) step["auth"] = perStepAuth;
+
+            return step;
         }
 
         private object GenerateUnauthorizedStep(SelectedEndpoint endpoint)
@@ -325,6 +359,7 @@ namespace Chapi.AI.Services
             {
                 id = "endpoint_unauthorized",
                 type = "http",
+                auth = new { strategy = "none" },
                 request = new
                 {
                     method = endpoint.Method,
@@ -335,8 +370,30 @@ namespace Chapi.AI.Services
             };
         }
 
-        private object GenerateForbiddenStep(SelectedEndpoint endpoint)
+        private object GenerateForbiddenStep(SelectedEndpoint endpoint, TestGenOptions options)
         {
+            // If an alternate profile is provided, emit an auth override pointing to its token_step
+            if (options?.ForbiddenAuthProfile != null)
+            {
+                var f = options.ForbiddenAuthProfile;
+                var authObj = GenerateAuthConfig(f, tokenStepId: GenerateTokenStepId(f, forForbidden: true));
+
+                return new
+                {
+                    id = "endpoint_forbidden",
+                    type = "http",
+                    auth = authObj,
+                    request = new
+                    {
+                        method = endpoint.Method,
+                        url = $"{{{{BASE_URL}}}}{endpoint.Path}",
+                        timeout_ms = 15000
+                    },
+                    assert = new { status = 403 }
+                };
+            }
+
+            // Fallback to an invalid token (may return 401 on some systems)
             return new
             {
                 id = "endpoint_forbidden",

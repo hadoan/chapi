@@ -40,7 +40,14 @@ public class ChapiAIModule : IModule
         services.AddScoped<ITestGenService, TestGenService>();
         services.AddScoped<ITestGenCardGenerator, TestGenCardGenerator>();
         services.AddScoped<ITestGenFileGenerator, TestGenFileGenerator>();
-        
+
+        // Register HTTP client used by token generator
+        services.AddHttpClient("auth")
+            .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.HttpClientHandler());
+
+        // Register token generator
+        services.AddScoped<Chapi.AI.Services.Auth.ITokenGenerator, Chapi.AI.Services.Auth.TokenGenerator>();
+
         services.AddScoped<ITestGenDatabasePersistenceService, TestGenDatabasePersistenceService>();
         services.AddScoped<ITestGenValidationService, TestGenValidationService>();
         services.AddScoped<IChapiIRGenerator, ChapiIRGenerator>();

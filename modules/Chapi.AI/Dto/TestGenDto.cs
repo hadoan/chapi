@@ -103,6 +103,12 @@ namespace Chapi.AI.Dto
         [JsonPropertyName("includeForbidden")]
         public bool IncludeForbidden { get; set; } = true;
 
+        [JsonPropertyName("forbiddenAuthProfile")]
+        public AuthProfile? ForbiddenAuthProfile { get; set; }
+
+        [JsonPropertyName("includeJsonTypeChecks")]
+        public bool IncludeJsonTypeChecks { get; set; } = true;
+
         [JsonPropertyName("envPlaceholders")]
         public List<string> EnvPlaceholders { get; set; } = new() { "BASE_URL" };
 
