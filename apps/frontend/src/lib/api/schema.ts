@@ -3448,6 +3448,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/llm/generate/endpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.IR.ChapiIr"];
+                        "application/json": components["schemas"]["Chapi.IR.ChapiIr"];
+                        "text/json": components["schemas"]["Chapi.IR.ChapiIr"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/llm/detect/code": {
         parameters: {
             query?: never;
@@ -6497,6 +6547,12 @@ export interface components {
          * @enum {integer}
          */
         "AuthProfiles.Domain.InjectionMode": 0 | 1 | 2;
+        "Chapi.AI.Controllers.LlmController.GenerateEndpointRequest": {
+            /** Format: uuid */
+            authProfileId?: string;
+            /** Format: uuid */
+            endpointId?: string;
+        };
         "Chapi.AI.Controllers.RunPackController.UpdateFileRequest": {
             filePath?: string | null;
             content?: string | null;
@@ -6787,6 +6843,121 @@ export interface components {
             maximum?: number | null;
             default?: unknown;
             example?: unknown;
+        };
+        "Chapi.IR.Auth": {
+            profile?: components["schemas"]["Chapi.IR.AuthProfile"];
+            token_request?: components["schemas"]["Chapi.IR.TokenRequest"];
+        };
+        "Chapi.IR.AuthParameters": {
+            tokenUrl?: string | null;
+            authorizationUrl?: string | null;
+            audience?: string | null;
+            scopes?: string | null;
+            clientId?: string | null;
+            clientSecretRef?: string | null;
+            usernameRef?: string | null;
+            passwordRef?: string | null;
+            customLoginUrl?: string | null;
+            customBodyType?: string | null;
+            customUserKey?: string | null;
+            customPassKey?: string | null;
+            tokenJsonPath?: string | null;
+        };
+        "Chapi.IR.AuthProfile": {
+            type?: components["schemas"]["Chapi.IR.AuthType"];
+            environmentKey?: string | null;
+            parameters?: components["schemas"]["Chapi.IR.AuthParameters"];
+            injection?: components["schemas"]["Chapi.IR.Injection"];
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "Chapi.IR.AuthType": 0 | 1 | 2;
+        "Chapi.IR.BodyDef": {
+            kind?: components["schemas"]["Chapi.IR.BodyKind"];
+            value?: unknown;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "Chapi.IR.BodyKind": 0 | 1 | 2 | 3;
+        "Chapi.IR.ChapiIr": {
+            version?: string | null;
+            suite?: components["schemas"]["Chapi.IR.Suite"];
+        };
+        "Chapi.IR.EndpointMeta": {
+            method?: string | null;
+            path?: string | null;
+            tags?: string[] | null;
+            requiresAuth?: boolean | null;
+            security?: {
+                [key: string]: string[];
+            }[] | null;
+        };
+        "Chapi.IR.Expect": {
+            /** Format: int32 */
+            status?: number;
+            jsonpath?: components["schemas"]["Chapi.IR.JsonPathCheck"][] | null;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "Chapi.IR.HttpMethodVerb": 0 | 1 | 2 | 3 | 4;
+        "Chapi.IR.HttpRequestDef": {
+            method?: components["schemas"]["Chapi.IR.HttpMethodVerb"];
+            url?: string | null;
+            headers?: {
+                [key: string]: string;
+            } | null;
+            body?: components["schemas"]["Chapi.IR.BodyDef"];
+        };
+        "Chapi.IR.Injection": {
+            mode?: components["schemas"]["Chapi.IR.InjectionMode"];
+            name?: string | null;
+            format?: string | null;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        "Chapi.IR.InjectionMode": 0 | 1 | 2;
+        "Chapi.IR.JsonPathCheck": {
+            path?: string | null;
+            equals?: unknown;
+            exists?: boolean | null;
+            contains?: string | null;
+        };
+        "Chapi.IR.Metadata": {
+            source?: string | null;
+            endpoint?: components["schemas"]["Chapi.IR.EndpointMeta"];
+            notes?: string | null;
+        };
+        "Chapi.IR.Suite": {
+            name?: string | null;
+            env?: {
+                [key: string]: string;
+            } | null;
+            secrets?: string[] | null;
+            auth?: components["schemas"]["Chapi.IR.Auth"];
+            tests?: components["schemas"]["Chapi.IR.Test"][] | null;
+            metadata?: components["schemas"]["Chapi.IR.Metadata"];
+        };
+        "Chapi.IR.Test": {
+            name?: string | null;
+            pre?: string[] | null;
+            request?: components["schemas"]["Chapi.IR.HttpRequestDef"];
+            expect?: components["schemas"]["Chapi.IR.Expect"];
+        };
+        "Chapi.IR.TokenRequest": {
+            name?: string | null;
+            request?: components["schemas"]["Chapi.IR.HttpRequestDef"];
+            expect?: components["schemas"]["Chapi.IR.Expect"];
+            save?: {
+                [key: string]: string;
+            } | null;
         };
         "Chat.Application.Dtos.ConversationDto": {
             /** Format: uuid */

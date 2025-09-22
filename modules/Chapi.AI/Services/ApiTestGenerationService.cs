@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using ShipMvp.Integration.SemanticKernel.Infrastructure;
+using Chapi.IR;
 
 namespace Chapi.AI.Services
 {
@@ -69,5 +70,48 @@ namespace Chapi.AI.Services
                 throw;
             }
         }
+
+
+        public async Task<ChapiIr> GenerateEndpointtAsync(string authProfileJson, string endpointJson)
+        {
+            try
+            {
+                var args = new KernelArguments();
+
+                if (!string.IsNullOrEmpty(authProfileJson))
+                    args["auth_profile"] = authProfileJson;
+                if (!string.IsNullOrEmpty(endpointJson))
+                    args["endpoint"] = endpointJson;
+
+
+                var result = await _semanticKernelService.InvokeAsync("ApiTest", "GenerateEndpoint", args);
+
+                // Prefer function value, then rendered prompt, then empty
+                var content = result.GetValue<string>() ?? result.RenderedPrompt ?? string.Empty;
+
+                _logger.LogInformation("ApiTest plugin returned: {Content}", content.Length > 500 ? content.Substring(0, 500) + "..." : content);
+
+                // Parse JSON into DTO
+                var card = System.Text.Json.JsonSerializer.Deserialize<ChapiIr>(content, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (card == null)
+                {
+                    _logger.LogWarning("ApiTest plugin returned invalid JSON: {Content}", content);
+                    throw new System.InvalidOperationException("Invalid response from ApiTest plugin");
+                }
+
+                return card;
+            }
+            catch (System.Exception ex)
+            {
+                _logger?.LogError(ex, "ApiTestGenerationService.GenerateEndpointAsync failed");
+                throw;
+            }
+        }
+
+
     }
 }
