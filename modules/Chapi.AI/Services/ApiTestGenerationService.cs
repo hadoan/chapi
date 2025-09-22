@@ -72,7 +72,7 @@ namespace Chapi.AI.Services
         }
 
 
-        public async Task<ChapiIr> GenerateEndpointtAsync(string authProfileJson, string endpointJson)
+        public async Task<string> GenerateEndpointAsync(string authProfileJson, string endpointJson)
         {
             try
             {
@@ -92,18 +92,19 @@ namespace Chapi.AI.Services
                 _logger.LogInformation("ApiTest plugin returned: {Content}", content.Length > 500 ? content.Substring(0, 500) + "..." : content);
 
                 // Parse JSON into DTO
-                var card = System.Text.Json.JsonSerializer.Deserialize<ChapiIr>(content, new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                // var card = System.Text.Json.JsonSerializer.Deserialize<ChapiIr>(content, new System.Text.Json.JsonSerializerOptions
+                // {
+                //     PropertyNameCaseInsensitive = true
+                // });
 
-                if (card == null)
-                {
-                    _logger.LogWarning("ApiTest plugin returned invalid JSON: {Content}", content);
-                    throw new System.InvalidOperationException("Invalid response from ApiTest plugin");
-                }
+                // if (card == null)
+                // {
+                //     _logger.LogWarning("ApiTest plugin returned invalid JSON: {Content}", content);
+                //     throw new System.InvalidOperationException("Invalid response from ApiTest plugin");
+                // }
 
-                return card;
+                // return card;
+                return content;
             }
             catch (System.Exception ex)
             {

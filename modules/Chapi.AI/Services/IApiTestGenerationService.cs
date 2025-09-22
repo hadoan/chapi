@@ -8,6 +8,6 @@ namespace Chapi.AI.Services
     {
         Task<ChapiCard> GenerateTestAsync(string openApiJson);
         Task<ChapiCard> GenerateTestAsync(string? userQuery, string? endpointsContext, int? maxFiles, string? openApiJson);
-        Task<ChapiIr> GenerateEndpointtAsync(string authProfileJson, string endpointJson);
+        Task<string> GenerateEndpointAsync(string authProfileJson, string endpointJson);
     }
 }

@@ -9,6 +9,7 @@ using Chapi.AI.Services;
 using Chapi.AI.Dto;
 using AuthProfiles.Application.Services;
 using AuthProfiles.Application.Dtos;
+using static Chapi.AI.Controllers.LlmController;
 
 namespace Chapi.AI.Controllers
 {
@@ -20,7 +21,10 @@ namespace Chapi.AI.Controllers
         private readonly ILogger<TestGenController> _logger;
         private readonly IAuthProfileReadService _authProfileReadService;
 
-        public TestGenController(ITestGenService testGenService, ILogger<TestGenController> logger, IAuthProfileReadService authProfileReadService)
+        private readonly IApiTestGenerationService _apiTestService;
+        private readonly IEndpointContextService _endpointContextService;
+
+        public TestGenController(ITestGenService testGenService, ILogger<TestGenController> logger, IAuthProfileReadService authProfileReadService, IApiTestGenerationService apiTestService, IEndpointContextService endpointContextService)
         {
             _testGenService = testGenService;
             _logger = logger;
@@ -75,6 +79,57 @@ namespace Chapi.AI.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+
+        [HttpPost("generate/endpoint")]
+        public async Task<ActionResult<TestGenResponse>> GenerateEndpoint([FromBody] GenerateEndpointRequest request, CancellationToken ct)
+        {
+            try
+            {
+                _logger.LogInformation("TestGen generate requested for project {ProjectId}", request.ProjectId);
+
+                // Parse the testGenInput from the openApiJson field
+                var testGenInput = JsonSerializer.Deserialize<TestGenInput>(request.OpenApiJson ?? "{}", new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (testGenInput == null)
+                {
+                    return BadRequest("Invalid testGenInput in openApiJson field");
+                }
+
+                // If the input included a reference to an existing AuthProfile, reload it from the DB
+                if (!string.IsNullOrEmpty(testGenInput.AuthProfile?.Id))
+                {
+                    if (Guid.TryParse(testGenInput.AuthProfile.Id, out var aid))
+                    {
+                        var dto = await _authProfileReadService.GetByIdAsync(aid, ct).ConfigureAwait(false);
+                        if (dto == null)
+                        {
+                            return BadRequest($"AuthProfile with id {aid} not found");
+                        }
+
+                        // Map AuthProfileDto to Chapi.AI.Dto.AuthProfile
+                        testGenInput.AuthProfile = MapAuthProfileDto(dto);
+                        _logger.LogInformation("Reloaded AuthProfile {AuthProfileId} from DB for test generation", aid);
+                    }
+                    else
+                    {
+                        return BadRequest("AuthProfile.Id is not a valid GUID");
+                    }
+                }
+
+                var result = await _apiTestService.GenerateEndpointAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to generate tests");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
 
         private static AuthProfile MapAuthProfileDto(AuthProfileDto dto)
         {

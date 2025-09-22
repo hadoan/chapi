@@ -16,7 +16,7 @@ namespace Chapi.AI.Controllers
 {
     [ApiController]
     [Route("api/llm")]
-    public class LlmController : ControllerBase
+    public partial class LlmController : ControllerBase
     {
         private readonly IApiTestGenerationService _apiTestService;
         private readonly ILogger<LlmController> _logger;
@@ -50,12 +50,6 @@ namespace Chapi.AI.Controllers
             return card;
         }
 
-        public class GenerateEndpointRequest
-        {
-            public Guid AuthProfileId { get; set; }
-            public Guid EndpointId { get; set; }
-        }
-
         [HttpPost("generate/endpoint")]
         public async Task<ActionResult<Chapi.IR.ChapiIr>> GenerateEndpoint([FromBody] GenerateEndpointRequest req)
         {
@@ -81,7 +75,7 @@ namespace Chapi.AI.Controllers
 
             try
             {
-                var ir = await _apiTestService.GenerateEndpointtAsync(authJson, endpointJson);
+                var ir = await _apiTestService.GenerateEndpointAsync(authJson, endpointJson);
                 return Ok(ir);
             }
             catch (Exception ex)
