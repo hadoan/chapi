@@ -7,7 +7,7 @@ namespace Chapi.AI.Services
 {
     public interface ITestGenFileGenerator
     {
-        List<TestGenFile> GenerateFiles(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options);
+        List<TestGenFile> GenerateFiles(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options, bool generateJson = true);
     }
 
     public class TestGenFileGenerator : ITestGenFileGenerator
@@ -21,17 +21,19 @@ namespace Chapi.AI.Services
             _chapiIRGenerator = chapiIRGenerator;
         }
 
-        public List<TestGenFile> GenerateFiles(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options)
+        public List<TestGenFile> GenerateFiles(SelectedEndpoint endpoint, AuthProfile authProfile, TestGenOptions options, bool generateJson = true)
         {
             var files = new List<TestGenFile>();
-
-            // Generate tests.json (Chapi IR)
-            var testsJson = _chapiIRGenerator.GenerateTestsJsonContent(endpoint, authProfile, options);
-            files.Add(new TestGenFile
+            if (generateJson)
             {
-                Path = "tests.json",
-                Content = testsJson
-            });
+                // Generate tests.json (Chapi IR)
+                var testsJson = _chapiIRGenerator.GenerateTestsJsonContent(endpoint, authProfile, options);
+                files.Add(new TestGenFile
+                {
+                    Path = "tests.json",
+                    Content = testsJson
+                });
+            }
 
             // Generate .env.example
             var envContent = GenerateEnvFile(authProfile);

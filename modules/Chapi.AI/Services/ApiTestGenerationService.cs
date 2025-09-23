@@ -79,9 +79,9 @@ namespace Chapi.AI.Services
                 var args = new KernelArguments();
 
                 if (!string.IsNullOrEmpty(authProfileJson))
-                    args["auth_profile"] = authProfileJson;
+                    args["auth_profile_json"] = authProfileJson;
                 if (!string.IsNullOrEmpty(endpointJson))
-                    args["endpoint"] = endpointJson;
+                    args["endpoint_json"] = endpointJson;
 
 
                 var result = await _semanticKernelService.InvokeAsync("ApiTest", "GenerateEndpoint", args);

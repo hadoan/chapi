@@ -27,7 +27,10 @@ public class EndpointAppService : IEndpointAppService
             OperationId = e.OperationId,
             Summary = e.Summary,
             Description = e.Description,
-            Tags = e.Tags?.ToList()
+            Tags = e.Tags?.ToList(),
+            Id = e.Id,
+            ProjectId = e.ProjectId,
+            SpecId = e.SpecId
         };
 
         try

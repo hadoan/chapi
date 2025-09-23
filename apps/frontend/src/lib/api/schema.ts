@@ -3466,9 +3466,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
-                    "text/json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
-                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.LlmController.GenerateEndpointRequest"];
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
                 };
             };
             responses: {
@@ -5872,6 +5872,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/testgen/generate/endpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
+                    "text/json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
+                    "application/*+json": components["schemas"]["Chapi.AI.Controllers.GenerateEndpointRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                        "application/json": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                        "text/json": components["schemas"]["Chapi.AI.Dto.TestGenResponse"];
+                    };
+                };
+                /** @description Bad Request - Invalid input data */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/connect/token": {
         parameters: {
             query?: never;
@@ -6547,7 +6597,7 @@ export interface components {
          * @enum {integer}
          */
         "AuthProfiles.Domain.InjectionMode": 0 | 1 | 2;
-        "Chapi.AI.Controllers.LlmController.GenerateEndpointRequest": {
+        "Chapi.AI.Controllers.GenerateEndpointRequest": {
             /** Format: uuid */
             authProfileId?: string;
             /** Format: uuid */

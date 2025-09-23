@@ -1,253 +1,45 @@
 {
   "schema": 1,
-  "type": "chat_completion",
-  "description": "Create a Chapi IR (suite.json) for ONE endpoint using an AuthProfile and Endpoint JSON. Includes an OAuth2 token step and header injection per profile. STRICT JSON output.",
+  "description": "Generate Chapi IR from AuthProfile and Endpoint JSON. Returns structured JSON for a single endpoint test suite.",
   "execution_settings": {
     "gpt-4o": {
       "model_id": "gpt-4o",
       "service_id": "gpt-4o",
       "temperature": 0.1,
-      "store": false,
       "text_format": "json",
-      "response_format": {
-        "type": "json_schema",
-        "json_schema": {
-          "name": "ChapiIR",
-          "strict": true,
-          "schema": {
-            "type": "object",
-            "required": ["version", "suite"],
-            "additionalProperties": false,
-            "properties": {
-              "version": { "type": "string", "const": "chapi-ir/0.1" },
-              "suite": {
-                "type": "object",
-                "required": ["name", "env", "secrets", "auth", "tests", "metadata"],
-                "additionalProperties": false,
-                "properties": {
-                  "name": { "type": "string", "minLength": 1 },
-                  "env": {
-                    "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "properties": {
-                      "BASE_URL": { "type": "string", "minLength": 1 },
-                      "TOKEN_URL": { "type": "string" },
-                      "SCOPE": { "type": "string" },
-                      "INJECTION_NAME": { "type": "string" },
-                      "INJECTION_FORMAT": { "type": "string" }
-                    }
-                  },
-                  "secrets": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "uniqueItems": true
-                  },
-                  "auth": {
-                    "type": "object",
-                    "required": ["profile"],
-                    "additionalProperties": false,
-                    "properties": {
-                      "profile": {
-                        "type": "object",
-                        "required": ["type", "environmentKey", "parameters", "injection"],
-                        "additionalProperties": false,
-                        "properties": {
-                          "type": { "type": "string", "enum": ["OAuth2", "ApiKey", "None"] },
-                          "environmentKey": { "type": "string" },
-                          "parameters": {
-                            "type": "object",
-                            "additionalProperties": true,
-                            "properties": {
-                              "tokenUrl": { "type": "string" },
-                              "authorizationUrl": { "type": ["string", "null"] },
-                              "audience": { "type": ["string", "null"] },
-                              "scopes": { "type": ["string", "null"] },
-                              "clientId": { "type": ["string", "null"] },
-                              "clientSecretRef": { "type": ["string", "null"] },
-                              "usernameRef": { "type": ["string", "null"] },
-                              "passwordRef": { "type": ["string", "null"] },
-                              "customLoginUrl": { "type": ["string", "null"] },
-                              "customBodyType": { "type": ["string", "null"] },
-                              "customUserKey": { "type": ["string", "null"] },
-                              "customPassKey": { "type": ["string", "null"] },
-                              "tokenJsonPath": { "type": ["string", "null"] }
-                            }
-                          },
-                          "injection": {
-                            "type": "object",
-                            "required": ["mode", "name", "format"],
-                            "additionalProperties": false,
-                            "properties": {
-                              "mode": { "type": "string", "enum": ["Header", "Query", "Cookie"] },
-                              "name": { "type": "string" },
-                              "format": { "type": "string" }
-                            }
-                          }
-                        }
-                      },
-                      "token_request": {
-                        "type": "object",
-                        "required": ["name", "request", "expect", "save"],
-                        "additionalProperties": false,
-                        "properties": {
-                          "name": { "type": "string" },
-                          "request": {
-                            "type": "object",
-                            "required": ["method", "url", "headers", "body"],
-                            "additionalProperties": false,
-                            "properties": {
-                              "method": { "type": "string", "enum": ["POST"] },
-                              "url": { "type": "string" },
-                              "headers": {
-                                "type": "object",
-                                "additionalProperties": { "type": "string" }
-                              },
-                              "body": {
-                                "type": "object",
-                                "required": ["kind", "value"],
-                                "additionalProperties": false,
-                                "properties": {
-                                  "kind": { "type": "string", "enum": ["form", "json"] },
-                                  "value": {
-                                    "type": "object",
-                                    "additionalProperties": true
-                                  }
-                                }
-                              }
-                            }
-                          },
-                          "expect": {
-                            "type": "object",
-                            "required": ["status"],
-                            "additionalProperties": false,
-                            "properties": { "status": { "type": "integer" } }
-                          },
-                          "save": {
-                            "type": "object",
-                            "required": ["access_token"],
-                            "additionalProperties": { "type": "string" },
-                            "properties": {
-                              "access_token": { "type": "string" }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "tests": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                      "type": "object",
-                      "required": ["name", "request", "expect"],
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": { "type": "string" },
-                        "pre": {
-                          "type": "array",
-                          "items": { "type": "string" }
-                        },
-                        "request": {
-                          "type": "object",
-                          "required": ["method", "url"],
-                          "additionalProperties": false,
-                          "properties": {
-                            "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
-                            "url": { "type": "string" },
-                            "headers": {
-                              "type": "object",
-                              "additionalProperties": { "type": "string" }
-                            },
-                            "body": {
-                              "type": "object",
-                              "required": ["kind", "value"],
-                              "additionalProperties": false,
-                              "properties": {
-                                "kind": { "type": "string", "enum": ["json", "form", "text", "none"] },
-                                "value": {}
-                              }
-                            }
-                          }
-                        },
-                        "expect": {
-                          "type": "object",
-                          "required": ["status"],
-                          "additionalProperties": true,
-                          "properties": {
-                            "status": { "type": "integer" },
-                            "jsonpath": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "required": ["path"],
-                                "additionalProperties": true,
-                                "properties": {
-                                  "path": { "type": "string" },
-                                  "equals": {},
-                                  "exists": { "type": "boolean" },
-                                  "contains": { "type": "string" }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "additionalProperties": true,
-                    "properties": {
-                      "source": { "type": "string" },
-                      "endpoint": {
-                        "type": "object",
-                        "additionalProperties": true
-                      },
-                      "notes": { "type": "string" }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      "store": false
     }
   },
   "input_variables": [
     {
       "name": "auth_profile_json",
-      "description": "Raw AuthProfile JSON string from Chapi",
+      "description": "AuthProfile JSON from Chapi database",
       "required": true
     },
     {
       "name": "endpoint_json",
-      "description": "Raw Endpoint JSON string from Chapi",
+      "description": "Endpoint JSON from Chapi EndpointCatalog",
       "required": true
     },
     {
       "name": "fallback_base_url",
-      "description": "Optional base URL if it cannot be inferred from TokenUrl",
+      "description": "Fallback base URL if not inferrable from auth profile",
       "required": false
     },
     {
       "name": "default_scope",
-      "description": "Optional OAuth scopes fallback (e.g., 'openid email profile roles')",
+      "description": "Default OAuth scope fallback",
       "required": false
     }
   ],
   "messages": [
     {
       "role": "system",
-      "content": "You generate a single Chapi IR (suite.json) for ONE endpoint using the provided AuthProfile and Endpoint JSON. Output STRICT JSON conforming to the attached JSON Schema. Never add explanations."
+      "content": "You are Chapi-IR-GPT. Generate a single Chapi IR (suite.json) for ONE endpoint using AuthProfile and Endpoint JSON. Return ONLY valid JSON that matches the Chapi IR v0.1 format. Include OAuth2 token acquisition if TokenUrl exists, proper auth injection, and comprehensive tests (happy path + negatives)."
     },
     {
       "role": "user",
-      "content": "AuthProfile JSON:\n{{auth_profile_json}}\n\nEndpoint JSON:\n{{endpoint_json}}\n\nHints:\nBASE_URL fallback: {{fallback_base_url}}\nSCOPE fallback: {{default_scope}}"
-    },
-    {
-      "role": "assistant",
-      "content": "Return ONLY the IR JSON now, following the schema. Include a token acquisition step if TokenUrl exists, and inject the token using the profile's InjectionName + format. Prefer password grant if username/password refs appear or when profile type suggests it."
+      "content": "AuthProfile JSON:\n{{$auth_profile_json}}\n\nEndpoint JSON:\n{{$endpoint_json}}\n\nHints:\nBASE_URL fallback: {{$fallback_base_url}}\nSCOPE fallback: {{$default_scope}}"
     }
   ],
   "defaults": {

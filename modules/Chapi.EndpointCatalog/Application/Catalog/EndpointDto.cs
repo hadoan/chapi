@@ -5,6 +5,12 @@ namespace Chapi.EndpointCatalog.Application
 {
     public sealed class EndpointDto
     {
+        public Guid Id { get; set; }
+        public Guid ProjectId { get; set; }
+
+        public Guid SpecId { get; set; }
+
+
         public string Method { get; set; } = default!;
         public string Path { get; set; } = default!;
         public string? OperationId { get; set; }

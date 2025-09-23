@@ -62,7 +62,7 @@ namespace Chapi.AI.Dto
     public class SelectedEndpoint
     {
         [JsonPropertyName("id")]
-        public string? Id { get; set; }
+        public Guid Id { get; set; }
 
         [JsonPropertyName("method")]
         public string Method { get; set; } = "GET";

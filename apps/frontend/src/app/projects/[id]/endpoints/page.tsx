@@ -16,7 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { apiSpecsApi, type ApiSpecDto } from '@/lib/api/apispecs';
 import { authProfilesApi, type AuthProfileDto } from '@/lib/api/auth-profiles';
 import { endpointsApi, type EndpointDto } from '@/lib/api/endpoints';
-import { testGenApi, type GenerateRequest } from '@/lib/api/llms';
+import { testGenApi } from '@/lib/api/llms';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -92,100 +92,20 @@ export default function ProjectEndpointsPage() {
 
     setTestGenerating(true);
     try {
-      // Format auth profile config based on type
-      // AuthType enum: 0=NONE, 1=API_KEY, 2=BEARER, 3=OIDC_CLIENT_CREDENTIALS
-      // InjectionMode enum: 0=Header, 1=Query, 2=None
-      const authConfig: Record<string, string | undefined> = {};
-      const authTypeString = selectedProfile
-        ? ['NONE', 'API_KEY', 'BEARER', 'OIDC_CLIENT_CREDENTIALS'][
-            selectedProfile.type
-          ] || 'NONE'
-        : 'NONE';
-
-      if (selectedProfile?.type === 1) {
-        // API_KEY
-        authConfig.headerName =
-          selectedProfile.injectionName || 'Authorization';
-        authConfig.injectAt =
-          selectedProfile.injectionMode === 0 ? 'header' : 'query';
-        if (selectedProfile.injectionMode === 1) {
-          authConfig.queryName = selectedProfile.injectionName || 'api_key';
-        }
-      } else if (selectedProfile?.type === 2) {
-        // BEARER
-        authConfig.tokenEnv = 'API_TOKEN';
-      } else if (selectedProfile?.type === 3) {
-        // OIDC_CLIENT_CREDENTIALS
-        authConfig.tokenUrl = selectedProfile.tokenUrl;
-        authConfig.clientIdEnv = 'CLIENT_ID';
-        authConfig.clientSecretEnv = 'CLIENT_SECRET';
-        if (selectedProfile.scopesCsv) {
-          authConfig.scope = selectedProfile.scopesCsv;
-        }
-        if (selectedProfile.audience) {
-          authConfig.audience = selectedProfile.audience;
-        }
-      }
-
-      // Create the Chapi-TestGen input format
-      const testGenInput = {
-        mode,
-        project: { id },
-        chat: {
-          conversation_id: null, // Will create new conversation
-          conversation_title: `${selectedEndpoint.method} ${selectedEndpoint.path} — tests`,
-        },
-        selectedEndpoint: {
-          id: selectedEndpointId,
-          method: selectedEndpoint.method || 'GET',
-          path: selectedEndpoint.path || '',
-          summary: selectedEndpoint.summary,
-          requiresAuth: !!(
-            selectedEndpoint.security && selectedEndpoint.security.length > 0
-          ),
-          successCode: 200,
-          requestSchemaHint: selectedEndpoint.request ? 'json' : 'none',
-        },
-        authProfile: selectedProfile
-          ? {
-              id: selectedProfile.id,
-              name: `${authTypeString} Profile`,
-              type: authTypeString,
-              config: authConfig,
-            }
-          : {
-              id: 'none',
-              name: 'No Authentication',
-              type: 'NONE',
-              config: {},
-            },
-        options: {
-          includeForbidden: true,
-          envPlaceholders: ['BASE_URL'],
-          fileBaseDir: 'tests/endpoint',
-          useJq: true,
-          generator_version: 'testgen@2025-09-10',
-        },
-        user_query: `Generate API tests for ${selectedEndpoint.method} ${selectedEndpoint.path}`,
+      // Call endpoint-specific generation on the server. The backend expects a
+      // payload with the auth profile id (if any) and the endpoint id.
+      const payload = {
+        authProfileId: selectedProfile?.id,
+        endpointId: selectedEndpointId,
       };
 
-      const request: GenerateRequest = {
-        user_query: `Generate API tests for ${selectedEndpoint.method} ${selectedEndpoint.path}`,
-        projectId: id,
-        max_files: 10,
-        openApiJson: JSON.stringify(testGenInput),
-      };
-
-      // Debug: log outgoing request
-      console.debug('testGen request:', request);
-
-      const response = await testGenApi.generate(request);
-      // Debug: log full response
-      console.debug('testGen response:', response);
+      const response = await testGenApi.generateEndpoint(payload);
 
       toast({
         title: 'Tests Generated Successfully',
-        description: `Generated ${response.card.files?.length || 0} test files`,
+        description: `Generated ${
+          response.card?.files?.length || 0
+        } test files`,
       });
 
       // TODO: Handle the generated card (e.g., navigate to test results page)
